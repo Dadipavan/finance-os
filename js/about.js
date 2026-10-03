@@ -76,7 +76,7 @@ window.FOS = window.FOS || {};
     snapshot: ['A one-page summary of your financial position.', 'Updates itself from your data.'],
     budget: ['Plan your monthly income against spending using 50/30/20, zero-based, pay-yourself-first, envelope or your own categories.', 'Set it once; revise when income or life changes, and review each month.'],
     expenses: ['Log what you actually spend (date, category, amount, how you paid).', 'Daily is best (one minute), or weekly in a batch.'],
-    statement: ['Your monthly money slip: income, spending by category, savings, payment modes and net-worth change for any month or range.', 'Read it after each Month-End Close. Nothing to type here.'],
+    statement: ['Your monthly money slip for any month or range: income, spending by category, savings, payment modes and net worth. It shows ONLY figures you entered: months with nothing recorded say "no data" and are left out; nothing is estimated.', 'Read it after each Month-End Close. Nothing to type here.'],
     monthend: ['The two-minute monthly routine: actual income, expense check, balances, snapshot — plus a calendar reminder.', 'Once a month, in the last days of the month or the first ten days of the next.'],
     networth: ['Track assets and liabilities and save a monthly net-worth snapshot.', 'Update balances monthly (Month-End Close does it).'],
     goals: ['Create goals with target, deadline, inflation and return and see the monthly amount each needs.', 'Add a goal when you decide on one; update "Saved so far" monthly.'],
@@ -117,9 +117,9 @@ window.FOS = window.FOS || {};
 
   FOS.ABOUT = { calc, tool, page };
   FOS.aboutHTML = function (kind, id) {
-    if (kind === 'calc' && calc[id]) { const a = calc[id]; return `<aside class="about" aria-label="About this page"><h2>About this page</h2><dl><dt>What it does</dt><dd>${a[0]}</dd><dt>Use it when</dt><dd>${a[1]}</dd><dt>How to read it</dt><dd>${a[2]}</dd></dl></aside>`; }
-    if (kind === 'tool' && tool[id]) { const a = tool[id]; return `<aside class="about" aria-label="About this page"><h2>About this page</h2><dl><dt>What it does</dt><dd>${a[0]}</dd><dt>When to update</dt><dd>${a[1]}</dd></dl></aside>`; }
-    if (kind === 'page' && page[id]) return `<aside class="about" aria-label="About this page"><h2>About this page</h2><p>${page[id]}</p></aside>`;
+    if (kind === 'calc' && calc[id]) { const a = calc[id]; return `<details class="about" open><summary>About this page — what it does</summary><dl><dt>What it does</dt><dd>${a[0]}</dd><dt>Use it when</dt><dd>${a[1]}</dd><dt>How to read it</dt><dd>${a[2]}</dd></dl></details>`; }
+    if (kind === 'tool' && tool[id]) { const a = tool[id]; return `<details class="about" open><summary>About this page — what it does</summary><dl><dt>What it does</dt><dd>${a[0]}</dd><dt>When to update</dt><dd>${a[1]}</dd></dl></details>`; }
+    if (kind === 'page' && page[id]) return `<details class="about" open><summary>About this page — what it does</summary><p>${page[id]}</p></details>`;
     return '';
   };
 })();
