@@ -1,0 +1,65 @@
+/* ==========================================================================
+   responsive.css — tablet, mobile (slide-out menu + bottom nav), large screens, print
+   ========================================================================== */
+.only-mobile { display: none; } .bn { display: none; }
+@media (min-width: 1700px) { :root { --fs: 17px; } .main { margin-inline: auto; margin-left: var(--side); } }
+@media (max-width: 1180px) {
+  .calc { grid-template-columns: 1fr; } .calc-in { position: static; max-height: none; }
+  .grid-2 { grid-template-columns: 1fr; }
+}
+@media (max-width: 980px) {
+  :root { --side: 290px; }
+  .only-mobile { display: inline-grid; } .hide-mobile { display: none; }
+  .brand { width: auto; } .brand-t { display: none; }
+  .sidebar { transform: translateX(-102%); transition: transform .25s ease; box-shadow: var(--shadow-lg); z-index: 120; top: 0; padding-top: 1.2rem; }
+  .scrim { display: block; position: fixed; inset: 0; background: rgba(8, 18, 16, .5); opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 110; }
+  body.nav-open .sidebar { transform: none; } body.nav-open .scrim { opacity: 1; pointer-events: auto; }
+  .main { margin-left: 0; padding-bottom: 7.5rem; } .alert-bar { left: 0; }
+  .bn { display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; bottom: 0; left: 0; right: 0; z-index: 90; background: var(--surface); border-top: 1px solid var(--line); padding: .3rem 0 calc(.3rem + env(safe-area-inset-bottom)); }
+  .bn a, .bn button { display: flex; flex-direction: column; align-items: center; gap: 2px; font: inherit; font-size: .68rem; color: var(--muted); text-decoration: none; background: none; border: 0; padding: .3rem 0; cursor: pointer; } .bn span { font-size: 1.15rem; line-height: 1; } .bn a.on { color: var(--primary); font-weight: 700; }
+  .fabs { bottom: 4.8rem; right: .8rem; } .fab { font-size: .7rem; padding: .55rem .85rem; } .fab.primary { padding: .7rem 1rem; }
+  .toast { bottom: 150px; }
+}
+@media (max-width: 640px) {
+  :root { --fs: 15.5px; }
+  .topbar { padding: 0 .6rem; gap: .4rem; } .search input { height: 40px; font-size: .9rem; }
+  .main { padding-inline: .8rem; } .card { padding: 1rem; border-radius: 14px; } .hero { border-radius: 20px; padding: 1.4rem 1.1rem; }
+  .cta .btn { flex: 1 1 100%; } .kpis, .kpis.big { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; } .kpi b { font-size: 1.15rem; }
+  .res-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .res b { font-size: 1.1rem; }
+  .mod-head { flex-direction: column; gap: .6rem; } .rate-row { grid-template-columns: 1fr 100px; } .rate-row small { display: none; }
+  .donut { justify-content: center; } .fields { grid-template-columns: 1fr; }
+  .modal-back { padding: 0; align-items: end; } .modal { border-radius: 22px 22px 0 0; max-height: 94vh; }
+  .data th, .data td { padding: .45rem .55rem; font-size: .8rem; }
+}
+@media print {
+  .topbar, .sidebar, .bn, .fabs, .scrim, .alert-bar, .toast, .row-actions, .calc-in, .out-actions, .no-print, .skip, #modal-root .modal-head button, .tabs { display: none !important; }
+  body { background: #fff; color: #000; } .main { margin: 0; padding: 0; max-width: none; } .card, .res, .kpi { box-shadow: none; border: 1px solid #bbb; break-inside: avoid; }
+  .calc { display: block; } .table-scroll { max-height: none; overflow: visible; } .res.hi { background: #eee; } .res.hi span, .res.hi b { color: #000; } details { display: block; } details > * { display: block; }
+  a { color: #000; text-decoration: none; }
+}
+
+/* ---------- phone / touch comfort ---------- */
+html { -webkit-tap-highlight-color: transparent; } body { overscroll-behavior-y: none; }
+button, a.btn, .chip, .tab, select, summary { touch-action: manipulation; }
+@media (pointer: coarse) {
+  .btn, .chip, .tab, .icon-btn, select.input, .input { min-height: 44px; }
+  .btn.sm { min-height: 38px; } .sidebar a { padding-block: .62rem; } .check input, .opt input, .checklist input { width: 22px; height: 22px; }
+  .slider { height: 32px; }
+}
+/* iOS zooms into inputs smaller than 16px — keep every field at 16px on phones */
+@media (max-width: 980px) { input, select, textarea, .input, .cell { font-size: 16px !important; } }
+@supports (padding: max(0px)) {
+  .topbar { padding-left: max(.6rem, env(safe-area-inset-left)); padding-right: max(.6rem, env(safe-area-inset-right)); height: calc(var(--top) + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top); }
+  :root { --top-safe: env(safe-area-inset-top); }
+  @media (max-width: 980px) { .main { padding-top: calc(var(--top) + env(safe-area-inset-top) + 1rem); } .sidebar { padding-bottom: calc(6rem + env(safe-area-inset-bottom)); } .fabs { bottom: calc(4.8rem + env(safe-area-inset-bottom)); right: max(.8rem, env(safe-area-inset-right)); } .bn { padding-bottom: calc(.3rem + env(safe-area-inset-bottom)); } }
+}
+@media (max-width: 420px) {
+  .brand-t { display: none; } .search input::placeholder { font-size: .85rem; } .topbar .icon-btn { min-width: 36px; }
+  .hero h1 { font-size: 2rem; } .kpi b { font-size: 1.05rem; } .res b { font-size: 1rem; } .table-scroll { -webkit-overflow-scrolling: touch; }
+  .fab { padding: .5rem .7rem; font-size: .66rem; } .modal-body { padding: 1rem; }
+}
+/* installed app (standalone): no browser chrome, so give the top bar a little breathing room */
+@media (display-mode: standalone) { body { user-select: none; -webkit-user-select: none; } input, textarea, .input, .cell, pre, .formula, td, p { user-select: text; -webkit-user-select: text; } }
+
+/* phones: search results use the full width instead of the narrow search box */
+@media (max-width: 980px) { .search-pop { position: fixed; left: .5rem; right: .5rem; top: calc(var(--top) + env(safe-area-inset-top, 0px) + 4px); max-height: 72vh; } .main { scroll-margin-top: 80px; } }
