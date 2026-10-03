@@ -62,22 +62,32 @@ window.FOS = window.FOS || {};
     else localStorage.setItem(KEY, snapshot);
     localStorage.setItem('fos.theme', state.settings.theme);
   }
+  // Writing the whole data set on every keystroke is slow on phones with a long history, so writes are coalesced:
+  // saved ~300 ms after the last change, and immediately when the page is hidden or closed.
+  let writeTimer = null, pendingWrite = false; const clr = (t) => { if (typeof clearTimeout === 'function') clearTimeout(t); };
+  function flush() {
+    if (!pendingWrite || locked) return; pendingWrite = false; clr(writeTimer);
+    try { writeState(); } catch (e) { FOS.ui && FOS.ui.toast('Could not save — browser storage may be full or blocked.'); }
+  }
   function save() {
     if (locked) return;
     state.meta.updatedAt = new Date().toISOString();
-    try { writeState(); } catch (e) { FOS.ui && FOS.ui.toast('Could not save — browser storage may be full or blocked.'); }
+    if (typeof setTimeout === 'function') { pendingWrite = true; clr(writeTimer); writeTimer = setTimeout(flush, 300); }
+    else { try { writeState(); } catch (e) { FOS.ui && FOS.ui.toast('Could not save — browser storage may be full or blocked.'); } }
     subs.forEach((f) => f(state));
   }
+  if (typeof window.addEventListener === 'function') { window.addEventListener('pagehide', flush); window.addEventListener('beforeunload', flush); }
+  if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
   FOS.store = {
     get: () => state,
-    save, uid, load,
+    save, uid, load, flush,
     setConfigPatch(p) { state.meta.configChecked = new Date().toISOString(); state.configPatch = p || {}; applyPatch(state.configPatch); save(); },
     mergeConfigPatch(p) { state.meta.configChecked = new Date().toISOString(); const cur = clone(state.configPatch || {}); dm(cur, p); state.configPatch = cur; applyPatch(cur); save(); },
     subscribe: (f) => subs.push(f),
     update(fn) { fn(state); save(); },
-    exportJSON() { state.meta.lastExport = new Date().toISOString(); try { writeState(); } catch (e) { /* ignore */ } return JSON.stringify({ app: 'finance-os', version: 1, exportedAt: new Date().toISOString(), data: state }, null, 2); },
+    exportJSON() { state.meta.lastExport = new Date().toISOString(); pendingWrite = false; try { writeState(); } catch (e) { /* ignore */ } return JSON.stringify({ app: 'finance-os', version: 1, exportedAt: new Date().toISOString(), data: state }, null, 2); },
     importJSON(text) {
       let o; try { o = JSON.parse(text); } catch (e) { throw new Error('That file is not valid JSON.'); }
       if (o && o.fos === 'enc1') { const er = new Error('This file is encrypted — enter your passphrase.'); er.needsPass = true; throw er; }
@@ -98,7 +108,7 @@ window.FOS = window.FOS || {};
     async exportEncrypted(pass) { const salt = window.crypto.getRandomValues(new Uint8Array(16)), key = await deriveKey(pass, salt); return encryptWith(key, salt, JSON.stringify({ app: 'finance-os', version: 1, exportedAt: new Date().toISOString(), data: state })); },
     async decryptText(text, pass) { return (await decryptBlob(text, pass)).text; },
     async importEncrypted(text, pass) { const r = await decryptBlob(text, pass); this.importJSON(r.text); },
-    reset() { state = defaults(); applyPatch({}); lockKey = null; locked = false; sessionPass = null; try { localStorage.removeItem(KEY); localStorage.removeItem(ENC); localStorage.removeItem('fos.theme'); } catch (e) { /* ignore */ } subs.forEach((f) => f(state)); },
+    reset() { pendingWrite = false; clr(writeTimer); state = defaults(); applyPatch({}); lockKey = null; locked = false; sessionPass = null; try { localStorage.removeItem(KEY); localStorage.removeItem(ENC); localStorage.removeItem('fos.theme'); } catch (e) { /* ignore */ } subs.forEach((f) => f(state)); },
     // Config lookup honouring user overrides (Settings → Rates & Assumptions)
     rate(key, fallback) { const v = state.overrides['rate.' + key]; return v !== undefined && v !== '' ? +v : fallback; },
     schemeRate(id) { const v = state.overrides['scheme.' + id]; return v !== undefined && v !== '' ? +v : FOS.GOVERNMENT_SCHEMES.schemes[id].rate; },
