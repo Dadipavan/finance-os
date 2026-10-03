@@ -13,7 +13,7 @@ window.FOS = window.FOS || {};
   function toast(msg) {
     let t = $('#toast'); if (!t) return;
     t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+    toastTimer = setTimeout(() => t.classList.remove('show'), Math.min(7000, 2400 + String(msg).length * 40));
   }
 
   let lastFocus = null;
