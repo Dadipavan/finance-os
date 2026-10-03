@@ -294,7 +294,7 @@
   /* ---------------- settings ---------------- */
   function settings() {
     const s = store.get(), ov = s.overrides;
-    const rateRow = (k, label, cur, def) => `<label class="rate-row"><span>${esc(label)}</span><input class="input mini" type="number" step="0.05" min="0" data-ov="${k}" value="${ov[k] !== undefined && ov[k] !== '' ? ov[k] : ''}" placeholder="${def}"><small>default ${def}</small></label>`;
+    const rateRow = (k, label, cur, def) => `<label class="rate-row"><span>${esc(label)}</span><input class="input mini" type="number" inputmode="decimal" step="0.05" min="0" data-ov="${k}" value="${ov[k] !== undefined && ov[k] !== '' ? ov[k] : ''}" placeholder="${def}"><small>default ${def}</small></label>`;
     page('Settings', `<h1 class="ph">Settings</h1>${FOS.aboutHTML('page', 'settings')}<nav class="jump" aria-label="Jump to a section">${[['sec-look', 'Appearance'], ['sec-install', 'Install'], ['sec-rates', 'Rates'], ['sec-gate', 'Access key'], ['sec-lock', 'Lock'], ['sec-sync', 'Drive'], ['sec-test', 'Test'], ['sec-data', 'My data']].map(([id, t]) => `<button class="chip" data-jump="${id}">${t}</button>`).join('')}</nav>
       <section class="card" id="sec-look"><h2>Appearance &amp; accessibility</h2><div class="fields">
         <div class="field"><label for="st-theme">Theme</label><select class="input" id="st-theme"><option value="light" ${s.settings.theme === 'light' ? 'selected' : ''}>Light</option><option value="dark" ${s.settings.theme === 'dark' ? 'selected' : ''}>Dark</option></select></div>
@@ -343,7 +343,19 @@
     $('#nav').addEventListener('click', (e) => { if (e.target.closest && e.target.closest('a')) document.body.classList.remove('nav-open'); });
     $('#fab-pay').onclick = FOS.payModal; $('#fab-sign').onclick = FOS.signModal; $('#bn-check').onclick = FOS.quickSheet;
     $('#bell-btn').onclick = (e) => { e.stopPropagation(); FOS.toggleNotices(); };
-    $('#search-toggle').onclick = () => { document.body.classList.toggle('search-open'); if (document.body.classList.contains('search-open')) setTimeout(() => $('#gsearch').focus(), 50); };
+    // iPhone only opens the keyboard when focus happens INSIDE the tap, so focus synchronously (no timeout)
+    $('#search-toggle').onclick = () => { const open = document.body.classList.toggle('search-open'); if (open) { const i = $('#gsearch'); void i.offsetWidth; i.focus(); } };
+    // Every field: right keyboard, always reachable, kept in view
+    const isField = (t) => !!(t && t.matches && t.matches('input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=button]):not([type=submit]):not([type=file]), textarea, select'));
+    document.addEventListener('focusin', (e) => {
+      const t = e.target; if (!isField(t)) return;
+      if (t.tagName === 'INPUT') { if (t.type === 'number' && !t.getAttribute('inputmode')) t.setAttribute('inputmode', 'decimal'); if ((t.type === 'text' || t.type === 'search') && !t.getAttribute('enterkeyhint')) t.setAttribute('enterkeyhint', 'done'); }
+      document.body.classList.add('kbd-open');
+      if (isPhone()) setTimeout(() => { try { t.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (x) { /* older browsers */ } }, 350);
+    });
+    document.addEventListener('focusout', () => { setTimeout(() => { if (!isField(document.activeElement)) document.body.classList.remove('kbd-open'); }, 120); });
+    // tapping the ₹ or % beside a number box (or the gap around it) focuses the box, inside the tap
+    document.addEventListener('click', (e) => { const w = e.target.closest && e.target.closest('.inp'); if (w && e.target.tagName !== 'INPUT') { const i = w.querySelector('input'); if (i) i.focus(); } });
     $$('[data-bn-menu]').forEach((b) => { b.onclick = () => document.body.classList.toggle('nav-open'); });
     const inp = $('#gsearch'), pop = $('#search-pop');
     inp.oninput = () => { const q = inp.value.trim(); if (!q) { pop.hidden = true; return; } pop.innerHTML = FOS.searchHTML(q, 4) + `<a class="sr-all" href="#/search/${encodeURIComponent(q)}">See all results for “${esc(q)}”</a>`; pop.hidden = false; };
