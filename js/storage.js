@@ -118,6 +118,7 @@ window.FOS = window.FOS || {};
   };
   load();
 
+   
   /* ---------- derived metrics: the single source for dashboard / health / reports ---------- */
   const n = (x) => (Number.isFinite(+x) ? +x : 0);
   const sum = (a, f) => a.reduce((s, x) => s + n(f(x)), 0);
