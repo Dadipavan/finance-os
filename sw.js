@@ -4,7 +4,7 @@
    handled; Google sign-in / Drive calls are never touched.
    WHEN YOU PUBLISH A NEW VERSION: change VERSION below (fos-v3, fos-v4, …). That makes every device download the
    complete new set of files together and drop the old ones, so no one ever mixes old and new files. */
-const VERSION = 'fos-v4';
+const VERSION = 'fos-v6';
 const CORE = [
   './',
   'index.html',
