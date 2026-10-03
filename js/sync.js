@@ -22,12 +22,20 @@
       const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.onload = res; s.onerror = () => rej(new Error('Could not load Google sign-in (are you online?)')); document.head.appendChild(s);
     });
   }
+  // Turn Google's cryptic codes into something you can act on
+  function friendly(code, desc) {
+    const c = String(code || ''), fix = ' If Google showed "Access blocked" or "has not completed the verification process": open Google Cloud → OAuth consent screen (Google Auth Platform → Audience) and add your Gmail under Test users — or press Publish app — then try again.';
+    if (/access_denied/.test(c)) return 'Google blocked this sign-in (access_denied).' + fix;
+    if (/popup_closed|popup_failed|closed/.test(c)) return 'The Google window was closed or blocked before it finished. Allow pop-ups for this site and try again.' + fix;
+    if (/invalid_client|origin_mismatch|redirect_uri/.test(c) || /origin/.test(String(desc || ''))) return 'Google does not recognise this website address for your client ID. In Google Cloud → Credentials, set Authorized JavaScript origins to exactly your site address (https://<username>.github.io, no path, no trailing slash).';
+    return 'Google sign-in did not complete (' + (c || 'closed') + ').' + fix;
+  }
   async function getToken(interactive) {
     if (token && Date.now() < tokenExp - 60000) return token;
     if (!clientId()) throw new Error('Enter your Google client ID first.');
     await loadGIS();
     return new Promise((res, rej) => {
-      const tc = window.google.accounts.oauth2.initTokenClient({ client_id: clientId(), scope: 'https://www.googleapis.com/auth/drive.appdata', callback: (r) => { if (r.error) return rej(new Error(r.error_description || r.error)); token = r.access_token; tokenExp = Date.now() + (r.expires_in || 3600) * 1000; localStorage.setItem(CONN, '1'); res(token); }, error_callback: (e) => rej(new Error('Sign-in did not complete (' + (e && e.type ? e.type : 'closed') + ')')) });
+      const tc = window.google.accounts.oauth2.initTokenClient({ client_id: clientId(), scope: 'https://www.googleapis.com/auth/drive.appdata', callback: (r) => { if (r.error) return rej(new Error(friendly(r.error, r.error_description))); token = r.access_token; tokenExp = Date.now() + (r.expires_in || 3600) * 1000; localStorage.setItem(CONN, '1'); res(token); }, error_callback: (e) => rej(new Error(friendly(e && e.type))) });
       tc.requestAccessToken({ prompt: interactive ? 'consent' : '' });
     });
   }
