@@ -4,8 +4,8 @@
 .only-mobile { display: none; } .bn { display: none; }
 @media (min-width: 1700px) { :root { --fs: 17px; } .main { margin-inline: auto; margin-left: var(--side); } }
 @media (max-width: 1180px) {
-  .calc { grid-template-columns: 1fr; } .calc-in { position: static; max-height: none; overflow: visible; }
-  .grid-2 { grid-template-columns: 1fr; }
+  .calc { grid-template-columns: minmax(0, 1fr); } .calc-in { position: static; max-height: none; overflow: visible; }
+  .grid-2 { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 980px) {
   :root { --side: 290px; }
@@ -40,7 +40,7 @@
 }
 
 /* ---------- phone / touch comfort ---------- */
-html { -webkit-tap-highlight-color: transparent; } body { overscroll-behavior-y: none; }
+html { -webkit-tap-highlight-color: transparent; }
 button, a.btn, .chip, .tab, select, summary { touch-action: manipulation; }
 @media (pointer: coarse) {
   .btn, .chip, .tab, .icon-btn, select.input, .input { min-height: 44px; }
@@ -157,3 +157,15 @@ button, a.btn, .chip, .tab, select, summary { touch-action: manipulation; }
 /* while a field is being edited, the floating bars step aside so they never cover it or jump above the keyboard */
 .kbd-open .bn, .kbd-open .mini-res, .kbd-open .fabs { display: none !important; }
 .mini-res { pointer-events: none; } .mini-res a { pointer-events: auto; }
+
+/* safety net: nothing may widen the page beyond the screen (iPhone shrinks a page that overflows, which makes it look like the desktop site) */
+/* only html clips sideways overflow (it propagates to the viewport, so the page keeps ONE normal scroll area); body and .main must never become scroll containers */
+html { overflow-x: hidden; } body { overflow-x: visible; }
+.main { min-width: 0; }
+img, svg, video, canvas { max-width: 100%; }
+@media (max-width: 980px) { .grid-3, .cards { grid-template-columns: minmax(0, 1fr); } .data.crud .cell { min-width: 0; } .data.crud input[type=date] { min-width: 0; } }
+
+/* ---------- smooth, natural scrolling ---------- */
+.slider { touch-action: pan-y; }                       /* vertical swipes on a slider scroll the page; only sideways drags move the thumb */
+.table-scroll, .tabs, .jump, .chips { -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+@media (max-width: 980px) { .table-scroll { max-height: none; } .modal, .notice-panel, .sidebar { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; } }
