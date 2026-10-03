@@ -90,6 +90,8 @@ window.FOS = window.FOS || {};
   const FINANCIAL_ASSUMPTIONS = {
     meta: { lastUpdated: 'Configurable default', source: 'Illustrative planning assumptions — NOT forecasts', period: 'n/a', note: 'Change these in Settings → Rates & Assumptions' },
     inflation: 6,
+    // How SIP future value is calculated (see calculations.js): nominal-start | nominal-end | effective-start | effective-end
+    sipMethod: 'nominal-start',
     equityReturn: 12,
     debtReturn: 7,
     goldReturn: 8,
@@ -153,6 +155,7 @@ window.FOS = window.FOS || {};
     M('bizstart', 'Start a Business: Step by Step', 'Plan', 'A practical, ordered guide from idea to first customers, registrations, taxes and cash flow.', { lvl: 10, tool: 'bizideas', calcs: ['breakeven', 'runway', 'roi'], chk: ['bizsteps', 'business'] }),
     M('earnmore', 'Earn More & Save More', 'Plan', 'Raise income, cut leaks, and keep more of what you earn — with the maths.', { lvl: 9, tool: 'expenses', calcs: ['subscription', 'whatif-salary', 'whatif-invest'] }),
     M('playbook', 'Life Playbook: Settle Well', 'Decide', 'What to do in which order, decade by decade — and how to handle the hard moments.', { lvl: 9, tool: 'ladder', calcs: ['emergency', 'fi', 'lifesim'] }),
+    M('suggestions', 'My Suggestions', 'Decide', 'What to do next, in order, based on your savings, spending, debts and goals — tick them off as you go.', { tool: 'suggestions', calcs: ['taxopt', 'sip', 'emergency'] }),
     M('plan', 'My Action Plan', 'Decide', 'Your numbers turned into an ordered plan with amounts: debt, buffer, cover, tax, investing, goals.', { tool: 'plan', calcs: ['taxopt', 'sip', 'emergency'] }),
     M('growth', 'Grow My Money', 'Decide', 'Every way to grow money, ranked by what you keep after tax and inflation.', { tool: 'growth', calcs: ['taxopt', 'ppf', 'nps', 'sip'] }),
     M('statement', 'Monthly Statement', 'Decide', 'Filter any month or range: income, spending by category, savings and where every rupee went. Print as a slip.', { tool: 'statement' }),
