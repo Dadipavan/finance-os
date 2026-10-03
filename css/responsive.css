@@ -14,11 +14,12 @@
   .sidebar { transform: translateX(-102%); transition: transform .25s ease; box-shadow: var(--shadow-lg); z-index: 120; top: 0; padding-top: 1.2rem; }
   .scrim { display: block; position: fixed; inset: 0; background: rgba(8, 18, 16, .5); opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 110; }
   body.nav-open .sidebar { transform: none; } body.nav-open .scrim { opacity: 1; pointer-events: auto; }
-  .main { margin-left: 0; padding-bottom: 7.5rem; } .alert-bar { left: 0; }
+  .main { margin-left: 0; padding-bottom: 7.5rem; } .alert-bar { margin: calc(var(--top) + env(safe-area-inset-top, 0px) + .6rem) .8rem 0; }
   .bn { display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; bottom: 0; left: 0; right: 0; z-index: 90; background: var(--surface); border-top: 1px solid var(--line); padding: .3rem 0 calc(.3rem + env(safe-area-inset-bottom)); }
   .bn a, .bn button { display: flex; flex-direction: column; align-items: center; gap: 2px; font: inherit; font-size: .68rem; color: var(--muted); text-decoration: none; background: none; border: 0; padding: .3rem 0; cursor: pointer; } .bn span { font-size: 1.15rem; line-height: 1; } .bn a.on { color: var(--primary); font-weight: 700; }
   .fabs { bottom: 4.8rem; right: .8rem; } .fab { font-size: .7rem; padding: .55rem .85rem; } .fab.primary { padding: .7rem 1rem; }
-  .toast { bottom: 150px; }
+  /* pop-up message at the TOP on phones so it never collides with the bottom bar or round buttons */
+  .toast { bottom: auto; top: calc(var(--top) + env(safe-area-inset-top, 0px) + .6rem); transform: translate(-50%, -16px); } .toast.show { transform: translate(-50%, 0); }
 }
 @media (max-width: 640px) {
   :root { --fs: 15.5px; }
@@ -63,3 +64,5 @@ button, a.btn, .chip, .tab, select, summary { touch-action: manipulation; }
 
 /* phones: search results use the full width instead of the narrow search box */
 @media (max-width: 980px) { .search-pop { position: fixed; left: .5rem; right: .5rem; top: calc(var(--top) + env(safe-area-inset-top, 0px) + 4px); max-height: 72vh; } .main { scroll-margin-top: 80px; } }
+
+@media (max-width: 640px) { .alert-bar { margin-inline: .6rem; } .notice { grid-template-columns: 24px 1fr 32px; padding: .65rem .5rem .65rem .7rem; } .n-act .btn { flex: 1 1 auto; min-height: 40px; } .n-b h3 { font-size: .92rem; } }
