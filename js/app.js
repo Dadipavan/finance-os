@@ -92,6 +92,7 @@
         <a class="card feature" href="#/m/health"><h3>Transparent health</h3><p>No mystery score. Every metric shows how it is calculated and where it falls short.</p></a>
         <a class="card feature" href="#/m/checklists"><h3>Checklists</h3><p>Before you pay, sign, borrow or invest. Interactive and saved locally.</p></a>
         <a class="card feature" href="#/m/scams"><h3>Scam Protection</h3><p>Spot ponzi, OTP, UPI and fake-app patterns with a quick checker.</p></a>
+        <a class="card feature" href="#/m/suggestions"><h3>My Suggestions</h3><p>A prioritised to-do list from your own savings, spending and debts — tick items off as you go.</p></a>
         <a class="card feature" href="#/m/insights"><h3>My Money Review</h3><p>Your own numbers turned into observations, questions and ideas to earn and save more.</p></a>
         <a class="card feature" href="#/m/bizstart"><h3>Start a Business</h3><p>Practical steps: validate, numbers, structure, registrations, funding, taxes, first 90 days.</p></a>
         <a class="card feature" href="#/calc/afford"><h3>Can I afford it?</h3><p>Car 20/4/10, home, bike and phone guidelines — with the highest price that fits.</p></a></section>
@@ -200,7 +201,8 @@
       extraEl.innerHTML = x;
       if (firstDraw) { firstDraw = false; const co = $('.calc-out', el); if (co) co.classList.add('no-anim'); }
     }
-    const schedule = () => { if (!pending) pending = requestAnimationFrame(draw); };
+    // a plain short timer (not requestAnimationFrame): rAF pauses in unfocused/hidden windows, which would leave results stale
+    const schedule = () => { if (!pending) pending = setTimeout(draw, 16); };
 
     const textSummary = () => {
       const res = last || {}, lines = [c.title, new Date().toLocaleDateString('en-IN'), '', 'INPUTS'];
@@ -330,7 +332,7 @@
 
   /* ---------------- quick checks (phone: replaces the floating buttons) ---------------- */
   FOS.quickSheet = function () {
-    const box = U.modal('Quick checks', `<div class="sheet-actions"><button class="sheet-btn" data-q="pay"><b>CHECK BEFORE I PAY</b><span>A 1-minute check for any purchase</span></button><button class="sheet-btn" data-q="sign"><b>BEFORE YOU SIGN</b><span>Checklist for loans, insurance, cards, property</span></button><a class="sheet-btn" href="#/m/decision" data-q="go"><b>Decision Engine</b><span>Full costs, risks and a clear verdict</span></a><a class="sheet-btn" href="#/tool/expenses" data-q="go"><b>Log an expense</b><span>Add what you just spent</span></a><a class="sheet-btn" href="#/tool/monthend" data-q="go"><b>Month-End Close</b><span>Two minutes to close the month</span></a></div>`);
+    const box = U.modal('Quick checks', `<div class="sheet-actions"><button class="sheet-btn" data-q="pay"><b>CHECK BEFORE I PAY</b><span>A 1-minute check for any purchase</span></button><button class="sheet-btn" data-q="sign"><b>BEFORE YOU SIGN</b><span>Checklist for loans, insurance, cards, property</span></button><a class="sheet-btn" href="#/m/suggestions" data-q="go"><b>My Suggestions</b><span>What to do next, based on your numbers</span></a><a class="sheet-btn" href="#/m/decision" data-q="go"><b>Decision Engine</b><span>Full costs, risks and a clear verdict</span></a><a class="sheet-btn" href="#/tool/expenses" data-q="go"><b>Log an expense</b><span>Add what you just spent</span></a><a class="sheet-btn" href="#/tool/monthend" data-q="go"><b>Month-End Close</b><span>Two minutes to close the month</span></a></div>`);
     box.onclick = (e) => { const b = e.target.closest('[data-q]'); if (!b) return; const q = b.dataset.q; U.closeModal(); if (q === 'pay') FOS.payModal(); if (q === 'sign') FOS.signModal(); };
   };
 
