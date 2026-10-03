@@ -84,10 +84,10 @@ window.FOS = window.FOS || {};
     const esc = FOS.ui.esc, fmt = FOS.fmt, vals = FOS.exampleValues(id);
     let res; try { res = c.compute(Object.assign({}, vals, Object.fromEntries(c.fields.filter((f) => f.type === 'sel').map((f) => [f.id, isNaN(+vals[f.id]) ? vals[f.id] : +vals[f.id]])))); } catch (e) { res = { summary: [] }; }
     const show = (f, v) => { if (f.type === 'sel') { const o = f.options.find((x) => String(Array.isArray(x) ? x[0] : x) === String(v)); return Array.isArray(o) ? o[1] : String(v); } if (f.type === 'money') return fmt.inr(+v); if (f.type === 'pct') return v + '%'; if (f.type === 'yrs') return v + (+v === 1 ? ' year' : ' years'); if (f.type === 'mon') return v + ' months'; return String(v); };
-    const rows = c.fields.map((f, i) => `<tr><th scope="row">${esc(f.label)}</th><td><b>${esc(show(f, vals[f.id]))}</b></td><td>${esc(ex[2][i] || '')}</td></tr>`).join('');
+    const rows = c.fields.map((f, i) => `<li><div class="ex-h"><b>${esc(f.label)}</b><span class="ex-v">${esc(show(f, vals[f.id]))}</span></div><p>${esc(ex[2][i] || '')}</p></li>`).join('');
     const out = (res.summary || []).slice(0, 6).map((s) => `<li>${esc(s.l)}: <b>${esc(FOS.showVal ? FOS.showVal(s.f, s.v) : String(s.v))}</b></li>`).join('');
     return `<section class="card example" aria-label="Worked example"><h3>Worked example</h3><p class="story">${esc(ex[0])}</p>
-      <div class="table-scroll"><table class="data schemes"><thead><tr><th>Field</th><th>Example value</th><th>What to put here</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <ul class="ex-fields">${rows}</ul>
       ${out ? `<h4>What this example gives</h4><ul>${out}</ul>` : ''}<div class="row-actions"><button class="btn primary" data-a="example">Try this example in the calculator</button></div></section>`;
   };
 })();
