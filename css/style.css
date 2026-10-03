@@ -70,7 +70,8 @@ code, pre { font-family: var(--mono); font-size: .88em; } code { background: var
 
 /* ---------- main ---------- */
 .main { margin-left: var(--side); padding: calc(var(--top) + 1.6rem) clamp(1rem, 3vw, 2.4rem) 6rem; max-width: calc(1180px + var(--side)); outline: none; }
-.alert-bar { position: fixed; top: var(--top); left: var(--side); right: 0; z-index: 40; background: var(--warn-soft); color: var(--warn); padding: .55rem 1.2rem; font-size: .9rem; display: flex; gap: .6rem; align-items: center; border-bottom: 1px solid var(--line); } .alert-bar[hidden] { display: none; }
+/* notices: in the page flow under the top bar (never overlays content) */
+.alert-bar { margin: calc(var(--top) + .8rem) clamp(1rem, 3vw, 2.4rem) 0 calc(var(--side) + clamp(1rem, 3vw, 2.4rem)); max-width: 1180px; } .alert-bar[hidden] { display: none; } .alert-bar:not([hidden]) + .main { padding-top: 1rem; }
 .ph { font-size: clamp(1.7rem, 3vw, 2.3rem); margin: .2rem 0 .3rem; font-family: var(--serif); font-weight: 600; letter-spacing: -.02em; outline: none; }
 .lead { font-size: 1.08rem; color: var(--ink2); max-width: 70ch; }
 .crumb { font-size: .85rem; color: var(--muted); margin-bottom: .3rem; } .crumb a { color: var(--muted); }
@@ -86,6 +87,7 @@ code, pre { font-family: var(--mono); font-size: .88em; } code { background: var
 .verbs { list-style: none; display: flex; flex-wrap: wrap; gap: .5rem; padding: 0; margin: 1.4rem 0; } .verbs li { padding: .35rem .9rem; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .28); background: rgba(255, 255, 255, .08); font-size: .9rem; letter-spacing: .04em; }
 .cta { display: flex; flex-wrap: wrap; gap: .7rem; }
 .hero .btn { background: rgba(255, 255, 255, .12); color: #fff; border-color: rgba(255, 255, 255, .3); } .hero .btn:hover { background: rgba(255, 255, 255, .22); } .hero .btn.primary { background: #fff; color: #0a3b35; border-color: #fff; }
-.toast { position: fixed; left: 50%; bottom: 90px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; background: var(--ink); color: var(--bg); padding: .7rem 1.1rem; border-radius: 12px; font-size: .92rem; z-index: 400; transition: all .25s; max-width: 90vw; } .toast.show { opacity: 1; transform: translate(-50%, 0); }
+/* pop-up message */
+.toast { position: fixed; left: 50%; bottom: 90px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; background: var(--ink); color: var(--bg); padding: .7rem 1.1rem; border-radius: 12px; font-size: .92rem; line-height: 1.35; z-index: 400; transition: opacity .25s, transform .25s; width: max-content; max-width: min(92vw, 440px); text-align: center; box-shadow: var(--shadow-lg); } .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
 .newhere { margin: 0 0 1rem; font-size: .92rem; } .newhere a { color: #fff; font-weight: 600; }
