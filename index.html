@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light" data-text="normal" data-contrast="normal" data-motion="full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0d8a79">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Finance OS">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="description" content="Finance OS — a private, offline personal finance operating system: learn, calculate, compare and decide.">
+  <meta name="color-scheme" content="light dark">
+  <title>Finance OS — Your money. Your decisions. Your future.</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <script>
+    // Apply saved theme before paint (avoids a flash of the wrong theme)
+    try { var t = localStorage.getItem('fos.theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to main content</a>
+
+  <header class="topbar" role="banner">
+    <button class="icon-btn only-mobile" id="menu-btn" aria-label="Open navigation menu">☰</button>
+    <a class="brand" href="#/home" aria-label="Finance OS home"><span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M6 17V11m6 6V6m6 11v-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none"/></svg></span><span class="brand-t">Finance <b>OS</b></span></a>
+    <div class="search" role="search">
+      <input id="gsearch" type="search" placeholder="Search topics, calculators, glossary…  ( / )" aria-label="Search Finance OS" autocomplete="off">
+      <div id="search-pop" class="search-pop" hidden></div>
+    </div>
+    <a class="btn ghost sm hide-mobile" href="#/dashboard">Dashboard</a>
+    <a class="icon-btn settings-btn" href="#/settings" id="settings-btn" aria-label="Settings" title="Settings">⚙</a>
+    <a class="icon-btn help-btn" href="#/help" id="help-btn" aria-label="Help: how to use Finance OS" title="Help — how to use this website">?</a>
+    <button class="icon-btn" id="theme-btn" aria-label="Switch to dark mode">☾</button>
+  </header>
+
+  <div id="scrim" class="scrim"></div>
+  <nav class="sidebar" id="nav" aria-label="Main navigation"></nav>
+
+  <div id="alert-bar" class="alert-bar" role="status" hidden></div>
+  <main id="main" class="main" tabindex="-1"></main>
+  <div id="live" class="sr" aria-live="polite"></div>
+
+  <div class="fabs">
+    <button class="fab" id="fab-sign" title="Checklist of what to verify before you sign">BEFORE YOU SIGN</button>
+    <button class="fab primary" id="fab-pay" title="Quick check before you spend">CHECK BEFORE I PAY</button>
+  </div>
+
+  <nav class="bn" aria-label="Quick navigation">
+    <a href="#/home"><span>⌂</span>Home</a>
+    <a href="#/dashboard"><span>▦</span>Money</a>
+    <a href="#/calculators"><span>∑</span>Calc</a>
+    <a href="#/m/decision"><span>⚖</span>Decide</a>
+    <button data-bn-menu><span>☰</span>Menu</button>
+  </nav>
+
+  <div id="modal-root"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <noscript><p style="padding:2rem">Finance OS needs JavaScript to run. It works fully offline and sends nothing anywhere.</p></noscript>
+
+  <script src="js/data.js"></script>
+  <script src="js/calculations.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/content.js"></script>
+  <script src="js/loans.js"></script>
+  <script src="js/investments.js"></script>
+  <script src="js/goals.js"></script>
+  <script src="js/budget.js"></script>
+  <script src="js/taxes.js"></script>
+  <script src="js/insurance.js"></script>
+  <script src="js/scenarios.js"></script>
+  <script src="js/decision.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/life.js"></script>
+  <script src="js/playbook.js"></script>
+  <script src="js/sources.js"></script>
+  <script src="js/adviser.js"></script>
+  <script src="js/statement.js"></script>
+  <script src="js/sync.js"></script>
+  <script src="js/about.js"></script>
+  <script src="js/examples.js"></script>
+  <script src="js/help.js"></script>
+  <script src="js/gate.js"></script>
+  <script src="js/search.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
