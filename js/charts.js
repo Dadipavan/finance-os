@@ -18,6 +18,7 @@ window.FOS = window.FOS || {};
     for (let v = lo; v <= hi + step / 2; v += step) t.push(v);
     return t;
   }
+  function prune() { const k = Object.keys(registry); if (k.length > 160) k.slice(0, k.length - 80).forEach((x) => { delete registry[x]; }); }
   const legend = (series) => `<div class="legend">${series.map((s, i) => `<span><i style="background:${s.color || PALETTE[i % PALETTE.length]}"></i>${esc(s.name)}</span>`).join('')}</div>`;
 
   /* line / area chart. series: [{name, data:[{x,y}], color, dash}] */
@@ -43,7 +44,7 @@ window.FOS = window.FOS || {};
       g += `<path class="ln" d="${d}" fill="none" stroke="${c}" stroke-width="2.4" ${s.dash ? 'stroke-dasharray="6 4"' : ''} stroke-linejoin="round"/>`;
       if (s.data.length <= 2) g += s.data.map((p) => `<circle cx="${X(p.x)}" cy="${Y(p.y)}" r="4" fill="${c}"/>`).join('');
     });
-    const id = 'c' + ++seq;
+    const id = 'c' + ++seq; prune();
     registry[id] = { kind: 'line', W, H, m, series, X, xf, yf: fullY(o.yfmt), xmin, xmax, colors: series.map((s, i) => s.color || PALETTE[i % PALETTE.length]), xLabel: o.xLabel || '' };
     const label = (o.title || 'Line chart') + ': ' + series.map((s) => `${s.name} from ${fullY(o.yfmt)(s.data[0].y)} to ${fullY(o.yfmt)(s.data[s.data.length - 1].y)}`).join('; ');
     return `<figure class="chart" data-chart="${id}"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}" preserveAspectRatio="xMidYMid meet">${g}<line class="guide" y1="${m.t}" y2="${H - m.b}" x1="-10" x2="-10"/></svg><div class="tooltip" hidden></div>${series.length > 1 ? legend(series) : ''}</figure>`;
@@ -68,7 +69,7 @@ window.FOS = window.FOS || {};
       });
       g += `<text class="ax" x="${m.l + i * bw + bw / 2}" y="${H - 16}" text-anchor="middle">${esc(c)}</text>`;
     });
-    const id = 'c' + ++seq;
+    const id = 'c' + ++seq; prune();
     registry[id] = { kind: 'bar', W, H, m, cats, series, bw, yf: fullY(o.yfmt), colors: series.map((s, i) => s.color || PALETTE[i % PALETTE.length]) };
     const label = (o.title || 'Bar chart') + ': ' + cats.map((c, i) => `${c}: ` + series.map((s) => `${s.name} ${fullY(o.yfmt)(s.data[i])}`).join(', ')).join('; ');
     return `<figure class="chart" data-chart="${id}"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}">${g}</svg><div class="tooltip" hidden></div>${series.length > 1 ? legend(series) : ''}</figure>`;
