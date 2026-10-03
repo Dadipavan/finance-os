@@ -14,17 +14,22 @@
   function applySettings() {
     const s = store.get().settings, r = document.documentElement;
     r.dataset.theme = s.theme; r.dataset.text = s.textSize; r.dataset.contrast = s.contrast ? 'high' : 'normal'; r.dataset.motion = s.reduceMotion ? 'reduce' : 'full';
-    const b = $('#theme-btn'); if (b) { b.textContent = s.theme === 'dark' ? '☀' : '☾'; b.setAttribute('aria-label', s.theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'); }
+    $$('[data-theme-btn]').forEach((b) => { b.textContent = s.theme === 'dark' ? '☀' : '☾'; b.setAttribute('aria-label', s.theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'); });
   }
 
   /* ---------------- navigation ---------------- */
+  const isPhone = () => !!(window.matchMedia && window.matchMedia('(max-width: 980px)').matches);
   function buildNav() {
     const groups = []; FOS.MODULES.forEach((m, i) => { let g = groups.find((x) => x.n === m.grp); if (!g) { g = { n: m.grp, items: [] }; groups.push(g); } g.items.push([m, i + 1]); });
-    $('#nav').innerHTML = groups.map((g) => `<div class="nav-group"><h3>${esc(g.n)}</h3>${g.items.map(([m, n]) => `<a href="${modHref(m)}" data-nav="${m.id}"><i>${n}</i><span>${esc(m.title)}</span></a>`).join('')}</div>`).join('') + `<div class="nav-group"><h3>My space</h3>${NAV_EXTRA.map(([t, h]) => `<a href="${h}" data-nav-h="${h}"><i>•</i><span>${esc(t)}</span></a>`).join('')}</div>`;
+    const link = (m, n) => `<a href="${modHref(m)}" data-nav="${m.id}"><i>${n}</i><span>${esc(m.title)}</span></a>`;
+    $('#nav').innerHTML = `<div class="drawer-head"><b>Menu</b><button class="icon-btn" data-theme-btn aria-label="Toggle dark mode">☾</button><button class="icon-btn" id="drawer-close" aria-label="Close menu">✕</button></div>`
+      + groups.map((g) => `<details class="nav-group" data-g="${esc(g.n)}" ${isPhone() && !['Start', 'Foundations'].includes(g.n) ? '' : 'open'}><summary><h3>${esc(g.n)}</h3></summary>${g.items.map(([m, n]) => link(m, n)).join('')}</details>`).join('')
+      + `<details class="nav-group" ${isPhone() ? '' : 'open'}><summary><h3>My space</h3></summary>${NAV_EXTRA.map(([t, h]) => `<a href="${h}" data-nav-h="${h}"><i>•</i><span>${esc(t)}</span></a>`).join('')}</details>`;
   }
   function markNav() {
     const h = location.hash.split('?')[0] || '#/home';
     $$('#nav a').forEach((a) => { const on = a.getAttribute('href') === h || (a.dataset.nav && (h === '#/m/' + a.dataset.nav || h === '#/tool/' + (modById(a.dataset.nav) || {}).tool)); if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    if (isPhone()) { const act = $('#nav a[aria-current="page"]'); if (act && act.closest) { const d = act.closest('details'); if (d) d.open = true; } }
     $$('.bn a').forEach((a) => a.classList.toggle('on', a.getAttribute('href') === h));
   }
 
@@ -39,7 +44,8 @@
     main().innerHTML = html; if (after) after(main());
     window.scrollTo(0, 0); const h = $('h1', main()); if (h) { h.tabIndex = -1; h.focus({ preventScroll: true }); }
     const live = $('#live'); if (live) live.textContent = 'Opened ' + title;
-    markNav(); document.body.classList.remove('nav-open');
+    if (isPhone()) $$('details.about', main()).forEach((d) => { d.open = false; });
+    markNav(); document.body.classList.remove('nav-open', 'search-open');
   }
   FOS.route = function () {
     if (store.isLocked()) return;
@@ -60,6 +66,11 @@
       return home();
     } catch (e) { console.error(e); page('Something went wrong', `<h1 class="ph">Something went wrong</h1><div class="card"><p>This page hit an unexpected error: <code>${esc(e.message)}</code>. Your data is safe in this browser.</p><a class="btn" href="#/home">Go home</a></div>`); }
   };
+
+  // Navigate without rendering twice: setting the hash already triggers a render unless it is unchanged.
+  FOS.go = (h) => { if ((location.hash || '') === h) FOS.route(); else location.hash = h; };
+  const route0 = FOS.route;
+  FOS.route = function () { route0(); if (!store.isLocked()) { try { FOS.renderNotices && FOS.renderNotices(); } catch (e) { /* notices are optional */ } } };
 
   function toolPage(id, title, blurb) {
     page(title, `<h1 class="ph">${esc(title)}</h1>${blurb ? `<p class="lead">${esc(blurb)}</p>` : ''}${FOS.aboutHTML('tool', id)}<div id="tool"></div>`, () => { const f = FOS.tools[id]; if (f) f($('#tool')); else $('#tool').innerHTML = '<p>Tool not found.</p>'; });
@@ -147,12 +158,13 @@
       const [pre, suf] = UNIT[f.type] || ['', ''];
       return `<div class="field" data-field="${f.id}"><label for="in-${id}-${f.id}">${esc(f.label)}</label><div class="inp">${pre ? `<span class="pre">${pre}</span>` : ''}<input class="input" id="in-${id}-${f.id}" type="number" inputmode="decimal" step="any" data-id="${f.id}" value="${v}">${suf ? `<span class="suf">${suf}</span>` : ''}</div><input class="slider" type="range" min="${f.min}" max="${Math.max(f.max, +v || 0)}" step="${f.step}" value="${v}" data-slide="${f.id}" aria-label="${esc(f.label)} slider"><div class="hint"></div><div class="err" role="alert"></div></div>`;
     };
-    el.innerHTML = `<div class="calc"><section class="card calc-in" aria-label="Inputs"><div class="fields one">${c.fields.map(fieldHTML).join('')}</div><div class="row-actions"><button class="btn ghost" data-a="reset">↺ Reset</button></div></section>
+    el.innerHTML = `<div class="calc"><section class="card calc-in" aria-label="Inputs"><div class="fields one">${c.fields.map(fieldHTML).join('')}</div><div class="row-actions"><button class="btn ghost" data-a="reset">↺ Reset</button></div><div class="mini-res" data-mini aria-hidden="true"></div></section>
       <section class="calc-out" aria-live="polite"><div class="res-sum"></div><div class="res-extra"></div>
       <div class="row-actions out-actions"><button class="btn" data-a="copy">Copy results</button><button class="btn" data-a="print">Print</button><button class="btn" data-a="download">Download summary</button><span class="sp"></span>${['A', 'B', 'C'].map((k) => `<button class="btn ghost" data-a="save" data-k="${k}">Save as ${k}</button>`).join('')}</div><div class="compare"></div></section></div>
       <section class="card formula-box"><h3>Formula &amp; assumptions</h3>${(c.formula || []).map((f) => `<pre class="formula">${esc(f)}</pre>`).join('')}${(c.vars || []).length ? `<ul>${c.vars.map((v) => `<li>${esc(v)}</li>`).join('')}</ul>` : ''}${(c.assumptions || []).length ? `<h4><span class="badge">ASSUMPTIONS</span></h4><ul>${c.assumptions.map((v) => `<li>${esc(v)}</li>`).join('')}</ul>` : ''}<p class="note">Projections use the assumptions listed above; change them and the result changes.</p></section>${FOS.exampleHTML ? FOS.exampleHTML(id) : ''}`;
     const sumEl = $('.res-sum', el), extraEl = $('.res-extra', el), cmpEl = $('.compare', el);
-    let last = null, pending = 0, valid = true;
+    let last = null, pending = 0, valid = true, tableOpen = false, lastTable = null, firstDraw = true;
+    const tableHTML = (t) => `<div class="table-scroll"><table class="data"><thead><tr>${t.head.map((h) => `<th scope="col">${esc(h)}</th>`).join('')}</tr></thead><tbody>${t.rows.map((r) => `<tr>${r.map((cell, i) => (i === 0 ? `<th scope="row">${esc(cell)}</th>` : `<td>${esc(cell)}</td>`)).join('')}</tr>`).join('')}</tbody></table></div>`;
 
     const validate = () => {
       valid = true;
@@ -170,20 +182,23 @@
 
     function draw() {
       pending = 0; validate();
-      if (!valid) { sumEl.classList.add('dim'); if (!$('.invalid', sumEl)) sumEl.insertAdjacentHTML('afterbegin', '<p class="invalid status warn">Please fix the highlighted inputs to see results.</p>'); return; }
+      if (!valid) { const mn = $('[data-mini]', el); if (mn) mn.innerHTML = '<div><span>Fix the highlighted input</span></div>'; sumEl.classList.add('dim'); if (!$('.invalid', sumEl)) sumEl.insertAdjacentHTML('afterbegin', '<p class="invalid status warn">Please fix the highlighted inputs to see results.</p>'); return; }
       sumEl.classList.remove('dim');
       let res; try { res = c.compute(numeric()) || {}; } catch (e) { console.error(e); sumEl.innerHTML = '<p class="status warn">These inputs could not be calculated. Try different values.</p>'; return; }
       last = res; const items = res.summary || [];
+      const mini = $('[data-mini]', el), top = items.find((x) => x.hi) || items[0]; if (mini) mini.innerHTML = top ? `<div><span>${esc(top.l)}</span><b>${esc(showVal(top.f, top.v))}</b></div><a href="#" data-a="toresults">See all ↓</a>` : '';
       const same = $$('.res', sumEl).length === items.length && items.every((it, i) => $$('.res span', sumEl)[i] && $$('.res span', sumEl)[i].textContent === it.l);
       if (same) { $$('.res b', sumEl).forEach((b, i) => { const it = items[i]; if (it.f === 'text' || it.f === 'yn' || !Number.isFinite(it.v)) { b.textContent = showVal(it.f, it.v); b.dataset.val = ''; } else U.animate(b, it.v, (x) => showVal(it.f, x)); }); $$('.invalid', sumEl).forEach((x) => x.remove()); }
       else sumEl.innerHTML = `<div class="res-grid">${items.map((it) => `<div class="res ${it.hi ? 'hi' : ''}"><span>${esc(it.l)}</span><b data-val="${Number.isFinite(it.v) ? it.v : ''}">${esc(showVal(it.f, it.v))}</b></div>`).join('')}</div>`;
       let x = '';
       (res.charts || []).forEach((h) => { x += `<div class="card chart-card">${h}</div>`; });
       if (res.html) x += `<div class="card">${res.html}</div>`;
-      if (res.table) { const t = res.table, tb = `<div class="table-scroll"><table class="data"><thead><tr>${t.head.map((h) => `<th scope="col">${esc(h)}</th>`).join('')}</tr></thead><tbody>${t.rows.map((r) => `<tr>${r.map((cell, i) => (i === 0 ? `<th scope="row">${esc(cell)}</th>` : `<td>${esc(cell)}</td>`)).join('')}</tr>`).join('')}</tbody></table></div>`; x += t.rows.length > 20 ? `<details class="card"><summary><b>${esc(res.tableTitle || 'Table')}</b> (${t.rows.length} rows — click to expand)</summary>${tb}</details>` : `<div class="card"><h4>${esc(res.tableTitle || 'Table')}</h4>${tb}</div>`; }
+      lastTable = res.table || null;
+      if (res.table) { const t = res.table; x += t.rows.length > 20 ? `<details class="card lazy" ${tableOpen ? 'open' : ''}><summary><b>${esc(res.tableTitle || 'Table')}</b> (${t.rows.length} rows — tap to expand)</summary><div class="lazy-body">${tableOpen ? tableHTML(t) : ''}</div></details>` : `<div class="card"><h4>${esc(res.tableTitle || 'Table')}</h4>${tableHTML(t)}</div>`; }
       if ((res.notes || []).length) x += `<div class="card notes">${res.notes.map((n) => `<p>${esc(n)}</p>`).join('')}</div>`;
       if ((res.actions || []).length) x += `<div class="row-actions">${res.actions.map((a, i) => `<button class="btn primary" data-a="act" data-i="${i}">${esc(a.label)}</button>`).join('')}</div>`;
       extraEl.innerHTML = x;
+      if (firstDraw) { firstDraw = false; const co = $('.calc-out', el); if (co) co.classList.add('no-anim'); }
     }
     const schedule = () => { if (!pending) pending = requestAnimationFrame(draw); };
 
@@ -204,15 +219,17 @@
       const outRows = first.map((s, i) => `<tr><th scope="row">${esc(s.l)}</th>${keys.map((k) => `<td>${esc(((saved[k].summary || [])[i] || {}).t || '—')}</td>`).join('')}</tr>`).join('');
       cmpEl.innerHTML = `<div class="card"><div class="between"><h4>Scenario comparison</h4><button class="btn ghost sm" data-a="clear">Clear scenarios</button></div><div class="table-scroll"><table class="data"><thead><tr><th></th>${keys.map((k) => `<th>Scenario ${k} <button class="link" data-a="load" data-k="${k}">load</button></th>`).join('')}</tr></thead><tbody><tr class="sep"><th>Inputs</th><td colspan="${keys.length}"></td></tr>${inRows}<tr class="sep"><th>Results</th><td colspan="${keys.length}"></td></tr>${outRows}</tbody></table></div><p class="note">Each scenario is a hypothetical calculation — none is certain or recommended.</p></div>`;
     }
-    const sync = (fid) => { const f = c.fields.find((x) => x.id === fid), fe = $(`[data-field="${fid}"]`, el); if (!f || f.type === 'sel') return; const n = $('[data-id]', fe), s = $('[data-slide]', fe); if (n && document.activeElement !== n) n.value = vals[fid]; if (s) { s.max = Math.max(f.max, +vals[fid] || 0); s.value = vals[fid]; } };
+    const sync = (fid) => { const f = c.fields.find((x) => x.id === fid), fe = $(`[data-field="${fid}"]`, el); if (!f || f.type === 'sel') return; const n = $('[data-id]', fe), s = $('[data-slide]', fe); if (n && document.activeElement !== n) n.value = vals[fid]; if (s) { s.max = Math.max(f.max, +vals[fid] || 0); s.value = vals[fid]; const span = (+s.max - f.min) || 1; if (s.style && typeof s.style.setProperty === 'function') s.style.setProperty('--p', Math.max(0, Math.min(100, ((+vals[fid] - f.min) / span) * 100)) + '%'); } };
 
     el.addEventListener('input', (e) => {
       const t = e.target; if (t.dataset.id) { vals[t.dataset.id] = t.value; sync(t.dataset.id); schedule(); }
-      else if (t.dataset.slide) { vals[t.dataset.slide] = t.value; const n = $(`[data-id="${t.dataset.slide}"]`, el); n.value = t.value; schedule(); }
+      else if (t.dataset.slide) { vals[t.dataset.slide] = t.value; const n = $(`[data-id="${t.dataset.slide}"]`, el); n.value = t.value; if (t.style && typeof t.style.setProperty === 'function') { const f = c.fields.find((x) => x.id === t.dataset.slide), span = (+t.max - f.min) || 1; t.style.setProperty('--p', Math.max(0, Math.min(100, ((+t.value - f.min) / span) * 100)) + '%'); } schedule(); }
     });
+    el.addEventListener('toggle', (e) => { const d = e.target; if (!d || !d.classList || !d.classList.contains || !d.classList.contains('lazy')) return; tableOpen = !!d.open; if (d.open && lastTable) { const b = d.querySelector('.lazy-body'); if (b && !b.innerHTML) b.innerHTML = tableHTML(lastTable); } }, true);
     el.addEventListener('change', (e) => { const t = e.target; if (t.tagName === 'SELECT' && t.dataset.id) { vals[t.dataset.id] = t.value; schedule(); } });
     el.addEventListener('click', (e) => {
       const b = e.target.closest('[data-a]'); if (!b) return; const a = b.dataset.a;
+      if (a === 'toresults') { e.preventDefault(); sumEl.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
       if (a === 'reset') { resetVals(); c.fields.forEach((f) => { const fe = $(`[data-field="${f.id}"]`, el); if (f.type === 'sel') $('select', fe).value = vals[f.id]; else sync(f.id); }); c.fields.forEach((f) => sync(f.id)); draw(); U.toast('Inputs reset'); }
       if (a === 'copy') U.copy(textSummary());
       if (a === 'print') window.print();
@@ -278,51 +295,62 @@
   function settings() {
     const s = store.get(), ov = s.overrides;
     const rateRow = (k, label, cur, def) => `<label class="rate-row"><span>${esc(label)}</span><input class="input mini" type="number" step="0.05" min="0" data-ov="${k}" value="${ov[k] !== undefined && ov[k] !== '' ? ov[k] : ''}" placeholder="${def}"><small>default ${def}</small></label>`;
-    page('Settings', `<h1 class="ph">Settings</h1>${FOS.aboutHTML('page', 'settings')}
-      <section class="card"><h2>Appearance &amp; accessibility</h2><div class="fields">
+    page('Settings', `<h1 class="ph">Settings</h1>${FOS.aboutHTML('page', 'settings')}<nav class="jump" aria-label="Jump to a section">${[['sec-look', 'Appearance'], ['sec-install', 'Install'], ['sec-rates', 'Rates'], ['sec-gate', 'Access key'], ['sec-lock', 'Lock'], ['sec-sync', 'Drive'], ['sec-test', 'Test'], ['sec-data', 'My data']].map(([id, t]) => `<button class="chip" data-jump="${id}">${t}</button>`).join('')}</nav>
+      <section class="card" id="sec-look"><h2>Appearance &amp; accessibility</h2><div class="fields">
         <div class="field"><label for="st-theme">Theme</label><select class="input" id="st-theme"><option value="light" ${s.settings.theme === 'light' ? 'selected' : ''}>Light</option><option value="dark" ${s.settings.theme === 'dark' ? 'selected' : ''}>Dark</option></select></div>
         <div class="field"><label for="st-text">Text size</label><select class="input" id="st-text"><option value="normal" ${s.settings.textSize === 'normal' ? 'selected' : ''}>Normal</option><option value="large" ${s.settings.textSize === 'large' ? 'selected' : ''}>Large</option><option value="xlarge" ${s.settings.textSize === 'xlarge' ? 'selected' : ''}>Extra large</option></select></div>
         <div class="field"><label class="check"><input type="checkbox" id="st-contrast" ${s.settings.contrast ? 'checked' : ''}> High contrast</label></div>
         <div class="field"><label class="check"><input type="checkbox" id="st-motion" ${s.settings.reduceMotion ? 'checked' : ''}> Reduce motion</label></div></div></section>
-      <section class="card"><h2>Rates, tax rules &amp; limits</h2><p>Keep the numbers current from the official sites. Edit once; every calculator, lesson table and report recalculates.</p><div class="row-actions"><a class="btn primary" href="#/sources">Open Data &amp; Sources</a></div></section>
-      <section class="card"><h2>Install on your phone or computer</h2><p>Add Finance OS to your home screen so it opens like an app and works offline.</p><div class="row-actions"><button class="btn primary" data-install hidden>Install Finance OS</button></div><p class="note"><b>Android (Chrome):</b> menu ⋮ → Install app / Add to Home screen. <b>iPhone (Safari):</b> Share → Add to Home Screen. <b>Computer (Chrome/Edge):</b> the install icon in the address bar.</p></section>
+      <section class="card" id="sec-rates"><h2>Rates, tax rules &amp; limits</h2><p>Keep the numbers current from the official sites. Edit once; every calculator, lesson table and report recalculates.</p><div class="row-actions"><a class="btn primary" href="#/sources">Open Data &amp; Sources</a></div></section>
+      <section class="card" id="sec-install"><h2>Install on your phone or computer</h2><p>Add Finance OS to your home screen so it opens like an app and works offline.</p><div class="row-actions"><button class="btn primary" data-install hidden>Install Finance OS</button></div><p class="note"><b>Android (Chrome):</b> menu ⋮ → Install app / Add to Home screen. <b>iPhone (Safari):</b> Share → Add to Home Screen. <b>Computer (Chrome/Edge):</b> the install icon in the address bar.</p></section>
       <section class="card" id="sec-gate"></section>
       <section class="card" id="sec-lock"></section>
       <section class="card" id="sec-sync"></section>
       <section class="card" id="sec-test"></section>
-      <section class="card"><h2>Your data — private and local</h2><p>Everything is stored in this browser (localStorage). Nothing is sent anywhere. Clearing browser data erases it, so export a backup now and then or turn on Google Drive sync. Current size: <b id="st-size"></b>.</p>
-        <div class="row-actions"><button class="btn" id="st-export">Export my data (JSON)</button><label class="btn file">Import my data<input type="file" id="st-import" accept="application/json,.json" hidden></label><button class="btn ghost" id="st-sample">Load sample data</button><button class="btn danger" id="st-delete">Delete all my data</button></div></section>
+      <section class="card" id="sec-data"><h2>Your data — private and local</h2><p>Everything is stored in this browser (localStorage). Nothing is sent anywhere. Clearing browser data erases it, so export a backup now and then or turn on Google Drive sync. Current size: <b id="st-size"></b>.</p>
+        <div class="row-actions"><button class="btn" id="st-export">Export my data (JSON)</button><label class="btn file">Import my data<input type="file" id="st-import" accept="application/json,.json" hidden></label><button class="btn ghost" id="st-sample">Load sample data</button>${FOS.hasSample && FOS.hasSample() ? '<button class="btn" id="st-sample-clear">Remove sample data</button>' : ''}<button class="btn danger" id="st-delete">Delete all my data</button></div></section>
       <section class="card"><h2>Privacy</h2><p>Everything is stored in this browser only and never sent anywhere. Export a backup regularly. Never type card or account numbers, passwords, OTPs, PINs or CVVs.</p></section>`, (el) => {
       U.$$('[data-install]', el).forEach((b) => { b.hidden = !FOS.installEvent; b.onclick = async () => { if (!FOS.installEvent) return; FOS.installEvent.prompt(); await FOS.installEvent.userChoice; FOS.installEvent = null; b.hidden = true; }; });
       if (FOS.renderGateSettings) FOS.renderGateSettings($('#sec-gate', el));
       FOS.renderLockSettings($('#sec-lock', el)); FOS.renderSyncSettings($('#sec-sync', el)); FOS.renderTestBox($('#sec-test', el));
       const sz = JSON.stringify(store.get()).length; $('#st-size', el).textContent = (sz / 1024).toFixed(0) + ' KB of about 5,000 KB available in this browser';
+      U.$$('[data-jump]', el).forEach((b) => { b.onclick = () => { const t = document.getElementById(b.dataset.jump); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }; });
       const set = (fn) => { store.update(fn); applySettings(); };
       $('#st-theme', el).onchange = (e) => set((st) => { st.settings.theme = e.target.value; });
       $('#st-text', el).onchange = (e) => set((st) => { st.settings.textSize = e.target.value; });
       $('#st-contrast', el).onchange = (e) => set((st) => { st.settings.contrast = e.target.checked; });
       $('#st-motion', el).onchange = (e) => set((st) => { st.settings.reduceMotion = e.target.checked; });
       $('#st-export', el).onclick = () => { U.download('finance-os-data-' + new Date().toISOString().slice(0, 10) + '.json', store.exportJSON(), 'application/json'); };
-      $('#st-import', el).onchange = (e) => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = async () => { try { if (!confirm('Importing replaces the data currently in this browser. Continue?')) return; try { store.importJSON(r.result); } catch (err) { if (!err.needsPass) throw err; const p = prompt('This backup is encrypted. Enter its passphrase:'); if (!p) return; await store.importEncrypted(r.result, p); } applySettings(); U.toast('Data imported'); location.hash = '#/dashboard'; FOS.route(); } catch (err) { U.toast(err.message); } }; r.readAsText(f); };
+      $('#st-import', el).onchange = (e) => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = async () => { try { if (!confirm('Importing replaces the data currently in this browser. Continue?')) return; try { store.importJSON(r.result); } catch (err) { if (!err.needsPass) throw err; const p = prompt('This backup is encrypted. Enter its passphrase:'); if (!p) return; await store.importEncrypted(r.result, p); } applySettings(); U.toast('Data imported'); FOS.go('#/dashboard'); } catch (err) { U.toast(err.message); } }; r.readAsText(f); };
       $('#st-sample', el).onclick = FOS.loadSample;
-      $('#st-delete', el).onclick = () => { if (prompt('This permanently deletes everything stored by Finance OS in this browser. Type DELETE to confirm.') === 'DELETE') { store.reset(); applySettings(); U.toast('All data deleted'); location.hash = '#/home'; FOS.route(); } };
+      const sc = $('#st-sample-clear', el); if (sc) sc.onclick = () => { if (confirm('Remove all sample data? Anything you added yourself stays.')) FOS.removeSample(); };
+      $('#st-delete', el).onclick = () => { if (prompt('This permanently deletes everything stored by Finance OS in this browser. Type DELETE to confirm.') === 'DELETE') { store.reset(); applySettings(); U.toast('All data deleted'); FOS.go('#/home'); } };
     });
   }
+
+  /* ---------------- quick checks (phone: replaces the floating buttons) ---------------- */
+  FOS.quickSheet = function () {
+    const box = U.modal('Quick checks', `<div class="sheet-actions"><button class="sheet-btn" data-q="pay"><b>CHECK BEFORE I PAY</b><span>A 1-minute check for any purchase</span></button><button class="sheet-btn" data-q="sign"><b>BEFORE YOU SIGN</b><span>Checklist for loans, insurance, cards, property</span></button><a class="sheet-btn" href="#/m/decision" data-q="go"><b>Decision Engine</b><span>Full costs, risks and a clear verdict</span></a><a class="sheet-btn" href="#/tool/expenses" data-q="go"><b>Log an expense</b><span>Add what you just spent</span></a><a class="sheet-btn" href="#/tool/monthend" data-q="go"><b>Month-End Close</b><span>Two minutes to close the month</span></a></div>`);
+    box.onclick = (e) => { const b = e.target.closest('[data-q]'); if (!b) return; const q = b.dataset.q; U.closeModal(); if (q === 'pay') FOS.payModal(); if (q === 'sign') FOS.signModal(); };
+  };
 
   /* ---------------- boot ---------------- */
   function boot() {
     applySettings(); buildNav();
-    $('#theme-btn').onclick = () => { store.update((s) => { s.settings.theme = s.settings.theme === 'dark' ? 'light' : 'dark'; }); applySettings(); };
+    document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('[data-theme-btn]')) { store.update((s) => { s.settings.theme = s.settings.theme === 'dark' ? 'light' : 'dark'; }); applySettings(); } if (e.target.closest && e.target.closest('#drawer-close')) document.body.classList.remove('nav-open'); });
     $('#menu-btn').onclick = () => document.body.classList.toggle('nav-open');
     $('#scrim').onclick = () => document.body.classList.remove('nav-open');
-    $('#fab-pay').onclick = FOS.payModal; $('#fab-sign').onclick = FOS.signModal;
+    $('#nav').addEventListener('click', (e) => { if (e.target.closest && e.target.closest('a')) document.body.classList.remove('nav-open'); });
+    $('#fab-pay').onclick = FOS.payModal; $('#fab-sign').onclick = FOS.signModal; $('#bn-check').onclick = FOS.quickSheet;
+    $('#bell-btn').onclick = (e) => { e.stopPropagation(); FOS.toggleNotices(); };
+    $('#search-toggle').onclick = () => { document.body.classList.toggle('search-open'); if (document.body.classList.contains('search-open')) setTimeout(() => $('#gsearch').focus(), 50); };
     $$('[data-bn-menu]').forEach((b) => { b.onclick = () => document.body.classList.toggle('nav-open'); });
     const inp = $('#gsearch'), pop = $('#search-pop');
     inp.oninput = () => { const q = inp.value.trim(); if (!q) { pop.hidden = true; return; } pop.innerHTML = FOS.searchHTML(q, 4) + `<a class="sr-all" href="#/search/${encodeURIComponent(q)}">See all results for “${esc(q)}”</a>`; pop.hidden = false; };
     inp.onkeydown = (e) => { if (e.key === 'Enter' && inp.value.trim()) { location.hash = '#/search/' + encodeURIComponent(inp.value.trim()); pop.hidden = true; } if (e.key === 'Escape') { pop.hidden = true; inp.blur(); } };
-    document.addEventListener('click', (e) => { if (!e.target.closest('.search')) pop.hidden = true; });
+    document.addEventListener('click', (e) => { if (!e.target.closest('#notice-panel') && !e.target.closest('#bell-btn') && FOS.closeNotices) FOS.closeNotices(); if (!e.target.closest('.search')) { pop.hidden = true; if (!e.target.closest('#search-toggle')) document.body.classList.remove('search-open'); } });
     document.addEventListener('keydown', (e) => { if (!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { if (e.key === '/') { e.preventDefault(); inp.focus(); } else if (e.key === '?') { location.hash = '#/help'; } } });
-    pop.onclick = () => { pop.hidden = true; inp.value = ''; };
+    pop.onclick = () => { pop.hidden = true; inp.value = ''; document.body.classList.remove('search-open'); };
     document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-h]'); if (t) { e.preventDefault(); FOS.openHelpSection(t.dataset.h); } });
     window.addEventListener('hashchange', FOS.route);
     const start = () => { applySettings(); FOS.route(); FOS.checkReminders && FOS.checkReminders(); FOS.initIdle && FOS.initIdle(); FOS.syncResume && FOS.syncResume(); };
