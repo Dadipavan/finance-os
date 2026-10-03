@@ -43,32 +43,44 @@ window.FOS = window.FOS || {};
   // CAGR = (End/Start)^(1/t) − 1
   C.cagr = (s, e, t) => (s > 0 && t > 0 && e >= 0 ? (Math.pow(e / s, 1 / t) - 1) * 100 : NaN);
 
-  /* ---------- SIP / lumpsum ---------- */
-  // Annuity-due FV: P × ((1+i)^n − 1)/i × (1+i), i = r/12. Optional annual step-up.
-  C.sipFV = function (monthly, annualRate, months, stepUpPct = 0) {
-    const i = annualRate / 1200;
+  /* ---------- SIP / lumpsum ----------
+     Four conventions exist; they differ by LAKHS over long periods, so the app lets you choose and shows all four:
+       nominal-start   i = annual ÷ 12, instalment at the START of each month   FV = P × ((1+i)^n − 1)/i × (1+i)   (most Indian calculators)
+       nominal-end     i = annual ÷ 12, instalment at the END of each month     FV = P × ((1+i)^n − 1)/i
+       effective-start i = (1+annual)^(1/12) − 1  ("12% a year" is a true yearly return), start of month
+       effective-end   same monthly rate, end of month */
+  C.SIP_METHODS = {
+    'nominal-start': 'Monthly rate = annual ÷ 12, invest at the start of each month (what most Indian SIP calculators use)',
+    'nominal-end': 'Monthly rate = annual ÷ 12, invest at the end of each month',
+    'effective-start': 'Yearly return is a true yearly return: monthly rate = (1 + annual)^(1/12) − 1, start of month (more conservative)',
+    'effective-end': 'True yearly return, invest at the end of each month (most conservative)'
+  };
+  let SIP_METHOD = 'nominal-start';
+  C.setSipMethod = (m) => { if (C.SIP_METHODS[m]) SIP_METHOD = m; };
+  C.getSipMethod = () => SIP_METHOD;
+  C.monthlyRate = (annual, method) => (/^effective/.test(method || SIP_METHOD) ? Math.pow(1 + annual / 100, 1 / 12) - 1 : annual / 1200);
+  C.sipFV = function (monthly, annualRate, months, stepUpPct = 0, method) {
+    const m = method || SIP_METHOD, i = C.monthlyRate(annualRate, m), due = !/-end$/.test(m);
     let bal = 0, p = monthly;
-    for (let m = 1; m <= months; m++) {
-      if (m > 1 && (m - 1) % 12 === 0) p *= 1 + stepUpPct / 100;
-      bal = (bal + p) * (1 + i);
+    for (let k = 1; k <= months; k++) {
+      if (k > 1 && (k - 1) % 12 === 0) p *= 1 + stepUpPct / 100;
+      bal = due ? (bal + p) * (1 + i) : bal * (1 + i) + p;
     }
     return bal;
   };
   C.sipSeries = function (monthly, annualRate, years, stepUpPct = 0, lump = 0) {
-    const out = [{ x: 0, invested: lump, value: lump }];
-    const i = annualRate / 1200;
+    const out = [{ x: 0, invested: lump, value: lump }], m = SIP_METHOD, i = C.monthlyRate(annualRate, m), due = !/-end$/.test(m);
     let bal = lump, inv = lump, p = monthly;
-    for (let m = 1; m <= Math.round(years * 12); m++) {
-      if (m > 1 && (m - 1) % 12 === 0) p *= 1 + stepUpPct / 100;
-      bal = (bal + p) * (1 + i); inv += p;
-      if (m % 12 === 0) out.push({ x: m / 12, invested: inv, value: bal });
+    for (let k = 1; k <= Math.round(years * 12); k++) {
+      if (k > 1 && (k - 1) % 12 === 0) p *= 1 + stepUpPct / 100;
+      bal = due ? (bal + p) * (1 + i) : bal * (1 + i) + p; inv += p;
+      if (k % 12 === 0) out.push({ x: k / 12, invested: inv, value: bal });
     }
-    // lump compounds yearly-equivalent monthly; recompute value to include it consistently
     return out;
   };
   C.sipWithLump = function (monthly, annualRate, years, stepUpPct, lump) {
     const n = Math.round(years * 12);
-    return C.sipFV(monthly, annualRate, n, stepUpPct) + lump * Math.pow(1 + annualRate / 1200, n);
+    return C.sipFV(monthly, annualRate, n, stepUpPct) + lump * Math.pow(1 + C.monthlyRate(annualRate), n);
   };
 
   /* ---------- loans ---------- */
@@ -127,7 +139,7 @@ window.FOS = window.FOS || {};
   // Required monthly contribution so that current*(1+r)^t + SIP = target
   C.requiredMonthly = function (target, current, annualRate, months) {
     if (months <= 0) return Math.max(0, target - current);
-    const fvCur = current * Math.pow(1 + annualRate / 1200, months);
+    const fvCur = current * Math.pow(1 + C.monthlyRate(annualRate), months);
     const gap = target - fvCur; if (gap <= 0) return 0;
     const unit = C.sipFV(1, annualRate, months);
     return unit > 0 ? gap / unit : gap / months;
