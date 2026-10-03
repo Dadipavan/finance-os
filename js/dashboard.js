@@ -166,7 +166,7 @@
   /* ---------- reports ---------- */
   FOS.reportHTML = function () {
     const s = store.get(), m = FOS.metrics(), p = s.profile, health = FOS.healthMetrics();
-    const t = (head, rows) => `<table class="data"><thead><tr>${head.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${head.length}">None recorded</td></tr>`}</tbody></table>`;
+    const t = (head, rows) => `<div class="table-scroll"><table class="data"><thead><tr>${head.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${head.length}">None recorded</td></tr>`}</tbody></table></div>`;
     const saved = Object.entries(s.calcSaved).flatMap(([id, arr]) => Object.entries(arr).map(([k, sc]) => [esc((FOS.calcs[id] || { title: id }).title), 'Scenario ' + k, (sc.summary || []).map((x) => esc(x.l) + ': ' + esc(x.t)).join('; ')]));
     return `<article class="report"><header><h2>My Financial Report</h2><p class="muted">Generated ${new Date().toLocaleDateString('en-IN', { dateStyle: 'long' })} · Stored only in this browser</p></header>
       <h3>Snapshot</h3>${t(['Income (monthly)', 'Expenses (monthly)', 'Savings', 'Savings rate', 'Net worth'], [[fmt.inr(m.income), fmt.inr(m.expenses), fmt.inr(m.savings), fmt.pct(m.savingsRate, 1), fmt.inr(m.netWorth)]])}
