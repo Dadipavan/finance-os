@@ -58,17 +58,17 @@
       form.innerHTML = `<div class="card"><h4>${esc(d.label)} — tell me the numbers</h4><div class="fields">
         <div class="field wide"><label>WHAT IS IT?<input class="input" id="d-what" maxlength="80" placeholder="${esc(d.what)}"></label></div>
         <div class="field wide"><label>WHY DO YOU NEED IT?<input class="input" id="d-why" maxlength="120" placeholder="Need, want, goal…"></label></div>
-        <div class="field"><label>Amount (₹)<input class="input" id="d-amt" type="number" min="0" step="any" value="${d.kind === 'spend' ? 20000 : 500000}"></label></div>
-        <div class="field"><label>Recurring cost per month (₹)<input class="input" id="d-rec" type="number" min="0" step="any" value="${d.rec || 0}"></label></div>
-        <div class="field"><label>Fees & charges (₹)<input class="input" id="d-fee" type="number" min="0" step="any" value="0"></label></div>
-        <div class="field"><label>Taxes payable (₹)<input class="input" id="d-tax" type="number" min="0" step="any" value="0"></label></div>
-        <div class="field"><label>Financed by loan? (0 = no, else interest % p.a.)<input class="input" id="d-rate" type="number" min="0" step="0.1" value="${d.kind === 'debt' || d.ten ? rate : 0}"></label></div>
-        <div class="field"><label>Loan tenure (months)<input class="input" id="d-ten" type="number" min="0" step="1" value="${d.ten || 0}"></label></div>
-        <div class="field"><label>Holding period (years)<input class="input" id="d-yrs" type="number" min="1" step="1" value="10"></label></div>
-        <div class="field"><label>Hypothetical alternative return %<input class="input" id="d-alt" type="number" min="0" max="30" step="0.5" value="10"></label></div>
-        <div class="field"><label>If income falls by (%)<input class="input" id="d-inc" type="number" min="0" max="100" value="30"></label></div>
-        <div class="field"><label>If price rises by (%)<input class="input" id="d-pr" type="number" min="0" max="100" value="10"></label></div>
-        <div class="field"><label>Cost of exiting early (% of amount)<input class="input" id="d-exit" type="number" min="0" max="100" step="0.5" value="${d.kind === 'spend' ? 60 : d.kind === 'invest' ? 3 : 15}"></label></div>
+        <div class="field"><label>Amount (₹)<input class="input" id="d-amt" type="number" inputmode="decimal" min="0" step="any" value="${d.kind === 'spend' ? 20000 : 500000}"></label></div>
+        <div class="field"><label>Recurring cost per month (₹)<input class="input" id="d-rec" type="number" inputmode="decimal" min="0" step="any" value="${d.rec || 0}"></label></div>
+        <div class="field"><label>Fees & charges (₹)<input class="input" id="d-fee" type="number" inputmode="decimal" min="0" step="any" value="0"></label></div>
+        <div class="field"><label>Taxes payable (₹)<input class="input" id="d-tax" type="number" inputmode="decimal" min="0" step="any" value="0"></label></div>
+        <div class="field"><label>Financed by loan? (0 = no, else interest % p.a.)<input class="input" id="d-rate" type="number" inputmode="decimal" min="0" step="0.1" value="${d.kind === 'debt' || d.ten ? rate : 0}"></label></div>
+        <div class="field"><label>Loan tenure (months)<input class="input" id="d-ten" type="number" inputmode="decimal" min="0" step="1" value="${d.ten || 0}"></label></div>
+        <div class="field"><label>Holding period (years)<input class="input" id="d-yrs" type="number" inputmode="decimal" min="1" step="1" value="10"></label></div>
+        <div class="field"><label>Hypothetical alternative return %<input class="input" id="d-alt" type="number" inputmode="decimal" min="0" max="30" step="0.5" value="10"></label></div>
+        <div class="field"><label>If income falls by (%)<input class="input" id="d-inc" type="number" inputmode="decimal" min="0" max="100" value="30"></label></div>
+        <div class="field"><label>If price rises by (%)<input class="input" id="d-pr" type="number" inputmode="decimal" min="0" max="100" value="10"></label></div>
+        <div class="field"><label>Cost of exiting early (% of amount)<input class="input" id="d-exit" type="number" inputmode="decimal" min="0" max="100" step="0.5" value="${d.kind === 'spend' ? 60 : d.kind === 'invest' ? 3 : 15}"></label></div>
       </div></div>`;
       run();
     };
