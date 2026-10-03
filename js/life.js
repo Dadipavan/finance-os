@@ -36,30 +36,44 @@
   const dismissed = () => { try { return JSON.parse(sessionStorage.getItem('fos.dismissed') || '[]'); } catch (e) { return []; } };
   FOS.buildNotices = function (now) {
     const out = [], soon = FOS.upcoming(3), mn = FOS.monthNotice && FOS.monthNotice(now), note = FOS.dataNotice(now);
+    if (FOS.hasSample && FOS.hasSample()) out.push({ id: 'sample', icon: '🧪', tone: 'warn', title: 'Sample data is loaded', text: 'The numbers you see are examples, not yours. Remove them before you enter your own.', actions: [{ label: 'Remove sample data', act: 'sample-clear', primary: true }] });
     if (soon.length) out.push({ id: 'due', icon: '⏰', tone: 'warn', title: 'Due soon', text: soon.slice(0, 3).map((x) => x.name + ' · ' + fmt.date(x.date)).join('\n'), actions: [{ label: 'Open reminders', href: '#/tool/reminders', primary: true }] });
     if (mn) out.push({ id: 'month', icon: '🗓', tone: 'info', title: 'Close ' + FOS.monthLabel(mn.key), text: 'Add last month\'s expenses, update balances and save it — about two minutes.', actions: [{ label: 'Close month', href: '#/tool/monthend', primary: true }, { label: 'Later', act: 'month-later' }] });
     if (FOS.syncNeeded && FOS.syncNeeded()) out.push({ id: 'sync', icon: '☁️', tone: 'info', title: 'Google Drive sync', text: 'A quick sign-in is needed to keep your data backed up.', actions: [{ label: 'Sign in & sync', act: 'sync-go', primary: true }] });
     if (note) out.push({ id: 'data', icon: '📅', tone: 'warn', title: note.kind === 'year' ? 'New financial year' : 'Check your rates', text: note.text, actions: [{ label: 'Update now', href: '#/sources', primary: true }, { label: 'I\'ve checked', act: 'data-ok' }, { label: 'Later', act: 'data-later' }] });
     return out.filter((n) => dismissed().indexOf(n.id) < 0);
   };
-  FOS.renderNotices = function () {
-    const bar = U.$('#alert-bar'); if (!bar) return; const list = FOS.buildNotices();
-    if (!list.length) { bar.hidden = true; bar.innerHTML = ''; return; }
-    const card = (n) => `<article class="notice ${n.tone}" data-n="${n.id}"><span class="n-ic" aria-hidden="true">${n.icon}</span><div class="n-b"><h3>${esc(n.title)}</h3><p>${esc(n.text).replace(/\n/g, '<br>')}</p><div class="n-act">${n.actions.map((x) => x.href ? `<a class="btn sm ${x.primary ? 'primary' : 'ghost'}" href="${x.href}">${esc(x.label)}</a>` : `<button class="btn sm ${x.primary ? 'primary' : 'ghost'}" data-act="${x.act}">${esc(x.label)}</button>`).join('')}</div></div><button class="n-x" data-dismiss="${n.id}" aria-label="Dismiss ${esc(n.title)}">✕</button></article>`;
-    const phone = window.matchMedia && window.matchMedia('(max-width: 980px)').matches;
-    bar.hidden = false;
-    bar.innerHTML = list.length === 1 ? `<div class="n-list">${card(list[0])}</div>` : `<details class="notices" ${phone ? '' : 'open'}><summary><span aria-hidden="true">🔔</span> <b>${list.length} notices</b><span class="n-first"> — ${esc(list[0].title)}${list.length > 1 ? ' and more' : ''}</span><span class="n-chev" aria-hidden="true">▾</span></summary><div class="n-list">${list.map(card).join('')}</div></details>`;
-    bar.onclick = (e) => {
-      const d = e.target.closest('[data-dismiss]'), a = e.target.closest('[data-act]');
+  FOS.noticeCount = () => FOS.buildNotices().length;
+  const cardHTML = (n) => `<article class="notice ${n.tone}" data-n="${n.id}"><span class="n-ic" aria-hidden="true">${n.icon}</span><div class="n-b"><h3>${esc(n.title)}</h3><p>${esc(n.text).replace(/\n/g, '<br>')}</p><div class="n-act">${n.actions.map((x) => x.href ? `<a class="btn sm ${x.primary ? 'primary' : 'ghost'}" href="${x.href}" data-nclose>${esc(x.label)}</a>` : `<button class="btn sm ${x.primary ? 'primary' : 'ghost'}" data-act="${x.act}">${esc(x.label)}</button>`).join('')}</div></div><button class="n-x" data-dismiss="${n.id}" aria-label="Dismiss ${esc(n.title)}">✕</button></article>`;
+  const setBadge = (n) => { const b = U.$('#bell-badge'); if (b) { b.hidden = n === 0; b.textContent = n > 9 ? '9+' : String(n); } const bell = U.$('#bell-btn'); if (bell) bell.setAttribute('aria-label', n ? 'Notifications: ' + n + ' new' : 'Notifications: none'); };
+  const closePanel = () => { const p = U.$('#notice-panel'); if (p) p.hidden = true; const bell = U.$('#bell-btn'); if (bell) bell.setAttribute('aria-expanded', 'false'); };
+  function fillPanel(panel, list) {
+    panel.innerHTML = `<div class="np-head"><b>Notifications</b><span class="muted">${list.length ? list.length + ' to look at' : ''}</span><button class="n-x" data-nclose aria-label="Close notifications">✕</button></div>` + (list.length ? `<div class="n-list">${list.map(cardHTML).join('')}</div>` : '<p class="np-empty">✓ You are all caught up.<br><small>Due dates, month-end and rate checks will appear here.</small></p>');
+    panel.onclick = (e) => {
+      if (e.target.closest('[data-nclose]')) { closePanel(); return; }
+      const d = e.target.closest('[data-dismiss]'), a2 = e.target.closest('[data-act]');
       const hide = (id) => { try { const x = dismissed(); x.push(id); sessionStorage.setItem('fos.dismissed', JSON.stringify(x)); } catch (er) { /* ignore */ } FOS.renderNotices(); };
       if (d) return hide(d.dataset.dismiss);
-      if (!a) return; const k = a.dataset.act, id = a.closest('[data-n]').dataset.n;
-      if (k === 'sync-go') { hide(id); FOS.syncNow(true); }
+      if (!a2) return; const k = a2.dataset.act, id = a2.closest('[data-n]').dataset.n;
+      if (k === 'sync-go') { hide(id); closePanel(); FOS.syncNow(true); }
       if (k === 'month-later') { store.update((s) => { s.meta.monthSnooze = new Date(Date.now() + 2 * 864e5).toISOString(); }); hide(id); }
       if (k === 'data-ok') { store.update((s) => { s.meta.configChecked = new Date().toISOString(); }); hide(id); }
       if (k === 'data-later') { store.update((s) => { s.meta.noticeSnooze = new Date(Date.now() + 30 * 864e5).toISOString(); }); hide(id); }
+      if (k === 'sample-clear') { if (confirm('Remove all sample data? Anything you added yourself stays.')) { closePanel(); FOS.removeSample(); } }
     };
+  }
+  // The bell shows only a number; the notices themselves appear when you press it.
+  FOS.renderNotices = function () {
+    const list = FOS.buildNotices(); setBadge(list.length);
+    const panel = U.$('#notice-panel'); if (panel && !panel.hidden) fillPanel(panel, list);
   };
+  FOS.toggleNotices = function () {
+    const panel = U.$('#notice-panel'); if (!panel) return;
+    if (!panel.hidden) { closePanel(); return; }
+    fillPanel(panel, FOS.buildNotices()); panel.hidden = false;
+    const bell = U.$('#bell-btn'); if (bell) bell.setAttribute('aria-expanded', 'true');
+  };
+  FOS.closeNotices = closePanel;
   FOS.checkReminders = function () {
     const soon = FOS.upcoming(3);
     FOS.renderNotices();
