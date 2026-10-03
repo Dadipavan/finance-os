@@ -38,7 +38,7 @@
         <div class="card"><h3>Liability breakdown</h3>${ch().donut({ title: 'Liabilities', items: by(s.liabilities) })}</div>
         <div class="card"><h3>Goal progress</h3>${m.goalProgress.length ? m.goalProgress.map((g) => `<div class="between"><span>${esc(g.name || 'Goal')}</span><b>${fmt.pct(g.pct, 0)}</b></div>${ch().progress(g.pct, g.name)}`).join('') : '<p class="muted">No goals yet. <a href="#/tool/goals">Create one</a>.</p>'}</div>
         <div class="card"><h3>Net worth timeline</h3>${snaps.length > 1 ? ch().line({ title: 'Net worth', xLabel: '', yfmt: 'inr', area: true, xfmt: (x) => (snaps[Math.round(x)] || {}).date || '', series: [{ name: 'Net worth', data: snaps.map((p, i) => ({ x: i, y: p.nw })) }] }) : '<p class="muted">Save monthly snapshots to see your timeline. One is saved by the button below.</p>'}<div class="row-actions"><button class="btn" data-act="snap">Save this month\'s snapshot</button></div></div>
-        <div class="card"><h3>Savings trend</h3>${snaps.length > 1 ? ch().line({ title: 'Monthly savings', xfmt: (x) => (snaps[Math.round(x)] || {}).date || '', yfmt: 'inr', series: [{ name: 'Monthly savings', data: snaps.map((p, i) => ({ x: i, y: p.savings })) }] }) : '<p class="muted">Appears after two or more snapshots.</p>'}</div>
+        <div class="card"><h3>Savings trend</h3>${snaps.filter((p) => Number.isFinite(p.savings)).length > 1 ? ch().line({ title: 'Monthly savings', xfmt: (x) => (snaps[Math.round(x)] || {}).date || '', yfmt: 'inr', series: [{ name: 'Monthly savings', data: snaps.map((p, i) => ({ x: i, y: p.savings })).filter((p) => Number.isFinite(p.y)) }] }) : '<p class="muted">Appears once two months have recorded income and expenses (Month-End Close).</p>'}</div>
       </div>
       <div class="card"><h3>Upcoming payments</h3>${up.length ? `<ul class="plain">${up.map((u) => `<li><b>${fmt.date(u.date)}</b> — ${esc(u.name)} ${u.amt ? '· ' + fmt.inr(+u.amt) : ''}</li>`).join('')}</ul>` : '<p class="muted">Add due dates in <a href="#/tool/reminders">Reminders</a>.</p>'}</div>
       ${!(s.meta && s.meta.lastExport) ? '<div class="card"><p class="status warn">Your data is stored only in this browser. <a href="#/settings">Export a backup</a> now and then so you can restore it anywhere.</p></div>' : ''}
@@ -49,8 +49,9 @@
   };
 
   FOS.saveSnapshot = function (monthKey) {
-    const m = FOS.metrics(), d = typeof monthKey === 'string' ? monthKey : new Date().toISOString().slice(0, 7), row = FOS.statement ? FOS.statement(d, d).months[0] : null;
-    store.update((s) => { const rec = { date: d, assets: m.assets, liabilities: m.liabilities, nw: m.netWorth, income: row ? row.income : m.income, expenses: row ? row.expenses : m.expenses, savings: row ? row.savings : m.savings }; const i = s.snapshots.findIndex((x) => x.date === d); if (i >= 0) s.snapshots[i] = rec; else s.snapshots.push(rec); });
+    // Balances are today's figures (entered by you). Income / spending / saving are stored ONLY if you recorded them for that month — otherwise null, never a guess.
+    const m = FOS.metrics(), d = typeof monthKey === 'string' ? monthKey : new Date().toISOString().slice(0, 7), f = FOS.monthFacts ? FOS.monthFacts(d) : { income: null, expenses: null };
+    store.update((s) => { const rec = { date: d, assets: m.assets, liabilities: m.liabilities, nw: m.netWorth, income: f.income, expenses: f.expenses, savings: f.income !== null && f.expenses !== null ? f.income - f.expenses : null }; const i = s.snapshots.findIndex((x) => x.date === d && !x.sample); if (i >= 0) s.snapshots[i] = rec; else s.snapshots.push(rec); });
     U.toast('Snapshot saved for ' + d);
   };
 
@@ -58,6 +59,7 @@
     if (!confirm('Load a sample profile? This replaces your current data in this browser (export first if unsure).')) return;
     const u = store.uid, now = new Date();
     store.update((s) => {
+      s.meta.sample = true; s.profile.sampleSet = true;
       Object.assign(s.profile, { age: 28, monthlyIncome: 60000, annualIncome: 720000, monthlyExpenses: 40000, dependents: 0, retAge: 60, hasHealth: true, healthCover: 500000, hasTerm: false, onboarded: true });
       s.budget = { method: '50-30-20', income: 60000, items: [['Rent', 12000, 'need'], ['Food', 6000, 'need'], ['Transport', 4000, 'need'], ['Utilities', 3000, 'need'], ['Subscriptions', 1000, 'want'], ['Entertainment', 3000, 'want'], ['Investments', 15000, 'save'], ['Emergency Fund', 5000, 'save'], ['Other', 2000, 'want']].map(([name, amount, kind]) => ({ id: u(), name, amount, kind, spent: '' })) };
       s.assets = [['Savings account', 'Bank', 80000], ['Emergency fund', 'Emergency Fund', 50000], ['Fixed deposit', 'FD', 100000], ['Index fund SIP', 'Investments', 180000], ['Phone / laptop', 'Other', 40000]].map(([name, cat, value]) => ({ id: u(), name, cat, value }));
@@ -65,9 +67,24 @@
       s.goals = [{ id: u(), name: 'Emergency fund', type: 'Emergency Fund', target: 240000, current: 0, deadline: '', inflation: 5, ret: 6 }, { id: u(), name: 'Laptop', type: 'Laptop', target: 90000, current: 30000, deadline: new Date(now.getFullYear() + 1, now.getMonth(), 1).toISOString().slice(0, 10), inflation: 5, ret: 6 }];
       s.recurring = [['Streaming', 'OTT / streaming', 499, 'monthly'], ['Gym', 'Gym / fitness', 1500, 'monthly'], ['Cloud storage', 'Cloud storage', 1300, 'yearly']].map(([name, cat, amount, freq]) => ({ id: u(), name, cat, amount, freq, renew: '' }));
       s.reminders = [{ id: u(), title: 'Credit card due', date: new Date(now.getFullYear(), now.getMonth(), Math.min(28, now.getDate() + 5)).toISOString().slice(0, 10), freq: 'monthly', amount: 20000, note: '' }];
+      const tag = (arr) => arr.map((x) => Object.assign({}, x, { sample: true }));
       s.snapshots = Array.from({ length: 6 }, (_, i) => { const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1); const nw = 300000 + i * 28000; return { date: d.toISOString().slice(0, 7), assets: nw + 170000, liabilities: 170000, nw, income: 60000, expenses: 40000 + (i % 2) * 1500, savings: 20000 - (i % 2) * 1500 }; });
     });
-    U.toast('Sample data loaded — these are illustrative numbers.'); FOS.route();
+    store.update((s) => { s.budget.sample = true; ['assets', 'liabilities', 'goals', 'recurring', 'reminders', 'snapshots'].forEach((k) => { s[k] = s[k].map((x) => Object.assign({}, x, { sample: true })); }); s.budget.items = s.budget.items.map((x) => Object.assign({}, x, { sample: true })); });
+    U.toast('Sample data loaded — these are example numbers, not yours. Remove them in Settings.'); FOS.route();
+  };
+
+  FOS.hasSample = () => !!(store.get().meta && store.get().meta.sample);
+  // Removes ONLY what the sample created; anything you added yourself stays.
+  FOS.removeSample = function () {
+    store.update((s) => {
+      ['assets', 'liabilities', 'goals', 'recurring', 'reminders', 'snapshots', 'records', 'expenses'].forEach((k) => { s[k] = (s[k] || []).filter((x) => !x.sample); });
+      s.budget.items = s.budget.items.filter((x) => !x.sample);
+      if (s.budget.sample) { s.budget = { method: 'custom', income: '', items: s.budget.items }; }
+      if (s.profile.sampleSet) { const d = { age: '', monthlyIncome: '', annualIncome: '', monthlyExpenses: '', dependents: '', retAge: 60, hasHealth: false, healthCover: '', hasTerm: false, termCover: '', onboarded: false }; Object.assign(s.profile, d); delete s.profile.sampleSet; }
+      s.meta.sample = false;
+    });
+    U.toast('Sample data removed.'); FOS.route();
   };
 
   /* ---------- onboarding ---------- */
@@ -89,7 +106,7 @@
       const b = e.target.closest('[data-nav]'); if (!b) return; collect(); step += +b.dataset.nav;
       if (step >= steps.length) {
         store.update((s) => {
-          Object.assign(s.profile, p, { onboarded: true });
+          Object.assign(s.profile, p, { onboarded: true }); delete s.profile.sampleSet;
           if (!(+s.profile.annualIncome) && +s.profile.monthlyIncome) s.profile.annualIncome = s.profile.monthlyIncome * 12;
           if (!(+s.profile.monthlyIncome) && +s.profile.annualIncome) s.profile.monthlyIncome = Math.round(s.profile.annualIncome / 12);
           s.assets = s.assets.filter((a) => a.src !== 'onboarding'); s.liabilities = s.liabilities.filter((a) => a.src !== 'onboarding');
@@ -98,7 +115,7 @@
           if (+p.loans) s.liabilities.push({ id: store.uid(), name: 'Loans (onboarding)', cat: 'Personal loan', value: +p.loans, emi: +p.emi || 0, src: 'onboarding' });
           if (+p.cards) s.liabilities.push({ id: store.uid(), name: 'Credit-card dues (onboarding)', cat: 'Credit card', value: +p.cards, emi: 0, src: 'onboarding' });
         });
-        U.closeModal(); U.toast('Snapshot created'); location.hash = '#/tool/snapshot'; FOS.route(); return;
+        U.closeModal(); U.toast('Snapshot created'); FOS.go('#/tool/snapshot'); return;
       }
       step = Math.max(0, step); draw();
     };
