@@ -136,4 +136,39 @@
       <div class="row-actions"><a class="btn" href="#/m/growth">Where each ₹ works hardest</a><a class="btn" href="#/m/insights">My Money Review</a><button class="btn" id="pl-print">Print / Save as PDF</button></div>`;
     root.querySelector('#pl-print').onclick = () => window.print();
   };
+
+  /* ---------------- My Suggestions: one prioritised list, tick-off, built from your data ---------------- */
+  const slug = (t) => String(t).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 42);
+  FOS.suggestions = function () {
+    const plan = FOS.actionPlan(), ins = FOS.insights(), s = store.get(), m = plan.m || FOS.metrics(), out = [];
+    const add = (id, pri, title, why, href, amount, tag, ideas) => out.push({ id, pri, title, why, href, amount: amount || 0, tag, ideas: ideas || [] });
+    const hasPlan = (re) => plan.acts.some((x) => re.test(x.title));
+    plan.acts.forEach((x) => add('plan-' + slug(x.href + x.title.slice(0, 22)), x.n <= 3 ? 1 : x.n <= 6 ? 2 : 3, x.title, x.why, x.href, x.amount, 'Plan'));
+    const covered = [[/credit-card|card balance/i, /debt/i], [/emergency fund/i, /emergency/i], [/health insurance/i, /health insurance/i], [/term cover|dependants/i, /term/i], [/savings rate/i, /20% savings|savings rate/i], [/goals vs/i, /goals/i]];
+    ins.filter((f) => f.sev === 'low' || f.sev === 'watch').forEach((f) => { if (covered.some(([ti, pl]) => ti.test(f.title) && hasPlan(pl))) return; add('ins-' + slug(f.title), f.sev === 'low' ? 1 : 2, f.title, f.body, '#/m/insights', 0, 'Review', f.ideas); });
+    if (m.income > 0) {
+      if (m.savings > 0) add('auto-payday', 2, `Automate ${inr(Math.round(m.savings * 0.7 / 500) * 500)} to move on payday`, 'Pay yourself first: set a standing instruction for the day your salary arrives, so saving happens before spending. Keep the rest for the month.', '#/tool/budget', Math.round(m.savings * 0.7 / 500) * 500, 'Habit');
+      const ex = FOS.expenseStats ? FOS.expenseStats() : null;
+      if (ex && ex.count > 0) { const top = Object.entries(ex.byCat).sort((p, q) => q[1] - p[1])[0]; if (top) { const cut = top[1] * 0.1; add('trim-top', 2, `Trim ${top[0]} by 10%`, `It is your biggest category: ${inr(top[1])} a month (${pc(top[1] / Math.max(1, m.income) * 100, 0)} of income). A 10% cut frees ${inr(cut)} a month — ${inr(cut * 12)} a year, and about ${inr(C.sipFV(cut, 10, 120))} after 10 years if invested at an assumed 10%.`, '#/tool/statement', cut, 'Spending'); } }
+      const rec = m.recurringMonthly; if (rec > 0) add('subs', 2, `Review your subscriptions (${inr(rec * 12)} a year)`, 'Cancel anything unused in the last 30 days. Yearly plans are cheaper only if you will use them all year.', '#/tool/recurring', rec, 'Spending');
+      if (m.savings > 0) add('step-up', 3, 'Raise your SIP by 10% every year', `A yearly step-up is easier than a big jump now. ₹10,000 a month stepping up 10% a year for 15 years ends around ${inr(C.sipFV(10000, 10, 180, 10))} versus ${inr(C.sipFV(10000, 10, 180, 0))} flat (assumed 10% return).`, '#/calc/sip', 0, 'Habit');
+      if (!s.goals.length) add('goals-set', 2, 'Write down 1–3 goals with an amount and a date', 'Goals turn saving into a target and show the exact monthly amount each needs.', '#/tool/goals', 0, 'Habit');
+    }
+    if (FOS.monthNotice && FOS.monthNotice()) add('close-month', 1, 'Close last month (2 minutes)', 'Record income and expenses and take a snapshot, so your statements and trends stay true.', '#/tool/monthend', 0, 'Habit');
+    add('annual-review', 3, 'Yearly review: insurance, nominees, tax regime, asset mix, backup', 'Pick a date each year. Update tax rules after the Budget, check cover and nominees, rebalance, and export a backup.', '#/tool/ladder', 0, 'Habit');
+    const seen = {}; return out.filter((x) => (seen[x.id] ? false : (seen[x.id] = 1))).sort((p, q) => p.pri - q.pri);
+  };
+  FOS.tools.suggestions = function (root) {
+    const PRI = { 1: 'Do now', 2: 'This month', 3: 'This year' }; let filter = 'all';
+    const draw = () => {
+      const list = FOS.suggestions(), done = store.get().suggestDone || {}, nDone = list.filter((x) => done[x.id]).length, shown = list.filter((x) => filter === 'all' ? true : filter === 'done' ? !!done[x.id] : !done[x.id] && String(x.pri) === filter);
+      root.innerHTML = `<div class="card"><h3>What to do next</h3><p class="muted">Built from your own numbers and ordered by what helps most. Tick each one when you have done it. The list updates as your data changes.</p>
+        <div class="between"><b>${nDone} of ${list.length} done</b><span class="muted">${list.length ? Math.round(nDone / list.length * 100) : 0}%</span></div>${ch().progress(list.length ? nDone / list.length * 100 : 0, 'Suggestions done')}
+        <div class="chips" id="sg-f">${[['all', 'All'], ['1', 'Do now'], ['2', 'This month'], ['3', 'This year'], ['done', 'Done']].map(([k, t]) => `<button class="chip ${filter === k ? 'on' : ''}" data-f="${k}">${t}</button>`).join('')}</div></div>
+        ${shown.length ? shown.map((x) => `<article class="sugg ${done[x.id] ? 'is-done' : ''} p${x.pri}"><label class="sg-check"><input type="checkbox" data-id="${esc(x.id)}" ${done[x.id] ? 'checked' : ''} aria-label="Mark done: ${esc(x.title)}"></label><div class="sg-b"><div class="sg-top"><span class="pill ${x.pri === 1 ? 'low' : x.pri === 2 ? 'watch' : 'info'}">${PRI[x.pri]}</span><span class="pill">${esc(x.tag)}</span>${x.amount ? `<span class="sg-amt">${inr(x.amount)}<small>/month</small></span>` : ''}</div><h4>${esc(x.title)}</h4><p>${esc(x.why)}</p>${x.ideas.length ? `<ul>${x.ideas.map((i) => `<li>${esc(i)}</li>`).join('')}</ul>` : ''}<a class="btn sm ghost" href="${x.href}">Open</a></div></article>`).join('') : '<div class="card"><p class="np-empty">✓ Nothing here right now.<br><small>Add more of your data and new suggestions will appear.</small></p></div>'}`;
+    };
+    root.onclick = (e) => { const f = e.target.closest('[data-f]'); if (f) { filter = f.dataset.f; draw(); } };
+    root.onchange = (e) => { const c = e.target.closest('[data-id]'); if (!c) return; store.update((s) => { s.suggestDone = s.suggestDone || {}; if (c.checked) s.suggestDone[c.dataset.id] = new Date().toISOString().slice(0, 10); else delete s.suggestDone[c.dataset.id]; }); draw(); };
+    draw();
+  };
 })();
