@@ -101,14 +101,16 @@ window.FOS = window.FOS || {};
       return `<input ${common} type="text" maxlength="80" value="${esc(v)}" autocomplete="off">`;
     };
     const cols = () => cfg.cols.filter((c) => !c.hide || !c.hide(store.get()));
+    let shown = cfg.pageSize || 60;
     function draw() {
-      const items = list(), cs = cols();
-      root.innerHTML = `<div class="table-scroll"><table class="data crud"><thead><tr>${cs.map((c) => `<th scope="col">${esc(c.label)}</th>`).join('')}${cfg.computed ? `<th scope="col">${esc(cfg.computed.label)}</th>` : ''}<th><span class="sr">Remove</span></th></tr></thead><tbody>
-        ${items.length ? items.map((it) => `<tr data-id="${it.id}">${cs.map((c) => `<td>${cell(c, it)}</td>`).join('')}${cfg.computed ? `<td class="comp">${cfg.computed.fn(it)}</td>` : ''}<td><button class="icon-btn" data-del="${it.id}" aria-label="Remove row">🗑</button></td></tr>`).join('') : `<tr><td colspan="${cs.length + 2}" class="muted">${esc(cfg.empty || 'Nothing here yet.')}</td></tr>`}
-        </tbody></table></div><div class="row-actions"><button class="btn" data-add>＋ ${esc(cfg.addLabel || 'Add')}</button>${cfg.extraButtons || ''}</div><div class="crud-foot">${cfg.footer ? cfg.footer(items) : ''}</div>`;
+      const all = list(), items = all.slice(0, shown), cs = cols();
+      root.innerHTML = `<div class="table-scroll crud-wrap"><table class="data crud"><thead><tr>${cs.map((c) => `<th scope="col">${esc(c.label)}</th>`).join('')}${cfg.computed ? `<th scope="col">${esc(cfg.computed.label)}</th>` : ''}<th><span class="sr">Remove</span></th></tr></thead><tbody>
+        ${items.length ? items.map((it) => `<tr data-id="${it.id}">${cs.map((c) => `<td data-label="${esc(c.label)}">${cell(c, it)}</td>`).join('')}${cfg.computed ? `<td class="comp" data-label="${esc(cfg.computed.label)}">${cfg.computed.fn(it)}</td>` : ''}<td class="del"><button class="icon-btn" data-del="${it.id}" aria-label="Remove row">🗑</button></td></tr>`).join('') : `<tr><td colspan="${cs.length + 2}" class="muted">${esc(cfg.empty || 'Nothing here yet.')}</td></tr>`}
+        </tbody></table></div>${all.length > shown ? `<div class="row-actions"><button class="btn ghost" data-more>Show ${Math.min(100, all.length - shown)} more (showing ${shown} of ${FOS.fmt.num(all.length)})</button></div>` : ''}<div class="row-actions"><button class="btn" data-add>＋ ${esc(cfg.addLabel || 'Add')}</button>${cfg.extraButtons || ''}</div><div class="crud-foot">${cfg.footer ? cfg.footer(all) : ''}</div>`;
     }
     root.onclick = (e) => {
-      if (e.target.closest('[data-add]')) { store.update((s) => { cfg.list(s).push(Object.assign({ id: store.uid() }, cfg.blank())); }); draw(); cfg.onChange && cfg.onChange(); const last = root.querySelector('tbody tr:last-child input'); if (last) last.focus(); }
+      if (e.target.closest('[data-more]')) { shown += 100; draw(); return; }
+      if (e.target.closest('[data-add]')) { store.update((s) => { const row = Object.assign({ id: store.uid() }, cfg.blank()); if (cfg.addToTop) cfg.list(s).unshift(row); else cfg.list(s).push(row); }); if (!cfg.addToTop) shown = Math.max(shown, list().length); draw(); cfg.onChange && cfg.onChange(); const nr = root.querySelector(cfg.addToTop ? 'tbody tr:first-child input' : 'tbody tr:last-child input'); if (nr) nr.focus(); }
       const d = e.target.closest('[data-del]');
       if (d) { store.update((s) => { const a = cfg.list(s); const i = a.findIndex((x) => x.id === d.dataset.del); if (i >= 0) a.splice(i, 1); }); draw(); cfg.onChange && cfg.onChange(); }
     };
