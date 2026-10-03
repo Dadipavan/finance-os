@@ -59,8 +59,6 @@ button, a.btn, .chip, .tab, select, summary { touch-action: manipulation; }
   .hero h1 { font-size: 2rem; } .kpi b { font-size: 1.05rem; } .res b { font-size: 1rem; } .table-scroll { -webkit-overflow-scrolling: touch; }
   .fab { padding: .5rem .7rem; font-size: .66rem; } .modal-body { padding: 1rem; }
 }
-/* installed app (standalone): no browser chrome, so give the top bar a little breathing room */
-@media (display-mode: standalone) { body { user-select: none; -webkit-user-select: none; } input, textarea, .input, .cell, pre, .formula, td, p { user-select: text; -webkit-user-select: text; } }
 
 /* phones: search results use the full width instead of the narrow search box */
 @media (max-width: 980px) { .search-pop { position: fixed; left: .5rem; right: .5rem; top: calc(var(--top) + env(safe-area-inset-top, 0px) + 4px); max-height: 72vh; } .main { scroll-margin-top: 80px; } }
@@ -155,3 +153,7 @@ button, a.btn, .chip, .tab, select, summary { touch-action: manipulation; }
   .calc-in .fields.one { gap: .15rem; } .calc-in .field > label { margin-top: .9rem; }
   .data.crud select.cell { min-height: 46px; }
 }
+
+/* while a field is being edited, the floating bars step aside so they never cover it or jump above the keyboard */
+.kbd-open .bn, .kbd-open .mini-res, .kbd-open .fabs { display: none !important; }
+.mini-res { pointer-events: none; } .mini-res a { pointer-events: auto; }
