@@ -90,5 +90,4 @@ code, pre { font-family: var(--mono); font-size: .88em; } code { background: var
 /* pop-up message */
 .toast { position: fixed; left: 50%; bottom: 90px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; background: var(--ink); color: var(--bg); padding: .7rem 1.1rem; border-radius: 12px; font-size: .92rem; line-height: 1.35; z-index: 400; transition: opacity .25s, transform .25s; width: max-content; max-width: min(92vw, 440px); text-align: center; box-shadow: var(--shadow-lg); } .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
-.newhere { margin: 0 0 1rem; font-size: .92rem; } .newhere a { color: #fff; font-weight: 600; 
-                                                             }
+.newhere { margin: 0 0 1rem; font-size: .92rem; } .newhere a { color: #fff; font-weight: 600; }
