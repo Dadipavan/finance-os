@@ -32,20 +32,37 @@
     if (!last || now - last > 90 * day) return { kind: 'stale', text: last ? `Rates and limits were last checked on ${fmt.date(last)}. Small-savings and bank rates change every few months.` : 'Rates and limits are still the built-in defaults. Check them against the official sites once so your results use current numbers.' };
     return null;
   };
+  /* ---------- notices: one tidy card each; collapses to a single line on phones ---------- */
+  const dismissed = () => { try { return JSON.parse(sessionStorage.getItem('fos.dismissed') || '[]'); } catch (e) { return []; } };
+  FOS.buildNotices = function (now) {
+    const out = [], soon = FOS.upcoming(3), mn = FOS.monthNotice && FOS.monthNotice(now), note = FOS.dataNotice(now);
+    if (soon.length) out.push({ id: 'due', icon: '⏰', tone: 'warn', title: 'Due soon', text: soon.slice(0, 3).map((x) => x.name + ' · ' + fmt.date(x.date)).join('\n'), actions: [{ label: 'Open reminders', href: '#/tool/reminders', primary: true }] });
+    if (mn) out.push({ id: 'month', icon: '🗓', tone: 'info', title: 'Close ' + FOS.monthLabel(mn.key), text: 'Add last month\'s expenses, update balances and save it — about two minutes.', actions: [{ label: 'Close month', href: '#/tool/monthend', primary: true }, { label: 'Later', act: 'month-later' }] });
+    if (FOS.syncNeeded && FOS.syncNeeded()) out.push({ id: 'sync', icon: '☁️', tone: 'info', title: 'Google Drive sync', text: 'A quick sign-in is needed to keep your data backed up.', actions: [{ label: 'Sign in & sync', act: 'sync-go', primary: true }] });
+    if (note) out.push({ id: 'data', icon: '📅', tone: 'warn', title: note.kind === 'year' ? 'New financial year' : 'Check your rates', text: note.text, actions: [{ label: 'Update now', href: '#/sources', primary: true }, { label: 'I\'ve checked', act: 'data-ok' }, { label: 'Later', act: 'data-later' }] });
+    return out.filter((n) => dismissed().indexOf(n.id) < 0);
+  };
+  FOS.renderNotices = function () {
+    const bar = U.$('#alert-bar'); if (!bar) return; const list = FOS.buildNotices();
+    if (!list.length) { bar.hidden = true; bar.innerHTML = ''; return; }
+    const card = (n) => `<article class="notice ${n.tone}" data-n="${n.id}"><span class="n-ic" aria-hidden="true">${n.icon}</span><div class="n-b"><h3>${esc(n.title)}</h3><p>${esc(n.text).replace(/\n/g, '<br>')}</p><div class="n-act">${n.actions.map((x) => x.href ? `<a class="btn sm ${x.primary ? 'primary' : 'ghost'}" href="${x.href}">${esc(x.label)}</a>` : `<button class="btn sm ${x.primary ? 'primary' : 'ghost'}" data-act="${x.act}">${esc(x.label)}</button>`).join('')}</div></div><button class="n-x" data-dismiss="${n.id}" aria-label="Dismiss ${esc(n.title)}">✕</button></article>`;
+    const phone = window.matchMedia && window.matchMedia('(max-width: 980px)').matches;
+    bar.hidden = false;
+    bar.innerHTML = list.length === 1 ? `<div class="n-list">${card(list[0])}</div>` : `<details class="notices" ${phone ? '' : 'open'}><summary><span aria-hidden="true">🔔</span> <b>${list.length} notices</b><span class="n-first"> — ${esc(list[0].title)}${list.length > 1 ? ' and more' : ''}</span><span class="n-chev" aria-hidden="true">▾</span></summary><div class="n-list">${list.map(card).join('')}</div></details>`;
+    bar.onclick = (e) => {
+      const d = e.target.closest('[data-dismiss]'), a = e.target.closest('[data-act]');
+      const hide = (id) => { try { const x = dismissed(); x.push(id); sessionStorage.setItem('fos.dismissed', JSON.stringify(x)); } catch (er) { /* ignore */ } FOS.renderNotices(); };
+      if (d) return hide(d.dataset.dismiss);
+      if (!a) return; const k = a.dataset.act, id = a.closest('[data-n]').dataset.n;
+      if (k === 'sync-go') { hide(id); FOS.syncNow(true); }
+      if (k === 'month-later') { store.update((s) => { s.meta.monthSnooze = new Date(Date.now() + 2 * 864e5).toISOString(); }); hide(id); }
+      if (k === 'data-ok') { store.update((s) => { s.meta.configChecked = new Date().toISOString(); }); hide(id); }
+      if (k === 'data-later') { store.update((s) => { s.meta.noticeSnooze = new Date(Date.now() + 30 * 864e5).toISOString(); }); hide(id); }
+    };
+  };
   FOS.checkReminders = function () {
-    const soon = FOS.upcoming(3), note = FOS.dataNotice(), mn = FOS.monthNotice && FOS.monthNotice(), bar = U.$('#alert-bar'); let html = '';
-    if (soon.length) html += `⏰ Due soon: ${soon.slice(0, 3).map((x) => `<b>${esc(x.name)}</b> (${fmt.date(x.date)})`).join(' · ')} <a href="#/tool/reminders">Open reminders</a>`;
-    if (mn) html += `${html ? '<br>' : ''}🗓 ${esc(mn.text)} <a href="#/tool/monthend">Close ${esc(FOS.monthLabel(mn.key))}</a> <button class="link" id="mn-later">Later</button>`;
-    if (FOS.syncNeeded && FOS.syncNeeded()) html += `${html ? '<br>' : ''}☁ Google Drive sync needs a quick sign-in: <button class="link" id="sync-go">Sign in &amp; sync</button>`;
-    if (note) html += `${html ? '<br>' : ''}📅 ${esc(note.text)} <a href="#/sources">Update now</a> <button class="link" id="dn-ok">I\'ve checked — remind me in 90 days</button> <button class="link" id="dn-later">Later</button>`;
-    if (bar && html) {
-      bar.hidden = false; bar.innerHTML = html + ' <button class="icon-btn" id="alert-x" aria-label="Dismiss">✕</button>';
-      U.$('#alert-x').onclick = () => { bar.hidden = true; };
-      const sg = U.$('#sync-go'), ml = U.$('#mn-later'); if (sg) sg.onclick = () => { bar.hidden = true; FOS.syncNow(true); }; if (ml) ml.onclick = () => { store.update((s) => { s.meta.monthSnooze = new Date(Date.now() + 2 * 864e5).toISOString(); }); bar.hidden = true; };
-      const ok = U.$('#dn-ok'), later = U.$('#dn-later');
-      if (ok) ok.onclick = () => { store.update((s) => { s.meta.configChecked = new Date().toISOString(); }); bar.hidden = true; };
-      if (later) later.onclick = () => { store.update((s) => { s.meta.noticeSnooze = new Date(Date.now() + 30 * 864e5).toISOString(); }); bar.hidden = true; };
-    }
+    const soon = FOS.upcoming(3);
+    FOS.renderNotices();
     if (soon.length && store.get().settings.notify && 'Notification' in window && Notification.permission === 'granted') {
       const key = 'fos.notified.' + new Date().toISOString().slice(0, 10);
       if (!sessionStorage.getItem(key)) { sessionStorage.setItem(key, '1'); try { new Notification('Finance OS reminder', { body: soon.slice(0, 3).map((x) => x.name + ' – ' + fmt.date(x.date)).join('\n') }); } catch (e) { /* ignore */ } }
