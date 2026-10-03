@@ -1,8 +1,10 @@
-/* Finance OS service worker — makes the app installable and usable offline.
-   Strategy: network-first (so a newly published version always arrives when online),
-   falling back to the saved copy when offline. Only same-origin files are handled;
-   Google sign-in / Drive calls are never touched. Change VERSION to force a clean cache. */
-const VERSION = 'fos-v1';
+/* Finance OS service worker — installable + offline + fast.
+   Strategy: stale-while-revalidate. A saved copy is served instantly (so the app opens fast, even on a weak
+   connection), and a fresh copy is fetched in the background for next time. Only same-origin GET requests are
+   handled; Google sign-in / Drive calls are never touched.
+   WHEN YOU PUBLISH A NEW VERSION: change VERSION below (fos-v3, fos-v4, …). That makes every device download the
+   complete new set of files together and drop the old ones, so no one ever mixes old and new files. */
+const VERSION = 'fos-v3';
 const CORE = [
   './',
   'index.html',
@@ -48,5 +50,8 @@ self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) =
 self.addEventListener('fetch', (e) => {
   const r = e.request, u = new URL(r.url);
   if (r.method !== 'GET' || u.origin !== self.location.origin) return;
-  e.respondWith(fetch(r).then((res) => { if (res && res.ok) { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(r, copy)); } return res; }).catch(() => caches.match(r, { ignoreSearch: true }).then((hit) => hit || caches.match('index.html'))));
+  e.respondWith(caches.open(VERSION).then((cache) => cache.match(r, { ignoreSearch: true }).then((hit) => {
+    const fresh = fetch(r).then((res) => { if (res && res.ok) cache.put(r, res.clone()); return res; }).catch(() => hit || cache.match('index.html'));
+    return hit || fresh;
+  })));
 });
