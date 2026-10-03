@@ -179,13 +179,13 @@
     const html = `<p class="muted">Quick check — nothing is stored. Takes under a minute.</p><div class="fields">
       <div class="field"><label>What are you buying?<input class="input" id="p-what" type="text" maxlength="60" placeholder="e.g. Phone"></label></div>
       <div class="field"><label>Price (₹)<input class="input" id="p-price" type="number" min="0" step="any" inputmode="decimal" value="0"></label></div>
-      <div class="field"><label>Recurring cost per month (₹)<input class="input" id="p-rec" type="number" min="0" step="any" value="0"></label></div>
-      <div class="field"><label>Hidden / extra fees (₹)<input class="input" id="p-fee" type="number" min="0" step="any" value="0"></label></div>
+      <div class="field"><label>Recurring cost per month (₹)<input class="input" id="p-rec" type="number" inputmode="decimal" min="0" step="any" value="0"></label></div>
+      <div class="field"><label>Hidden / extra fees (₹)<input class="input" id="p-fee" type="number" inputmode="decimal" min="0" step="any" value="0"></label></div>
       <div class="field"><label>Cash or EMI?<select class="input" id="p-mode"><option value="cash">Cash / one-time</option><option value="emi">EMI</option></select></label></div>
-      <div class="field emi-only" hidden><label>EMI interest % per year<input class="input" id="p-rate" type="number" min="0" step="any" value="14"></label></div>
-      <div class="field emi-only" hidden><label>EMI months<input class="input" id="p-ten" type="number" min="1" step="1" value="12"></label></div>
+      <div class="field emi-only" hidden><label>EMI interest % per year<input class="input" id="p-rate" type="number" inputmode="decimal" min="0" step="any" value="14"></label></div>
+      <div class="field emi-only" hidden><label>EMI months<input class="input" id="p-ten" type="number" inputmode="decimal" min="1" step="1" value="12"></label></div>
       <div class="field"><label>Need or want?<select class="input" id="p-nw"><option>Need</option><option selected>Want</option></select></label></div>
-      <div class="field"><label>Alternative price (₹, optional)<input class="input" id="p-alt" type="number" min="0" step="any" value="0"></label></div>
+      <div class="field"><label>Alternative price (₹, optional)<input class="input" id="p-alt" type="number" inputmode="decimal" min="0" step="any" value="0"></label></div>
       <div class="field"><label>Return policy<select class="input" id="p-ret"><option>Unknown</option><option>No returns</option><option>7 days</option><option>30 days</option></select></label></div>
       <div class="field"><label>Warranty<select class="input" id="p-war"><option>Unknown</option><option>None</option><option>Up to 1 year</option><option>More than 1 year</option></select></label></div></div><div id="p-out"></div>`;
     const box = U.modal('CHECK BEFORE I PAY', html, { wide: true });
