@@ -9,7 +9,7 @@ window.FOS = window.FOS || {};
     version: 1,
     profile: { age: '', monthlyIncome: '', annualIncome: '', monthlyExpenses: '', savings: '', investments: '', loans: '', cards: '', dependents: '', retAge: 60, riskUnderstanding: 3, hasHealth: false, healthCover: '', hasTerm: false, termCover: '', hasMotor: false, goalsInterest: [], onboarded: false },
     budget: { method: 'custom', income: '', items: [] },
-    assets: [], liabilities: [], snapshots: [], expenses: [], months: {}, suggestDone: {}, meta: { lastExport: '', configChecked: '', noticeSnooze: '', updatedAt: '', lastSync: '', lastArchive: '' }, configPatch: {}, goals: [], recurring: [], reminders: [], records: [],
+    assets: [], liabilities: [], snapshots: [], expenses: [], months: {}, suggestDone: {}, bankRates: [], quotes: [], meta: { bankSeeded: false, bankChecked: '', bankSnooze: '', lastExport: '', configChecked: '', noticeSnooze: '', updatedAt: '', lastSync: '', lastArchive: '' }, configPatch: {}, goals: [], recurring: [], reminders: [], records: [],
     timeline: [
       { id: 'tl1', age: 18, text: 'Open first bank account' }, { id: 'tl2', age: 22, text: 'First salary' }, { id: 'tl3', age: 25, text: 'Emergency fund' },
       { id: 'tl4', age: 28, text: 'Vehicle' }, { id: 'tl5', age: 30, text: 'House planning' }, { id: 'tl6', age: 35, text: 'Family goals' },
@@ -118,7 +118,6 @@ window.FOS = window.FOS || {};
   };
   load();
 
-   
   /* ---------- derived metrics: the single source for dashboard / health / reports ---------- */
   const n = (x) => (Number.isFinite(+x) ? +x : 0);
   const sum = (a, f) => a.reduce((s, x) => s + n(f(x)), 0);
