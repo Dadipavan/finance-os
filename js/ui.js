@@ -119,7 +119,7 @@ window.FOS = window.FOS || {};
       const c = cfg.cols.find((x) => x.k === e.target.dataset.k); let val = e.target.value;
       if (c.type === 'text' && FOS.ui.looksSensitive(val)) { FOS.ui.toast(FOS.ui.SENSITIVE_MSG); e.target.value = ''; val = ''; }
       if (c.type === 'money' || c.type === 'number') { val = val === '' ? '' : Math.max(0, parseFloat(val) || 0); e.target.value = val; }
-      store.update((s) => { const it = cfg.list(s).find((x) => x.id === tr.dataset.id); if (it) it[c.k] = val; });
+      store.update((s) => { const it = cfg.list(s).find((x) => x.id === tr.dataset.id); if (it) { it[c.k] = val; if (cfg.touch) cfg.touch(it, c.k); } });
       if (cfg.computed) { const it = list().find((x) => x.id === tr.dataset.id); tr.querySelector('.comp').innerHTML = cfg.computed.fn(it); }
       const f = root.querySelector('.crud-foot'); if (f && cfg.footer) f.innerHTML = cfg.footer(list());
       if (cfg.redraw) draw();
