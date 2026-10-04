@@ -58,6 +58,7 @@
       if (r === 'tool') { const m = FOS.MODULES.find((x) => x.tool === seg[1]); return m ? modulePage(m.id, q) : toolPage(seg[1], ({ snapshot: 'My Financial Snapshot', reminders: 'Reminders', records: 'Records', timeline: 'Life Timeline', recurring: 'Recurring Expense Auditor', purchase: 'Purchase Analyzer' })[seg[1]] || 'Tool'); }
       if (r === 'calculators') return library();
       if (r === 'help') return page('Help', '<h1 class="ph">How to use Finance OS</h1>' + FOS.helpHTML(), () => { if (q.s) FOS.openHelpSection(q.s); });
+      if (r === 'guide') { const g = FOS.GUIDES.find((x) => x.id === seg[1]); if (!g) return toolPage('guides', 'Expert Guides', ''); return page(g.title, FOS.guideHTML(g), (el) => FOS.guideAfter(g, el)); }
       if (r === 'sources') return toolPage('sources', 'Data & Sources', 'Official links for every number, and the update centre that recalculates the whole app.');
       if (r === 'glossary') return glossary(q.t);
       if (r === 'reports') return page('My Reports', '<h1 class="ph">My Reports</h1>' + FOS.aboutHTML('page', 'reports') + '<div id="rep"></div>', () => FOS.renderReports($('#rep')));
@@ -108,6 +109,7 @@
     const calcs = m.calcs.map((c) => FOS.calcs[c]).filter(Boolean);
     const related = Object.values(FOS.calcs).filter((c) => c.module === id && !m.calcs.includes(c.id));
     const html = `<div class="crumb"><a href="#/home">Home</a> › <span>${esc(m.grp)}</span></div><header class="mod-head"><span class="mod-n">${idx}</span><div><h1 class="ph">${esc(m.title)}</h1><p class="lead">${esc(m.blurb)}</p>${m.lvl ? `<span class="pill info">Level ${m.lvl} — ${esc(FOS.LEVELS[m.lvl])}</span>` : ''}</div></header>
+      ${FOS.guideFor && FOS.guideFor(id) ? `<a class="card guide-cta" href="#/guide/${FOS.guideFor(id).id}"><span class="gc-ic">📘</span><div><b>Expert guide: ${esc(FOS.guideFor(id).title)}</b><p>${esc(FOS.guideFor(id).summary.replace(/\*\*/g, ''))}</p><small>${esc(FOS.guideFor(id).read || '')} · types, documents to check, costs, traps and my recommendation →</small></div></a>` : ''}
       ${m.tool ? FOS.aboutHTML('tool', m.tool) + '<div id="tool"></div>' : ''}
       ${calcs.length || related.length ? `<section><h2>Calculators</h2><div class="cards">${calcs.concat(related).map((c) => calcCard(c)).join('')}</div></section>` : ''}
       ${lessons.length ? `<section><h2>Lessons</h2>${lessons.map((l, i) => lessonHTML(l, pr.lessons[l.id], q.l ? q.l === l.id : i === 0, m)).join('')}</section>` : ''}
@@ -348,14 +350,19 @@
     // iPhone only opens the keyboard when focus happens INSIDE the tap, so focus synchronously (no timeout)
     $('#search-toggle').onclick = () => { const open = document.body.classList.toggle('search-open'); if (open) { const i = $('#gsearch'); void i.offsetWidth; i.focus(); } };
     // Every field: right keyboard, always reachable, kept in view
-    const isField = (t) => !!(t && t.matches && t.matches('input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=button]):not([type=submit]):not([type=file]), textarea, select'));
+    // Keyboard logic applies ONLY to fields that open a keyboard. Date / month / time pickers and dropdowns are native sheets:
+    // scrolling or re-laying-out the page while they open makes the phone close them, so they are left completely alone.
+    const KBD = 'input:not([type]), input[type=text], input[type=number], input[type=search], input[type=email], input[type=tel], input[type=url], input[type=password], textarea';
+    const isField = (t) => !!(t && t.matches && t.matches(KBD));
     document.addEventListener('focusin', (e) => {
       const t = e.target; if (!isField(t)) return;
       if (t.tagName === 'INPUT') { if (t.type === 'number' && !t.getAttribute('inputmode')) t.setAttribute('inputmode', 'decimal'); if ((t.type === 'text' || t.type === 'search') && !t.getAttribute('enterkeyhint')) t.setAttribute('enterkeyhint', 'done'); }
       document.body.classList.add('kbd-open');
-      if (isPhone()) setTimeout(() => { try { t.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (x) { /* older browsers */ } }, 350);
+      if (isPhone()) setTimeout(() => { if (document.activeElement === t) { try { t.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (x) { /* older browsers */ } } }, 350);
     });
     document.addEventListener('focusout', () => { setTimeout(() => { if (!isField(document.activeElement)) document.body.classList.remove('kbd-open'); }, 120); });
+    // On computers, Chrome/Edge open the date picker only from the little calendar icon: make a click anywhere in the field open it
+    document.addEventListener('click', (e) => { const t = e.target; if (t && t.matches && t.matches('input[type=date], input[type=month], input[type=time], input[type=datetime-local]') && window.matchMedia && window.matchMedia('(pointer: fine)').matches && typeof t.showPicker === 'function') { try { t.showPicker(); } catch (x) { /* already open or not allowed */ } } });
     // tapping the ₹ or % beside a number box (or the gap around it) focuses the box, inside the tap
     document.addEventListener('click', (e) => { const w = e.target.closest && e.target.closest('.inp'); if (w && e.target.tagName !== 'INPUT') { const i = w.querySelector('input'); if (i) i.focus(); } });
     $$('[data-bn-menu]').forEach((b) => { b.onclick = () => document.body.classList.toggle('nav-open'); });
