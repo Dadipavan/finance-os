@@ -75,12 +75,12 @@
       FOS.crud(root.querySelector('#bitems'), {
         list: (st) => st.budget.items, addLabel: 'Add category', empty: 'Add rent, food, transport… or load the example.',
         cols: [{ k: 'name', label: 'Category', type: 'text' }, { k: 'kind', label: 'Type', type: 'select', options: [['need', 'Need'], ['want', 'Want'], ['save', 'Saving / investing']] }, { k: 'amount', label: 'Monthly ₹', type: 'money' }, { k: 'spent', label: 'Spent so far ₹', type: 'money', hide: (st) => st.budget.method !== 'envelope' }],
-        blank: () => ({ name: '', kind: 'need', amount: '', spent: '' }), onChange: sum
+        blank: () => ({ name: '', kind: 'need', amount: '', spent: '' }), onChange: () => { if (store.get().profile.numbersFrom !== 'budget') store.update((st) => { st.profile.numbersFrom = 'budget'; }); sum(); }
       });
       sum();
-      const bm = root.querySelector('#bm'); bm.onchange = () => { store.update((st) => { st.budget.method = bm.value; }); draw(); };
-      root.querySelector('#binc').onchange = (e) => { store.update((st) => { st.budget.income = Math.max(0, parseFloat(e.target.value) || 0); }); sum(); };
-      const set = (items) => { store.update((st) => { st.budget.items = items.map((i) => Object.assign({ id: store.uid(), spent: '' }, i)); }); draw(); };
+      const bm = root.querySelector('#bm'); bm.onchange = () => { store.update((st) => { st.budget.method = bm.value; st.profile.numbersFrom = 'budget'; }); draw(); };
+      root.querySelector('#binc').onchange = (e) => { store.update((st) => { st.budget.income = Math.max(0, parseFloat(e.target.value) || 0); st.profile.numbersFrom = 'budget'; }); sum(); };
+      const set = (items) => { store.update((st) => { st.profile.numbersFrom = 'budget'; st.budget.items = items.map((i) => Object.assign({ id: store.uid(), spent: '' }, i)); }); draw(); };
       root.querySelector('#b-ex').onclick = () => { store.update((st) => { st.budget.income = 60000; }); set([['Rent', 12000, 'need'], ['Food', 6000, 'need'], ['Transport', 4000, 'need'], ['Utilities', 3000, 'need'], ['Subscriptions', 1000, 'want'], ['Entertainment', 3000, 'want'], ['Investments', 15000, 'save'], ['Emergency Fund', 5000, 'save'], ['Other', 2000, 'want']].map(([name, amount, kind]) => ({ name, amount, kind }))); U.toast('Example loaded — this is an illustration, not advice.'); };
       root.querySelector('#b-5030').onclick = () => { const inc = +store.get().budget.income; if (!(inc > 0)) return U.toast('Enter your monthly income first.'); set([{ name: 'Needs (rent, food, bills, EMIs)', kind: 'need', amount: Math.round(inc * 0.5) }, { name: 'Wants', kind: 'want', amount: Math.round(inc * 0.3) }, { name: 'Savings & debt reduction', kind: 'save', amount: Math.round(inc * 0.2) }]); };
       root.querySelector('#b-clear').onclick = () => { if (confirm('Remove all budget categories?')) set([]); };
