@@ -16,7 +16,7 @@
   function snapshotHTML(m) {
     return `<div class="kpis">${kpi('Income (monthly)', fmt.inr(m.income), '', { num: m.income })}${kpi('Expenses (monthly)', fmt.inr(m.expenses), '', { num: m.expenses })}${kpi('Savings (monthly)', fmt.inr(m.savings), 'income − expenses', { num: m.savings })}${kpi('Savings rate', fmt.pct(m.savingsRate, 1), 'savings ÷ income', { num: m.savingsRate, f: 'pct' })}${kpi('Debt (total)', fmt.inr(m.liabilities), '', { num: m.liabilities })}${kpi('Debt-to-income', fmt.pct(m.dti, 1), 'EMIs ÷ income', { num: m.dti, f: 'pct' })}${kpi('Emergency fund', fmt.inr(m.ef), Number.isFinite(m.efMonths) ? fmt.months(m.efMonths) + ' of essentials' : '', { num: m.ef })}${kpi('Investments', fmt.inr(m.investments), '', { num: m.investments })}${kpi('Net worth', fmt.inr(m.netWorth), 'assets − liabilities', { num: m.netWorth, hi: true })}${kpi('Goals', store.get().goals.length + '', 'tracked')}</div>`;
   }
-  FOS.tools.snapshot = (root) => { root.innerHTML = `<div class="card"><h3>MY FINANCIAL SNAPSHOT</h3>${snapshotHTML(FOS.metrics())}</div>`; animateKpis(root); };
+  FOS.tools.snapshot = (root) => { const sr = sourceOf(); root.innerHTML = `<div class="card"><h3>MY FINANCIAL SNAPSHOT</h3>${snapshotHTML(FOS.metrics())}<p class="note">Income comes from ${esc(sr.inc)}. Expenses come from ${esc(sr.exp)}. Change them in <a href="#/tool/budget">Budget</a> or by running <b>Start my financial journey</b> again.</p></div>`; animateKpis(root); };
 
   /* ---------- dashboard ---------- */
   function upcoming(days) {
@@ -26,12 +26,44 @@
     return out.sort((a, b) => a.date - b.date);
   }
   FOS.upcoming = upcoming;
+
+  // where the dashboard's income and expense numbers come from (so the user is never surprised)
+  function sourceOf() {
+    const st = store.get(), b = st.budget, p = st.profile, m = FOS.metrics();
+    if (m.fromForm) return { inc: 'your “Start my financial journey” answers', exp: 'your “Start my financial journey” answers' };
+    const inc = n(b.income) ? 'your Budget (monthly income)' : n(p.monthlyIncome) ? 'your “Start my financial journey” answers' : n(p.annualIncome) ? 'your yearly income ÷ 12 (journey form)' : 'nothing entered yet';
+    const exp = b.items.length ? `your Budget (${b.items.filter((i) => i.kind !== 'save').length} spending lines; savings lines excluded)` : n(p.monthlyExpenses) ? 'your “Start my financial journey” answers' : 'nothing entered yet';
+    return { inc, exp };
+  }
+  FOS.numberSource = sourceOf;
+  /* ---------- "How is this calculated?" (uses the user's own numbers and says where each one came from) ---------- */
+  function howCalculated(m) {
+    const s = store.get(), b = s.budget, p = s.profile, I = (v) => fmt.inr(v), P = (v) => (Number.isFinite(v) ? fmt.pct(v, 1) : '—');
+    const src = sourceOf(), incSrc = src.inc, expSrc = src.exp;
+    const efCats = 'assets in the “Emergency Fund” category + the “current” amount of any Emergency Fund goal';
+    const rows = [
+      ['Monthly income', I(m.income), 'Taken from ' + incSrc + '.'],
+      ['Monthly expenses', I(m.expenses), 'Taken from ' + expSrc + '.'],
+      ['Monthly savings', I(m.savings), `Income − expenses = ${I(m.income)} − ${I(m.expenses)}. Can be negative if you spend more than you earn.`],
+      ['Savings rate', P(m.savingsRate), `Savings ÷ income × 100 = ${I(m.savings)} ÷ ${I(m.income)}. Aim for 20% or more.`],
+      ['Total assets', I(m.assets), `Add up every row in Net Worth → Assets (${s.assets.length} rows). Use today’s market value, not what you paid.`],
+      ['Total liabilities', I(m.liabilities), `Add up the outstanding amount of every row in Net Worth → Liabilities (${s.liabilities.length} rows).`],
+      ['Net worth', I(m.netWorth), `Assets − liabilities = ${I(m.assets)} − ${I(m.liabilities)}.`],
+      ['Emergency fund', I(m.ef), 'Counted from ' + efCats + '. Savings accounts are not counted unless you put them in that category.'],
+      ['Emergency months', Number.isFinite(m.efMonths) ? m.efMonths.toFixed(1) + ' months' : '—', `Emergency fund ÷ essential monthly expenses (${I(m.essential)}; your “need” lines if you made a budget, otherwise all expenses). Target 6.`],
+      ['Debt-to-income', P(m.dti), `All monthly EMIs ÷ monthly income × 100 = ${I(m.emi)} ÷ ${I(m.income)}. Keep it under 35–40%.`],
+      ['Liquid months', Number.isFinite(m.liquidMonths) ? m.liquidMonths.toFixed(1) + ' months' : '—', `(Cash + bank + emergency fund) ÷ (essential expenses + EMIs) = ${I(m.liquid)} ÷ ${I(m.essential + m.emi)}.`],
+      ['Goal progress', m.goalProgress.length ? m.goalProgress.length + ' goal(s)' : '—', 'For each goal: amount saved so far ÷ target amount × 100, capped at 100%.']
+    ];
+    return `<section class="card calc-how"><details${/^(1|true)$/.test(String(localStorage.getItem('fos.howOpen'))) ? ' open' : ''} id="how-calc"><summary><b>How is each number calculated?</b> <span class="muted">— with your own figures and where each came from</span></summary><div class="table-scroll"><table class="data"><thead><tr><th>Number</th><th>Your value</th><th>How it is worked out</th></tr></thead><tbody>${rows.map((r) => `<tr><th scope="row" data-label="Number">${esc(r[0])}</th><td data-label="Your value"><b>${esc(r[1])}</b></td><td data-label="How">${esc(r[2])}</td></tr>`).join('')}</tbody></table></div><p class="note">Nothing here is estimated or assumed. Every figure comes from what you typed in <a href="#/tool/budget">Budget</a>, <a href="#/tool/networth">Net Worth</a>, <a href="#/tool/goals">Goals</a> or the <b>Start my financial journey</b> form. If a number looks wrong, fix the source row, not this page. Monthly statements use only your logged entries (see <a href="#/tool/statement">Monthly Statement</a>).</p></details></section>`;
+  }
   FOS.tools.dashboard = function (root) {
     const s = store.get(), m = FOS.metrics(), empty = !m.income && !s.assets.length && !s.liabilities.length && !s.goals.length;
     const up = upcoming(30), by = (arr) => Object.entries(arr.reduce((a, x) => { a[x.cat] = (a[x.cat] || 0) + n(x.value); return a; }, {})).map(([name, value]) => ({ name, value }));
     const snaps = [...s.snapshots].sort((a, b) => a.date.localeCompare(b.date));
     root.innerHTML = `${empty ? `<div class="card hero-empty"><h3>Welcome. Your dashboard is empty — and that\'s fine.</h3><p>Answer a few optional questions, add a budget, or explore a sample to see how it works.</p><div class="row-actions"><button class="btn primary" data-act="onboard">START MY FINANCIAL JOURNEY</button><button class="btn" data-act="sample">Load sample data</button><a class="btn ghost" href="#/tool/budget">Create a budget</a></div></div>` : ''}
       <div class="kpis big">${kpi('Monthly income', fmt.inr(m.income), '', { num: m.income })}${kpi('Monthly expenses', fmt.inr(m.expenses), '', { num: m.expenses })}${kpi('Monthly savings', fmt.inr(m.savings), '', { num: m.savings })}${kpi('Savings rate', fmt.pct(m.savingsRate, 1), '', { num: m.savingsRate, f: 'pct', tip: 'Savings ÷ Income × 100' })}${kpi('Total assets', fmt.inr(m.assets), '', { num: m.assets })}${kpi('Total liabilities', fmt.inr(m.liabilities), '', { num: m.liabilities })}${kpi('Net worth', fmt.inr(m.netWorth), 'assets − liabilities', { num: m.netWorth, hi: true })}${kpi('Emergency fund', fmt.inr(m.ef), Number.isFinite(m.efMonths) ? `${fmt.months(m.efMonths)} of essentials` : 'add essentials in Budget', { num: m.ef })}${kpi('Total investments', fmt.inr(m.investments), '', { num: m.investments })}${kpi('Total debt', fmt.inr(m.liabilities), m.emi ? `EMIs ${fmt.inr(m.emi)}/mo` : '', { num: m.liabilities })}${kpi('Recurring expenses', fmt.inr(m.recurringMonthly), 'per month', { num: m.recurringMonthly })}${kpi('Upcoming (30 days)', up.length + '', up[0] ? esc(up[0].name) + ' · ' + fmt.date(up[0].date) : 'nothing due')}</div>
+      ${howCalculated(m)}
       <div class="grid-2">
         <div class="card"><h3>Income vs expenses</h3>${ch().bar({ title: 'Income vs expenses', cats: ['Income', 'Expenses', 'Savings'], series: [{ name: 'Monthly', data: [m.income, m.expenses, Math.max(0, m.savings)], color: ch().PALETTE[0] }], yfmt: 'inr' })}</div>
         <div class="card"><h3>Asset allocation</h3>${ch().donut({ title: 'Assets', items: by(s.assets) })}</div>
@@ -45,6 +77,7 @@
       <div class="card quote"><p>You don't need to become a financial expert overnight. You need to understand the important numbers before making important decisions.</p></div>
       <p class="safety">${SAFETY}</p>`;
     animateKpis(root);
+    const hw = root.querySelector('#how-calc'); if (hw) hw.addEventListener('toggle', () => { try { localStorage.setItem('fos.howOpen', hw.open ? '1' : '0'); } catch (e) {} });
     root.onclick = (e) => { const a = e.target.closest('[data-act]'); if (!a) return; if (a.dataset.act === 'onboard') FOS.onboarding(); if (a.dataset.act === 'sample') FOS.loadSample(); if (a.dataset.act === 'snap') { FOS.saveSnapshot(); FOS.route(); } };
   };
 
@@ -61,7 +94,7 @@
     store.update((s) => {
       s.meta.sample = true; s.profile.sampleSet = true;
       Object.assign(s.profile, { age: 28, monthlyIncome: 60000, annualIncome: 720000, monthlyExpenses: 40000, dependents: 0, retAge: 60, hasHealth: true, healthCover: 500000, hasTerm: false, onboarded: true });
-      s.budget = { method: '50-30-20', income: 60000, items: [['Rent', 12000, 'need'], ['Food', 6000, 'need'], ['Transport', 4000, 'need'], ['Utilities', 3000, 'need'], ['Subscriptions', 1000, 'want'], ['Entertainment', 3000, 'want'], ['Investments', 15000, 'save'], ['Emergency Fund', 5000, 'save'], ['Other', 2000, 'want']].map(([name, amount, kind]) => ({ id: u(), name, amount, kind, spent: '' })) };
+      s.budget = { sample: true, method: '50-30-20', income: 60000, items: [['Rent', 12000, 'need'], ['Food', 6000, 'need'], ['Transport', 4000, 'need'], ['Utilities', 3000, 'need'], ['Subscriptions', 1000, 'want'], ['Entertainment', 3000, 'want'], ['Investments', 15000, 'save'], ['Emergency Fund', 5000, 'save'], ['Other', 2000, 'want']].map(([name, amount, kind]) => ({ id: u(), name, amount, kind, spent: '', sample: true })) };
       s.assets = [['Savings account', 'Bank', 80000], ['Emergency fund', 'Emergency Fund', 50000], ['Fixed deposit', 'FD', 100000], ['Index fund SIP', 'Investments', 180000], ['Phone / laptop', 'Other', 40000]].map(([name, cat, value]) => ({ id: u(), name, cat, value }));
       s.liabilities = [{ id: u(), name: 'Credit card dues', cat: 'Credit card', value: 20000, emi: 0 }, { id: u(), name: 'Personal loan', cat: 'Personal loan', value: 150000, emi: 5000 }];
       s.goals = [{ id: u(), name: 'Emergency fund', type: 'Emergency Fund', target: 240000, current: 0, deadline: '', inflation: 5, ret: 6 }, { id: u(), name: 'Laptop', type: 'Laptop', target: 90000, current: 30000, deadline: new Date(now.getFullYear() + 1, now.getMonth(), 1).toISOString().slice(0, 10), inflation: 5, ret: 6 }];
@@ -90,32 +123,62 @@
   /* ---------- onboarding ---------- */
   FOS.onboarding = function () {
     const p = Object.assign({}, store.get().profile); let step = 0;
+    delete p.numbersFrom; // decided again at the review step from what you type now
+    const wasSample = !!(store.get().meta && store.get().meta.sample) || !!p.sampleSet;
+    // sample numbers must never be pre-filled as if they were yours
+    if (wasSample) ['age', 'monthlyIncome', 'annualIncome', 'monthlyExpenses', 'savings', 'investments', 'loans', 'emi', 'cards', 'dependents', 'healthCover', 'termCover'].forEach((k) => { p[k] = ''; });
+    const num = (v) => +v || 0;
+    const fld = (k, label, hint, o = {}) => `<div class="field"><label>${label}<input class="input" data-p="${k}" type="number" inputmode="decimal" min="${o.min === undefined ? 0 : o.min}"${o.max ? ` max="${o.max}"` : ''} placeholder="${o.ph || ''}" value="${esc(p[k] === undefined || p[k] === null ? '' : p[k])}"></label><small class="hint">${hint}</small></div>`;
+    const review = () => {
+      const inc = num(p.monthlyIncome) || num(p.annualIncome) / 12, exp = num(p.monthlyExpenses), sur = inc - exp, emi = num(p.emi);
+      const row = (l, v, note) => `<tr><th scope="row">${l}</th><td>${v}</td><td class="muted">${note}</td></tr>`;
+      const rows = [
+        inc ? row('Monthly income', fmt.inr(inc), 'Used for every affordability and savings answer') : row('Monthly income', '— not given', 'Without it, savings rate, EMI load and tax advice stay blank'),
+        p.monthlyExpenses !== '' ? row('Monthly expenses', fmt.inr(exp), inc ? `You keep ${fmt.inr(sur)} a month (${Math.round(sur / inc * 100)}% savings rate)` : '') : '',
+        exp && num(p.savings) ? row('Emergency fund', (Math.min(num(p.emergencyFund), num(p.savings)) / exp).toFixed(1) + ' months', num(p.emergencyFund) ? 'Target is 6 months of expenses' : 'None earmarked. Savings of ' + fmt.inr(num(p.savings)) + ' would last ' + (num(p.savings) / exp).toFixed(1) + ' months, but only money kept as emergency fund is counted') : '',
+        inc && emi ? row('EMI load', Math.round(emi / inc * 100) + '% of income', 'Keep this under 35–40%') : '',
+        row('Health insurance', p.hasHealth ? 'Yes' + (num(p.healthCover) ? ' · ' + fmt.inr(num(p.healthCover)) : '') : 'No', p.hasHealth ? '' : 'You will see this as a priority in My Suggestions'),
+        row('Term life insurance', p.hasTerm ? 'Yes' + (num(p.termCover) ? ' · ' + fmt.inr(num(p.termCover)) : '') : 'No', +p.dependents && !p.hasTerm ? 'You have dependents — this matters' : '')
+      ].join('');
+      const made = [num(p.savings) && 'asset “Savings”', num(p.investments) && 'asset “Investments”', num(p.loans) && 'liability “Loans”', num(p.cards) && 'liability “Credit-card dues”'].filter(Boolean);
+      const bs = store.get().budget, hasOwnBudget = !wasSample && (bs.items.length > 0 || n(bs.income) > 0), typed = p.monthlyIncome !== '' || p.monthlyExpenses !== '' || p.annualIncome !== '';
+      if (p.numbersFrom !== 'form' && p.numbersFrom !== 'budget') p.numbersFrom = typed || !hasOwnBudget ? 'form' : 'budget';
+      const chooser = hasOwnBudget ? `<div class="field"><label>You already have a Budget. Which income and expense numbers should the dashboard use?<select class="input" data-p="numbersFrom"><option value="form" ${p.numbersFrom === 'form' ? 'selected' : ''}>The numbers I typed here (expenses ${fmt.inr(num(p.monthlyExpenses))})</option><option value="budget" ${p.numbersFrom === 'budget' ? 'selected' : ''}>My Budget (expenses ${fmt.inr(bs.items.filter((i) => i.kind !== 'save').reduce((a, i) => a + num(i.amount), 0))})</option></select></label><small class="hint">Your Budget is never deleted. You can switch any time by editing the Budget or running this form again.</small></div>` : '';
+      return `${chooser}<div class="table-scroll"><table class="data"><tbody>${rows}</tbody></table></div><div class="g-note gn-ex"><span class="gn-ic" aria-hidden="true">📒</span><div class="gn-b"><b class="gn-t">What will be created</b><div>Your profile${made.length ? ', plus ' + made.join(', ') + ' in Net Worth' : ''}. Nothing is sent anywhere. You can edit or delete every number later in <b>Net Worth</b>, <b>Budget</b> or <b>Settings</b>.</div></div></div>`;
+    };
     const steps = [
-      ['About you', `<div class="fields"><div class="field"><label>Age<input class="input" data-p="age" type="number" inputmode="decimal" min="0" max="110" value="${esc(p.age)}"></label></div><div class="field"><label>Dependents (people who rely on your income)<input class="input" data-p="dependents" type="number" inputmode="decimal" min="0" value="${esc(p.dependents)}"></label></div><div class="field"><label>Target retirement age<input class="input" data-p="retAge" type="number" inputmode="decimal" min="30" max="80" value="${esc(p.retAge)}"></label></div><div class="field"><label>How well do you understand investment risk?<select class="input" data-p="riskUnderstanding">${['Not at all', 'A little', 'Somewhat', 'Fairly well', 'Very well'].map((t, i) => `<option value="${i + 1}" ${+p.riskUnderstanding === i + 1 ? 'selected' : ''}>${t}</option>`).join('')}</select></label></div></div>`],
-      ['Income & spending', `<div class="fields"><div class="field"><label>Monthly income, take-home (₹)<input class="input" data-p="monthlyIncome" type="number" inputmode="decimal" min="0" value="${esc(p.monthlyIncome)}"></label></div><div class="field"><label>Annual income (₹) — optional<input class="input" data-p="annualIncome" type="number" inputmode="decimal" min="0" value="${esc(p.annualIncome)}"></label></div><div class="field"><label>Monthly expenses (₹)<input class="input" data-p="monthlyExpenses" type="number" inputmode="decimal" min="0" value="${esc(p.monthlyExpenses)}"></label></div></div>`],
-      ['Savings & debts', `<div class="fields"><div class="field"><label>Savings in bank/cash (₹)<input class="input" data-p="savings" type="number" inputmode="decimal" min="0" value="${esc(p.savings)}"></label></div><div class="field"><label>Investments (₹)<input class="input" data-p="investments" type="number" inputmode="decimal" min="0" value="${esc(p.investments)}"></label></div><div class="field"><label>Loans outstanding (₹)<input class="input" data-p="loans" type="number" inputmode="decimal" min="0" value="${esc(p.loans)}"></label></div><div class="field"><label>Total monthly EMIs (₹)<input class="input" data-p="emi" type="number" inputmode="decimal" min="0" value="${esc(p.emi || '')}"></label></div><div class="field"><label>Credit-card dues (₹)<input class="input" data-p="cards" type="number" inputmode="decimal" min="0" value="${esc(p.cards)}"></label></div></div>`],
-      ['Protection & goals', `<div class="fields"><div class="field"><label class="check"><input type="checkbox" data-p="hasHealth" ${p.hasHealth ? 'checked' : ''}> I have health insurance</label></div><div class="field"><label>Health cover (₹)<input class="input" data-p="healthCover" type="number" inputmode="decimal" min="0" value="${esc(p.healthCover)}"></label></div><div class="field"><label class="check"><input type="checkbox" data-p="hasTerm" ${p.hasTerm ? 'checked' : ''}> I have term life insurance</label></div><div class="field"><label>Term cover (₹)<input class="input" data-p="termCover" type="number" inputmode="decimal" min="0" value="${esc(p.termCover)}"></label></div></div><fieldset><legend>Goals I am thinking about</legend><div class="chips">${['Emergency Fund', 'Laptop', 'Phone', 'Bike', 'Car', 'House', 'Education', 'Travel', 'Marriage', 'Children', 'Retirement', 'Financial Independence'].map((g) => `<label class="chip check"><input type="checkbox" data-goal="${g}" ${p.goalsInterest.includes(g) ? 'checked' : ''}> ${g}</label>`).join('')}</div></fieldset>`]
+      ['Welcome', 'What this is, and what you get', () => `<div class="onb-intro"><p>This builds your <b>starting picture</b> in about <b>4 minutes</b>: how much you earn and spend, what you own and owe, and how protected you are.</p><ul class="onb-list"><li><b>What you get:</b> your savings rate, emergency-fund months, EMI load, net worth, an insurance check, and an ordered “what to do next” list in <b>My Suggestions</b> and <b>My Action Plan</b>.</li><li><b>Everything is optional.</b> Leave a box empty if you don’t know it. Rough numbers are fine; you can correct them later.</li><li><b>Private:</b> numbers stay in this browser (and your own Google Drive if you turn sync on). No account, no server.</li><li><b>Never type</b> Aadhaar, PAN, account or card numbers, passwords, OTPs, PINs or CVVs. This form never needs them.</li></ul><p class="muted">Steps: 1 About you · 2 Income &amp; spending · 3 Savings &amp; debts · 4 Protection &amp; goals · 5 Review.</p></div>`],
+      ['1. About you', 'Age and family decide how much insurance and how much risk make sense.', () => `<div class="fields">${fld('age', 'Your age (years)', 'Sets your investing horizon and insurance need.', { max: 110, ph: 'e.g. 30' })}${fld('dependents', 'Dependents (people who rely on your income)', 'Spouse, children, parents you support. Enter 0 if none.', { ph: 'e.g. 2' })}${fld('retAge', 'Age you want to retire', 'Used by the retirement and financial-independence calculators. Default 60.', { min: 30, max: 80, ph: '60' })}<div class="field"><label>How well do you understand investment risk?<select class="input" data-p="riskUnderstanding">${['Not at all', 'A little', 'Somewhat', 'Fairly well', 'Very well'].map((t, i) => `<option value="${i + 1}" ${+p.riskUnderstanding === i + 1 ? 'selected' : ''}>${t}</option>`).join('')}</select></label><small class="hint">Honest answer please — it limits how aggressive the suggested mix is.</small></div></div>`],
+      ['2. Income & spending', 'Take-home means what reaches your bank account after tax and PF.', () => `<div class="fields">${fld('monthlyIncome', 'Monthly income, take-home (₹)', 'Salary credited per month. For irregular income, use an average of the last 6 months.', { ph: 'e.g. 60000' })}${fld('annualIncome', 'Yearly income, before tax (₹) — optional', 'Your CTC or gross for the year. Used for the tax calculators. Left blank = monthly × 12.', { ph: 'e.g. 900000' })}${fld('monthlyExpenses', 'Monthly expenses (₹)', 'Everything you spend in a month: rent, food, bills, EMIs, fuel, outings. Check last month’s UPI/bank statement for a real number.', { ph: 'e.g. 40000' })}</div>`],
+      ['3. Savings & debts', 'What you own and what you owe today. Rounded numbers are fine.', () => `<div class="fields">${fld('savings', 'Savings in bank and cash (₹)', 'Savings account + cash + liquid money you can use this week. Not FDs you can’t break.', { ph: 'e.g. 150000' })}${fld('emergencyFund', 'Of that, kept as emergency fund (₹)', 'The part of your savings you have set aside only for emergencies (job loss, medical). It is counted in the “Emergency months” number. Enter 0 if none is earmarked.', { ph: 'e.g. 100000' })}${fld('investments', 'Investments (₹)', 'Current value of mutual funds, stocks, FDs, PPF/EPF/NPS, gold. Use today’s value, not what you paid.', { ph: 'e.g. 400000' })}${fld('loans', 'Loans outstanding (₹)', 'Total still to repay on home, car, personal and education loans.', { ph: 'e.g. 2500000' })}${fld('emi', 'Total monthly EMIs (₹)', 'Add up every loan EMI you pay each month.', { ph: 'e.g. 22000' })}${fld('cards', 'Credit-card dues (₹)', 'Unpaid balance across cards right now. Costs 36–42% a year, so it comes first in your plan.', { ph: 'e.g. 0' })}</div>`],
+      ['4. Protection & goals', 'Insurance is checked before investing. Goals tell the plan what to save for.', () => `<div class="fields"><div class="field"><label class="check"><input type="checkbox" data-p="hasHealth" ${p.hasHealth ? 'checked' : ''}> I have health insurance (not only from my employer)</label></div>${fld('healthCover', 'Health cover (₹)', 'Total sum insured, e.g. 1000000 for ₹10 lakh.', { ph: 'e.g. 1000000' })}<div class="field"><label class="check"><input type="checkbox" data-p="hasTerm" ${p.hasTerm ? 'checked' : ''}> I have term life insurance</label></div>${fld('termCover', 'Term cover (₹)', 'Sum assured, e.g. 10000000 for ₹1 crore.', { ph: 'e.g. 10000000' })}</div><fieldset><legend>Goals I am thinking about</legend><div class="chips">${['Emergency Fund', 'Laptop', 'Phone', 'Bike', 'Car', 'House', 'Education', 'Travel', 'Marriage', 'Children', 'Retirement', 'Financial Independence'].map((g) => `<label class="chip check"><input type="checkbox" data-goal="${g}" ${p.goalsInterest.includes(g) ? 'checked' : ''}> ${g}</label>`).join('')}</div><small class="hint">Tick any. You will set amounts and dates in Financial Goals afterwards.</small></fieldset>`],
+      ['5. Review', 'Check this once. Go Back to change anything.', review]
     ];
-    const box = U.modal('Build my financial snapshot', '', { wide: true });
+    const box = U.modal('Start my financial journey', '', { wide: true });
     const body = box.querySelector('.modal-body');
     const collect = () => { U.$$('[data-p]', body).forEach((e) => { p[e.dataset.p] = e.type === 'checkbox' ? e.checked : e.value === '' ? '' : (isNaN(+e.value) ? e.value : Math.max(0, +e.value)); }); const g = U.$$('[data-goal]', body); if (g.length) p.goalsInterest = g.filter((e) => e.checked).map((e) => e.dataset.goal); };
     const draw = () => {
-      body.innerHTML = `<div class="steps">${steps.map((s, i) => `<span class="${i === step ? 'on' : i < step ? 'done' : ''}">${i + 1}</span>`).join('')}</div><h3>${steps[step][0]}</h3><p class="muted">Everything is optional. Skip anything you prefer not to share — it never leaves this device.</p><div class="safety">${SAFETY}</div>${steps[step][1]}<div class="row-actions">${step > 0 ? '<button class="btn ghost" data-nav="-1">Back</button>' : ''}<button class="btn primary" data-nav="1">${step === steps.length - 1 ? 'Create my snapshot' : 'Next'}</button></div>`;
+      const st = steps[step], last = step === steps.length - 1;
+      body.innerHTML = `<div class="steps" aria-label="Step ${step + 1} of ${steps.length}">${steps.map((x, i) => `<span class="${i === step ? 'on' : i < step ? 'done' : ''}">${i + 1}</span>`).join('')}</div><h3>${st[0]}</h3><p class="lead">${st[1]}</p>${step > 0 && !last ? `<p class="muted">Optional — skip anything you prefer not to share.</p>` : ''}${st[2]()}${step > 0 && !last ? `<div class="safety">${SAFETY}</div>` : ''}<div class="row-actions">${step > 0 ? '<button class="btn ghost" data-nav="-1">Back</button>' : ''}<button class="btn primary" data-nav="1">${step === 0 ? 'Let’s start' : last ? 'Create my snapshot' : 'Next'}</button></div>`;
+      const m = body.closest('.modal, [role=dialog]') || body; if (m.scrollTo) m.scrollTo(0, 0);
     };
     body.onclick = (e) => {
-      const b = e.target.closest('[data-nav]'); if (!b) return; collect(); step += +b.dataset.nav;
+      const b = e.target.closest('[data-nav]'); if (!b) return; collect(); step += +b.dataset.nav || 0;
       if (step >= steps.length) {
+        if (wasSample) { const keepToast = U.toast; U.toast = () => {}; FOS.removeSample(); U.toast = keepToast; }
         store.update((s) => {
-          Object.assign(s.profile, p, { onboarded: true }); delete s.profile.sampleSet;
+          Object.assign(s.profile, p, { onboarded: true, numbersFrom: p.numbersFrom === 'budget' ? 'budget' : 'form' }); delete s.profile.sampleSet;
           if (!(+s.profile.annualIncome) && +s.profile.monthlyIncome) s.profile.annualIncome = s.profile.monthlyIncome * 12;
           if (!(+s.profile.monthlyIncome) && +s.profile.annualIncome) s.profile.monthlyIncome = Math.round(s.profile.annualIncome / 12);
           s.assets = s.assets.filter((a) => a.src !== 'onboarding'); s.liabilities = s.liabilities.filter((a) => a.src !== 'onboarding');
-          if (+p.savings) s.assets.push({ id: store.uid(), name: 'Savings (onboarding)', cat: 'Bank', value: +p.savings, src: 'onboarding' });
-          if (+p.investments) s.assets.push({ id: store.uid(), name: 'Investments (onboarding)', cat: 'Investments', value: +p.investments, src: 'onboarding' });
-          if (+p.loans) s.liabilities.push({ id: store.uid(), name: 'Loans (onboarding)', cat: 'Personal loan', value: +p.loans, emi: +p.emi || 0, src: 'onboarding' });
-          if (+p.cards) s.liabilities.push({ id: store.uid(), name: 'Credit-card dues (onboarding)', cat: 'Credit card', value: +p.cards, emi: 0, src: 'onboarding' });
+          const ef = Math.min(+p.emergencyFund || 0, +p.savings || 0);
+          if (ef > 0) s.assets.push({ id: store.uid(), name: 'Emergency fund (from journey form)', cat: 'Emergency Fund', value: ef, src: 'onboarding' });
+          if ((+p.savings || 0) - ef > 0) s.assets.push({ id: store.uid(), name: 'Savings (from journey form)', cat: 'Bank', value: (+p.savings || 0) - ef, src: 'onboarding' });
+          if (+p.investments) s.assets.push({ id: store.uid(), name: 'Investments (from journey form)', cat: 'Investments', value: +p.investments, src: 'onboarding' });
+          if (+p.loans) s.liabilities.push({ id: store.uid(), name: 'Loans (from journey form)', cat: 'Other', value: +p.loans, emi: +p.emi || 0, src: 'onboarding' });
+          if (+p.cards) s.liabilities.push({ id: store.uid(), name: 'Credit-card dues (from journey form)', cat: 'Credit card', value: +p.cards, emi: 0, src: 'onboarding' });
         });
-        U.closeModal(); U.toast('Snapshot created'); FOS.go('#/tool/snapshot'); return;
+        U.closeModal(); U.toast('Done. Your snapshot is ready — next: open My Suggestions'); FOS.go('#/tool/snapshot'); return;
       }
       step = Math.max(0, step); draw();
     };
