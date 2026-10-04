@@ -90,11 +90,12 @@
 
   /* ---------- rates editor ---------- */
   function tabRates(el) {
-    const G = FOS.GOVERNMENT_SCHEMES, I = FOS.INTEREST_RATES, A = FOS.FINANCIAL_ASSUMPTIONS;
+    const G = FOS.GOVERNMENT_SCHEMES, I = FOS.INTEREST_RATES, A = FOS.FINANCIAL_ASSUMPTIONS, C0 = FOS.calc;
     const inp = (id, v, step) => `<input class="input mini" type="number" inputmode="decimal" step="${step || 'any'}" min="0" data-r="${id}" value="${v === null || v === undefined ? '' : v}">`;
     el.innerHTML = `<div class="card"><h3>Update rates &amp; limits</h3><p class="muted">Type the figures you found on the official sites. Saved values replace the built-in defaults everywhere.</p>
       <h4>Government &amp; Post Office schemes</h4><div class="table-scroll"><table class="data crud"><thead><tr><th>Scheme</th><th>Rate % p.a.</th><th>Minimum ₹</th><th>Maximum ₹ (blank = none)</th></tr></thead><tbody>${Object.entries(G.schemes).map(([k, s]) => `<tr><th scope="row">${k}<br><small class="muted">${esc(s.name)}</small></th><td>${inp('S.' + k + '.rate', s.rate, '0.01')}</td><td>${inp('S.' + k + '.min', s.min)}</td><td>${inp('S.' + k + '.max', s.max)}</td></tr>`).join('')}</tbody></table></div>
       <h4>Market interest rates (%)</h4><div class="fields">${Object.entries(I.rates).map(([k, r]) => `<div class="field"><label>${esc(r.label)}${inp('I.' + k, r.rate, '0.05')}</label></div>`).join('')}</div>
+      <h4>How SIP future value is calculated</h4><div class="field wide"><select class="input" data-r="A.sipMethod">${Object.entries(C0.SIP_METHODS).map(([k, t]) => `<option value="${k}" ${A.sipMethod === k ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select><p class="note">Every calculator that projects regular investing (SIP, retirement, goals, NPS, FI, what-if) follows this one setting. The SIP calculator shows all four side by side.</p></div>
       <h4>Planning assumptions</h4><div class="fields">${[['inflation', 'Inflation %'], ['equityReturn', 'Equity return assumption %'], ['debtReturn', 'Debt return assumption %'], ['goldReturn', 'Gold return assumption %'], ['postRetirementReturn', 'Post-retirement return %'], ['retirementAge', 'Retirement age'], ['lifeExpectancy', 'Life expectancy']].map(([k, l]) => `<div class="field"><label>${l}${inp('A.' + k, A[k])}</label></div>`).join('')}</div>
       <div class="row-actions"><button class="btn primary" id="rt-save">Save rates &amp; limits</button></div></div>`;
     el.querySelector('#rt-save').onclick = () => {
@@ -103,6 +104,7 @@
       Object.keys(G.schemes).forEach((k) => { patch.GOVERNMENT_SCHEMES.schemes[k] = { rate: val('S.' + k + '.rate'), min: val('S.' + k + '.min'), max: val('S.' + k + '.max') }; });
       Object.keys(I.rates).forEach((k) => { patch.INTEREST_RATES.rates[k] = { rate: val('I.' + k) }; });
       ['inflation', 'equityReturn', 'debtReturn', 'goldReturn', 'postRetirementReturn', 'retirementAge', 'lifeExpectancy'].forEach((k) => { patch.FINANCIAL_ASSUMPTIONS[k] = val('A.' + k); });
+      patch.FINANCIAL_ASSUMPTIONS.sipMethod = el.querySelector('[data-r="A.sipMethod"]').value;
       store.state_overrides_clear && store.state_overrides_clear();
       store.update((s) => { s.overrides = {}; }); store.mergeConfigPatch(patch); U.toast('Saved — everything now uses your numbers.');
     };
