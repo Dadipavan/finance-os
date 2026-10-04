@@ -98,6 +98,7 @@ window.FOS = window.FOS || {};
     timeline: ['Your personal life timeline of financial milestones.', 'Edit yearly.'],
     ladder: ['The 11-step order of financial priorities and where you stand on each.', 'Updates from your data; check quarterly.'],
     insights: ['My Money Review: observations, questions and ideas generated from your own numbers.', 'Read it after each Month-End Close.'],
+    jargon: ['A dictionary of hundreds of short forms and unfamiliar words from banks, cards, loans, investing, insurance, income tax, salary, property, vehicles, GST and government schemes, each with the full form and a plain meaning.', 'Open it whenever a word confuses you. Search a word, a full form, or filter by topic or letter.'],
     guides: ['The library of in-depth expert guides, one per topic: every type and option, documents and identifiers to check, costs, traps, tax and my recommendation with a checklist.', 'Read a guide before any big decision; the checklists save your progress.'],
     bankrates: ['Your own book of real banks and their current savings, FD, RD and loan rates, plus FD and loan comparisons that rank the banks for your amount.', 'At the start of every financial year, and whenever you are about to deposit or borrow. The app reminds you.'],
     quotes: ['Compare insurance quotes side by side: premium per ₹1 lakh of cover, 10-year cost, co-pay, waiting period and claim ratio flags.', 'Each time you collect quotes for a new or renewing policy.'],
