@@ -40,6 +40,7 @@
     if (soon.length) out.push({ id: 'due', icon: '⏰', tone: 'warn', title: 'Due soon', text: soon.slice(0, 3).map((x) => x.name + ' · ' + fmt.date(x.date)).join('\n'), actions: [{ label: 'Open reminders', href: '#/tool/reminders', primary: true }] });
     if (mn) out.push({ id: 'month', icon: '🗓', tone: 'info', title: 'Close ' + FOS.monthLabel(mn.key), text: 'Add last month\'s expenses, update balances and save it — about two minutes.', actions: [{ label: 'Close month', href: '#/tool/monthend', primary: true }, { label: 'Later', act: 'month-later' }] });
     if (FOS.syncNeeded && FOS.syncNeeded()) out.push({ id: 'sync', icon: '☁️', tone: 'info', title: 'Google Drive sync', text: 'A quick sign-in is needed to keep your data backed up.', actions: [{ label: 'Sign in & sync', act: 'sync-go', primary: true }] });
+    const bk = FOS.bankRatesStale && FOS.bankRatesStale(now); if (bk) out.push({ id: 'banks', icon: '🏦', tone: 'warn', title: 'Update your bank rates', text: bk.text, actions: [{ label: 'Update rates', href: '#/tool/bankrates', primary: true }, { label: 'I\'ve checked', act: 'bank-ok' }, { label: 'Later', act: 'bank-later' }] });
     if (note) out.push({ id: 'data', icon: '📅', tone: 'warn', title: note.kind === 'year' ? 'New financial year' : 'Check your rates', text: note.text, actions: [{ label: 'Update now', href: '#/sources', primary: true }, { label: 'I\'ve checked', act: 'data-ok' }, { label: 'Later', act: 'data-later' }] });
     return out.filter((n) => dismissed().indexOf(n.id) < 0);
   };
@@ -58,6 +59,8 @@
       if (k === 'sync-go') { hide(id); closePanel(); FOS.syncNow(true); }
       if (k === 'month-later') { store.update((s) => { s.meta.monthSnooze = new Date(Date.now() + 2 * 864e5).toISOString(); }); hide(id); }
       if (k === 'data-ok') { store.update((s) => { s.meta.configChecked = new Date().toISOString(); }); hide(id); }
+      if (k === 'bank-ok') { store.update((s) => { s.meta.bankChecked = new Date().toISOString(); }); hide(id); }
+      if (k === 'bank-later') { store.update((s) => { s.meta.bankSnooze = new Date(Date.now() + 30 * 864e5).toISOString(); }); hide(id); }
       if (k === 'data-later') { store.update((s) => { s.meta.noticeSnooze = new Date(Date.now() + 30 * 864e5).toISOString(); }); hide(id); }
       if (k === 'sample-clear') { if (confirm('Remove all sample data? Anything you added yourself stays.')) { closePanel(); FOS.removeSample(); } }
     };
