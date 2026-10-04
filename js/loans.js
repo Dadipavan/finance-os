@@ -95,10 +95,10 @@
   reg({
     id: 'utilization', title: 'Credit Utilization Calculator', group: 'Credit', module: 'score', tags: 'credit utilization score card limit',
     intro: 'How much of your credit limit are you using?',
-    fields: [F.money('lim', 'Total credit limit', 300000, 2000000, 5000, { lo: 1 }), F.money('out', 'Total outstanding', 90000, 2000000, 1000)],
+    fields: [F.money('lim', 'Total credit limit', 300000, 2000000, 5000, { lo: 1 }), F.money('out', 'Total outstanding', 120000, 2000000, 1000)],
     formula: ['Utilization % = Outstanding ÷ Total limit × 100'], vars: ['Real credit-scoring models use many more factors and details vary by bureau; a commonly quoted guideline is to stay below ~30%'],
     assumptions: ['Utilization is one factor of several: payment history, age, mix, inquiries'],
-    compute(v) { const u = C.utilization(v.lim, v.out); return { summary: [S('Utilization', u, 'pct', true), S('Available limit', Math.max(0, v.lim - v.out)), S('Outstanding to reach 30%', Math.max(0, v.out - v.lim * 0.3))], notes: [u > 100 ? 'Outstanding is above the limit — check for fees or over-limit charges.' : u > 30 ? 'Above the common 30% guideline.' : 'At or below the common 30% guideline.'] }; }
+    compute(v) { const u = C.utilization(v.lim, v.out); return { summary: [S('Utilization', u, 'pct', true), S('Available limit', Math.max(0, v.lim - v.out)), S(v.out > v.lim * 0.3 ? 'Pay down to reach 30%' : 'Room left before 30%', Math.abs(v.out - v.lim * 0.3))], notes: [u > 100 ? 'Outstanding is above the limit — check for fees or over-limit charges.' : u > 30 ? 'Above the common 30% guideline.' : 'At or below the common 30% guideline.'] }; }
   });
 
   reg({
