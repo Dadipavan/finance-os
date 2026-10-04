@@ -124,12 +124,14 @@ window.FOS = window.FOS || {};
   FOS.metrics = function () {
     const s = state, p = s.profile, b = s.budget;
     const hasBudget = b.items.length > 0 || n(b.income) > 0;
-    const income = n(b.income) || n(p.monthlyIncome) || n(p.annualIncome) / 12;
+    // numbersFrom === 'form': the user typed income/expenses in "Start my financial journey" and chose those over the Budget tool
+    const fromForm = p.numbersFrom === 'form';
+    const income = fromForm ? (n(p.monthlyIncome) || n(p.annualIncome) / 12) : (n(b.income) || n(p.monthlyIncome) || n(p.annualIncome) / 12);
     const budgetExp = sum(b.items.filter((i) => i.kind !== 'save'), (i) => i.amount);
     const budgetNeed = sum(b.items.filter((i) => i.kind === 'need'), (i) => i.amount);
-    const budgetSave = sum(b.items.filter((i) => i.kind === 'save'), (i) => i.amount);
-    const expenses = b.items.length ? budgetExp : n(p.monthlyExpenses);
-    const essential = b.items.length && budgetNeed > 0 ? budgetNeed : expenses;
+    const budgetSave = p.numbersFrom === 'form' ? 0 : sum(b.items.filter((i) => i.kind === 'save'), (i) => i.amount);
+    const expenses = fromForm ? n(p.monthlyExpenses) : (b.items.length ? budgetExp : n(p.monthlyExpenses));
+    const essential = !fromForm && b.items.length && budgetNeed > 0 ? budgetNeed : expenses;
     const savings = income - expenses;
     const assets = sum(s.assets, (a) => a.value), liabilities = sum(s.liabilities, (l) => l.value);
     const byCat = (arr, c) => sum(arr.filter((x) => x.cat === c), (x) => x.value);
@@ -140,7 +142,7 @@ window.FOS = window.FOS || {};
     const emi = sum(s.liabilities, (l) => l.emi);
     const recurringMonthly = sum(s.recurring, (r) => FOS.freqToMonthly(r.amount, r.freq));
     return {
-      hasBudget, income, expenses, essential, savings, budgetSave, savingsRate: income > 0 ? (savings / income) * 100 : NaN,
+      hasBudget, fromForm, income, expenses, essential, savings, budgetSave, savingsRate: income > 0 ? (savings / income) * 100 : NaN,
       assets, liabilities, netWorth: assets - liabilities, ef, liquid, investments, emi,
       dti: income > 0 ? (emi / income) * 100 : NaN, efMonths: essential > 0 ? ef / essential : NaN,
       liquidMonths: essential + emi > 0 ? liquid / (essential + emi) : NaN, recurringMonthly,
