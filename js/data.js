@@ -169,6 +169,7 @@ window.FOS = window.FOS || {};
     M('oppcost', 'Opportunity Cost', 'Decide', 'The price of what you gave up by choosing this.', { lvl: 10, calcs: ['oppcost', 'fv'] }),
     M('decision', 'Decision Engine', 'Decide', 'WHAT ARE YOU ABOUT TO DO? Facts, costs, risks, alternatives.', { lvl: 10, tool: 'decision' }),
     M('health', 'Financial Health', 'Decide', 'Transparent metrics. No mystery score.', { lvl: 10, tool: 'health' }),
+    M('jargon', 'Money Words A–Z', 'Learn & Tools', 'Every short form and unfamiliar word in banking, tax, insurance, loans, investing, property and more — in plain language.', { tool: 'jargon' }),
     M('guides', 'Expert Guides', 'Learn & Tools', 'In-depth expert guide for every topic: types, real documents to check, costs, traps, tax and my recommendation.', { tool: 'guides' }),
     M('knowledge', 'Financial Knowledge', 'Learn & Tools', 'Levels 0–10, quizzes and your progress.', { tool: 'knowledge' }),
     M('checklists', 'Checklists', 'Learn & Tools', 'Before you pay, sign, borrow or invest.', { tool: 'checklists' }),
