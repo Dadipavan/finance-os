@@ -152,7 +152,7 @@ window.FOS = window.FOS || {};
 
   G({
     id: 'govt', module: 'govt', cat: 'Invest', read: '26 min read', title: 'Government savings schemes — PPF, EPF, NPS, SSY, SCSS, NSC, KVP, APY and more',
-    summary: `What each scheme offers, its lock-in, limit, tax status and who should use it. Rates change every quarter — update them in Settings → Rates.`,
+    summary: `What each scheme offers, its lock-in, limit, tax status and who should use it. Rates change every quarter — update them in Data & Sources → Update rates & limits.`,
     calcs: ['ppf', 'nps', 'fd', 'rd'], tools: [['Scheme data', '#/tool/schemes']],
     sections: [
       [`Comparison`,
@@ -169,7 +169,7 @@ window.FOS = window.FOS || {};
           [`Post office TD / RD`, `6.9–7.5%`, `1–5 yrs`, `None`, `Taxable`, `FD alternative`],
           [`APY (Atal Pension)`, `Fixed pension ₹1–5k`, `Till 60`, `Age 18–40`, `Not tax-exempt now`, `Low-income workers`],
           [`SGB`, `2.5% + gold`, `8 yrs`, `4 kg`, `Maturity tax-free`, `Gold hedge`]]],
-        ['tip', `Rates shown are the most recent I know and are **reset quarterly** by the Ministry of Finance. Use Settings → Rates / Data & Sources to update them each quarter.`]],
+        ['tip', `Rates shown are the most recent I know and are **reset quarterly** by the Ministry of Finance. Use Data & Sources → Update rates & limits to update them each quarter.`]],
       [`PPF — in detail`,
         ['ul', `**Open** at a post office or bank with KYC; **deposit** between ₹500 and ₹1.5 L per year (max 12 deposits). Deposit by the **5th of the month** to earn that month's interest.`, `**Partial withdrawal** from year 7; **loan** between years 3–6; **premature closure** after 5 years for specified reasons (education, medical).`, `**Extension** in 5-year blocks with or without contributions.`, `**Minor's account:** guardian deposits count within the ₹1.5 L limit.`],
         ['ex', `₹1.5 L a year for 15 years at 7.1% → ≈ ₹40.7 L, all tax-free. Earning the same from an FD at 7% in the 30% slab gives ~₹30 L after tax.`]],
