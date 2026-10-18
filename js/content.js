@@ -185,8 +185,7 @@ window.FOS = window.FOS || {};
   Q('health', tf('Benchmarks are rules of thumb.', true, 'They don’t fit everyone.', 'Context matters.', 'dti'));
 
   /* ---------------- Learning path (journey) ---------------- */
-  const JOURNEY = [['₹50 vegetable purchase', 'spending'], ['₹200 coffee', 'spending'], ['₹1,000 subscription', 'spending'], ['₹10,000 monthly expenses', 'budgeting'], ['First salary', 'income'], ['Bank account', 'banking'], ['Emergency fund', 'emergency'], ['Credit card', 'cards'], ['Loan', 'loans'], ['Insurance', 'insurance'], ['Investments', 'investing'], ['Tax', 'tax'], ['Vehicle', 'vehicle'], ['House', 'property'], ['Marriage / family', 'marriage'], ['Children\'s education', 'children'], ['Retirement', 'retirement'], ['Financial independence', 'fi'], ['Wealth preservation', 'networth'], ['Advanced investing', 'crypto']];
-
+  const JOURNEY = [['₹50 vegetable purchase', 'spending'], ['₹200 coffee', 'spending'], ['₹1,000 subscription', 'spending'], ['₹10,000 monthly expenses', 'budgeting'], ['Money habits & mindset', 'mindset'], ['First job & first salary', 'firstjob'], ['Bank account & digital safety', 'banking'], ['Emergency fund', 'emergency'], ['Credit card', 'cards'], ['Loan', 'loans'], ['Insurance', 'insurance'], ['Investments', 'investing'], ['Tax', 'tax'], ['Career growth', 'career'], ['Vehicle', 'vehicle'], ['House', 'property'], ['Marriage & family', 'marriage'], ['Children\'s education', 'children'], ['Business or side income', 'bizstart'], ['Advanced investing', 'advinvest'], ['Retirement', 'retirement'], ['Financial independence', 'fi'], ['Will & legacy', 'estate'], ['Senior years', 'seniors']];
   const EDUCATIONAL_CONTENT = { lessons: LESSONS, quiz: QUIZ, journey: JOURNEY };
   FOS.LESSONS = LESSONS; FOS.QUIZ = QUIZ; FOS.JOURNEY = JOURNEY; FOS.EDUCATIONAL_CONTENT = EDUCATIONAL_CONTENT;
   window.EDUCATIONAL_CONTENT = EDUCATIONAL_CONTENT;
