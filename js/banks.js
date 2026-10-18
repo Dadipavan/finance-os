@@ -6,7 +6,7 @@
 (function () {
   'use strict';
   const C = FOS.calc, fmt = FOS.fmt, U = FOS.ui, esc = U.esc, store = FOS.store, ch = () => FOS.charts;
-  const today = () => new Date().toISOString().slice(0, 10);
+  const today = () => FOS.dates.iso();
   const TYPES = ['PSU bank', 'Private bank', 'Small finance bank', 'Cooperative bank', 'Post office', 'NBFC / housing finance', 'Other'];
   // Representative starting figures (from your study guide, "verify with the bank"). Replace them with the real current numbers.
   const SEED = [['State Bank of India (SBI)', 'PSU bank', 6.5, 6.5, 6.5, 6.5], ['Punjab National Bank (PNB)', 'PSU bank', 6.75, 6.8, 7.0, 6.5], ['Bank of Baroda (BoB)', 'PSU bank', 6.85, 7.15, 6.8, 6.8], ['HDFC Bank', 'Private bank', 6.6, 7.0, 6.95, 6.9], ['ICICI Bank', 'Private bank', 6.7, 7.0, 6.9, 6.9], ['Axis Bank', 'Private bank', 6.7, 7.1, 7.0, 7.0], ['Kotak Mahindra Bank', 'Private bank', 6.7, 7.0, 6.9, 6.8], ['AU Small Finance Bank', 'Small finance bank', 7.25, 7.75, 7.5, 7.25], ['Equitas Small Finance Bank', 'Small finance bank', 7.5, 8.0, 7.75, 7.25], ['Ujjivan Small Finance Bank', 'Small finance bank', 7.5, 7.95, 7.2, 7.2]];
