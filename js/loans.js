@@ -161,18 +161,21 @@
     const U = FOS.ui;
     const def = (n, rate, fee) => ({ name: n, p: 1000000, r: rate, y: 5, fee, prepay: 'Check with lender' });
     let loans = [def('Loan A', 10.5, 1), def('Loan B', 11, 0), def('Loan C', 9.9, 2.5)];
-    const draw = () => {
-      const res = loans.map((l) => { const n = Math.round(l.y * 12), a = C.amortize({ principal: l.p, rate: l.r, months: n }), fees = l.p * l.fee / 100 * 1.18; return { ...l, emi: a.emi, int: a.totalInterest, fees, total: a.totalPaid + fees, eff: l.p > 0 ? ((a.totalInterest + fees) / l.p) * 100 : NaN }; });
-      const rowf = (k, label, f) => `<tr><th scope="row">${label}</th>${res.map((r, i) => `<td>${f(r, i)}</td>`).join('')}</tr>`;
+    const calc = () => loans.map((l) => { const n = Math.round(l.y * 12), a = C.amortize({ principal: l.p, rate: l.r, months: n }), fees = l.p * l.fee / 100 * 1.18; return { ...l, emi: a.emi, int: a.totalInterest, fees, total: a.totalPaid + fees, eff: l.p > 0 ? ((a.totalInterest + fees) / l.p) * 100 : NaN }; });
+    const OUT = [['emi', 'EMI', (r) => '<b>' + FOS.fmt.inr(r.emi) + '</b>'], ['int', 'Total interest', (r) => FOS.fmt.inr(r.int)], ['fees', 'Fees incl. GST', (r) => FOS.fmt.inr(r.fees)], ['tot', 'Total repayment', (r) => '<b>' + FOS.fmt.inr(r.total) + '</b>'], ['eff', 'Total cost as % of loan', (r) => FOS.fmt.pct(r.eff, 1)], ['ten', 'Tenure', (r) => FOS.fmt.months(r.y * 12)]];
+    // built once; typing only refreshes the calculated cells, so the field you are in keeps the keyboard and focus
+    const build = () => {
       const inp = (i, k, type, step) => `<input aria-label="${k} for ${U.esc(loans[i].name)}" class="mini" type="${type}" step="${step || 'any'}" min="0" value="${U.esc(loans[i][k])}" data-i="${i}" data-k="${k}">`;
+      const rowf = (label, f) => `<tr><th scope="row">${label}</th>${loans.map((l, i) => `<td>${f(i)}</td>`).join('')}</tr>`;
       root.innerHTML = `<div class="card"><h3>Compare loans side by side</h3><p class="muted">Enter up to three offers. Nothing is ranked “best” — look at every row, including fees and prepayment terms.</p>
-      <div class="table-scroll"><table class="data"><thead><tr><th></th>${res.map((r, i) => `<th>${inp(i, 'name', 'text')}</th>`).join('')}</tr></thead><tbody>
-      ${rowf('p', 'Loan amount (₹)', (r, i) => inp(i, 'p', 'number'))}${rowf('r', 'Interest rate (%)', (r, i) => inp(i, 'r', 'number', '0.05'))}${rowf('y', 'Tenure (years)', (r, i) => inp(i, 'y', 'number', '0.5'))}${rowf('fee', 'Processing fee (% + 18% GST)', (r, i) => inp(i, 'fee', 'number', '0.1'))}${rowf('pp', 'Prepayment conditions', (r, i) => inp(i, 'prepay', 'text'))}
-      <tr class="sep"><th scope="row">Calculated</th><td colspan="${res.length}"></td></tr>
-      ${rowf('emi', 'EMI', (r) => '<b>' + FOS.fmt.inr(r.emi) + '</b>')}${rowf('int', 'Total interest', (r) => FOS.fmt.inr(r.int))}${rowf('fees', 'Fees incl. GST', (r) => FOS.fmt.inr(r.fees))}${rowf('tot', 'Total repayment', (r) => '<b>' + FOS.fmt.inr(r.total) + '</b>')}${rowf('eff', 'Total cost as % of loan', (r) => FOS.fmt.pct(r.eff, 1))}${rowf('ten', 'Tenure', (r) => FOS.fmt.months(r.y * 12))}
+      <div class="table-scroll"><table class="data"><thead><tr><th></th>${loans.map((l, i) => `<th>${inp(i, 'name', 'text')}</th>`).join('')}</tr></thead><tbody>
+      ${rowf('Loan amount (₹)', (i) => inp(i, 'p', 'number'))}${rowf('Interest rate (%)', (i) => inp(i, 'r', 'number', '0.05'))}${rowf('Tenure (years)', (i) => inp(i, 'y', 'number', '0.5'))}${rowf('Processing fee (% + 18% GST)', (i) => inp(i, 'fee', 'number', '0.1'))}${rowf('Prepayment conditions', (i) => inp(i, 'prepay', 'text'))}
+      <tr class="sep"><th scope="row">Calculated</th><td colspan="${loans.length}"></td></tr>
+      ${OUT.map(([k, label]) => `<tr><th scope="row">${label}</th>${loans.map((l, i) => `<td data-out="${k}" data-i="${i}"></td>`).join('')}</tr>`).join('')}
       </tbody></table></div><p class="note">Lower EMI can mean a longer tenure and more total interest. Decide using the full picture and your own priorities.</p></div>`;
     };
-    root.addEventListener('change', (e) => { const i = e.target.dataset.i; if (i === undefined) return; const k = e.target.dataset.k; const val = e.target.type === 'number' ? Math.max(0, parseFloat(e.target.value) || 0) : e.target.value; loans[i][k] = k === 'y' && val < 0.25 ? 0.25 : k === 'p' && val < 1 ? 1 : val; draw(); });
-    draw();
+    const refresh = () => { const res = calc(); OUT.forEach(([k, , f]) => { root.querySelectorAll(`[data-out="${k}"]`).forEach((td) => { td.innerHTML = f(res[+td.dataset.i]); }); }); };
+    root.addEventListener('input', (e) => { const i = e.target.dataset.i; if (i === undefined) return; const k = e.target.dataset.k; if (k === 'name' || k === 'prepay') { loans[i][k] = e.target.value; return; } const val = Math.max(0, parseFloat(e.target.value) || 0); loans[i][k] = k === 'y' && val < 0.25 ? 0.25 : k === 'p' && val < 1 ? 1 : val; refresh(); });
+    build(); refresh();
   };
 })();
