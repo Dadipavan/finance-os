@@ -48,16 +48,20 @@ window.FOS = window.FOS || {};
   };
 
   /* ---------- TAX RULES (by financial year; configurable) ---------- */
+  // Surcharge tiers apply to TOTAL taxable income [upper limit, % of tax]; the new regime caps the top rate at 25%. Marginal relief is applied in calculations.js.
+  const SURCHARGE_NEW = [[5000000, 0], [10000000, 10], [20000000, 15], [null, 25]];
+  const SURCHARGE_OLD = [[5000000, 0], [10000000, 10], [20000000, 15], [50000000, 25], [null, 37]];
   const TAX_RULES = {
-    defaultYear: 'FY2025-26',
+    defaultYear: 'FY2026-27', // replaced by the CURRENT financial year when the app starts (see storage.js), unless you pin a year in Data & Sources
     years: {
+      'FY2026-27': null, // filled in below: carried forward from FY 2025-26 and flagged UNVERIFIED until you check it
       'FY2025-26': {
         label: 'FY 2025-26 (AY 2026-27)',
-        lastUpdated: 'Configurable default (not live)', source: 'Income Tax Department — incometax.gov.in; Union Budget documents', note: VERIFY,
+        lastUpdated: 'Configurable default (not live)', source: 'Income Tax Department — incometax.gov.in; Union Budget documents', note: VERIFY, verified: true,
         regimes: {
-          new: { name: 'New regime (default)', stdDeduction: 75000, cessPct: 4, rebate: { limit: 1200000, max: 60000, marginalRelief: true },
+          new: { name: 'New regime (default)', stdDeduction: 75000, cessPct: 4, rebate: { limit: 1200000, max: 60000, marginalRelief: true }, surcharge: SURCHARGE_NEW,
             slabs: [[400000, 0], [800000, 5], [1200000, 10], [1600000, 15], [2000000, 20], [2400000, 25], [null, 30]] },
-          old: { name: 'Old regime (with deductions)', stdDeduction: 50000, cessPct: 4, rebate: { limit: 500000, max: 12500, marginalRelief: false },
+          old: { name: 'Old regime (with deductions)', stdDeduction: 50000, cessPct: 4, rebate: { limit: 500000, max: 12500, marginalRelief: false }, surcharge: SURCHARGE_OLD,
             slabs: [[250000, 0], [500000, 5], [1000000, 20], [null, 30]] }
         },
         deductionsOld: { '80C': 150000, '80D (self/family, <60)': 25000, '80D (parents, <60)': 25000, '80D (parents, senior)': 50000, 'NPS 80CCD(1B)': 50000, 'Home-loan interest (self-occupied)': 200000 },
@@ -68,27 +72,36 @@ window.FOS = window.FOS || {};
           gold: { rate: 12.5, note: 'Long-term gold (physical / ETF) — holding period rules differ; verify' },
           crypto: { rate: 30, tds: 1, note: 'Flat 30% on gains, no set-off of losses, 1% TDS on transfers — verify' }
         },
-        other: { tdsOnFDInterestThreshold: 50000, standardCess: 4 }
+        // employerNpsPct: employer NPS contribution deductible up to this % of basic (+DA) — 14% under the new regime, 10% (private sector) under the old
+        other: { tdsOnFDInterestThreshold: 50000, standardCess: 4, employerNpsPct: { new: 14, old: 10 } }
       },
       'FY2024-25': {
         label: 'FY 2024-25 (AY 2025-26)',
-        lastUpdated: 'Configurable default (not live)', source: 'Income Tax Department — incometax.gov.in', note: VERIFY + ' (capital-gains rates changed mid-year)',
+        lastUpdated: 'Configurable default (not live)', source: 'Income Tax Department — incometax.gov.in', note: VERIFY + ' (capital-gains rates changed mid-year)', verified: true,
         regimes: {
-          new: { name: 'New regime', stdDeduction: 75000, cessPct: 4, rebate: { limit: 700000, max: 25000, marginalRelief: true },
+          new: { name: 'New regime', stdDeduction: 75000, cessPct: 4, rebate: { limit: 700000, max: 25000, marginalRelief: true }, surcharge: SURCHARGE_NEW,
             slabs: [[300000, 0], [700000, 5], [1000000, 10], [1200000, 15], [1500000, 20], [null, 30]] },
-          old: { name: 'Old regime', stdDeduction: 50000, cessPct: 4, rebate: { limit: 500000, max: 12500, marginalRelief: false },
+          old: { name: 'Old regime', stdDeduction: 50000, cessPct: 4, rebate: { limit: 500000, max: 12500, marginalRelief: false }, surcharge: SURCHARGE_OLD,
             slabs: [[250000, 0], [500000, 5], [1000000, 20], [null, 30]] }
         },
-        deductionsOld: { '80C': 150000, '80D (self/family, <60)': 25000, 'NPS 80CCD(1B)': 50000 },
+        deductionsOld: { '80C': 150000, '80D (self/family, <60)': 25000, '80D (parents, <60)': 25000, '80D (parents, senior)': 50000, 'NPS 80CCD(1B)': 50000, 'Home-loan interest (self-occupied)': 200000 },
         capitalGains: { equitySTCG: { rate: 20, note: 'Post 23-Jul-2024 transfers' }, equityLTCG: { rate: 12.5, exemption: 125000, note: 'Post 23-Jul-2024 transfers' }, debtMF: { rate: 'slab', note: '' }, gold: { rate: 12.5, note: '' }, crypto: { rate: 30, tds: 1, note: '' } },
-        other: { tdsOnFDInterestThreshold: 40000, standardCess: 4 }
+        other: { tdsOnFDInterestThreshold: 40000, standardCess: 4, employerNpsPct: { new: 14, old: 10 } }
       }
-    }
+    },
+    // Cost Inflation Index (indexation of property bought before 23-Jul-2024). Enter new years from the CBDT notification.
+    cii: { 'FY2001-02': 100, 'FY2002-03': 105, 'FY2003-04': 109, 'FY2004-05': 113, 'FY2005-06': 117, 'FY2006-07': 122, 'FY2007-08': 129, 'FY2008-09': 137, 'FY2009-10': 148, 'FY2010-11': 167, 'FY2011-12': 184, 'FY2012-13': 200, 'FY2013-14': 220, 'FY2014-15': 240, 'FY2015-16': 254, 'FY2016-17': 264, 'FY2017-18': 272, 'FY2018-19': 280, 'FY2019-20': 289, 'FY2020-21': 301, 'FY2021-22': 317, 'FY2022-23': 331, 'FY2023-24': 348, 'FY2024-25': 363, 'FY2025-26': 376 }
   };
+  // The newest year starts as a COPY of the previous one. The copy is flagged unverified so the app keeps asking you to check it (life.js).
+  TAX_RULES.years['FY2026-27'] = Object.assign(JSON.parse(JSON.stringify(TAX_RULES.years['FY2025-26'])), {
+    label: 'FY 2026-27 (AY 2027-28)', verified: false,
+    lastUpdated: 'Carried forward from FY 2025-26 — NOT yet checked against the Union Budget 2026',
+    note: 'UNVERIFIED COPY. The Income-tax Act, 2025 applies from 1 April 2026 (new section numbers). Check every figure on incometax.gov.in, correct it in Data & Sources → Update tax rules, then tick “I have checked these numbers”.'
+  });
 
   /* ---------- FINANCIAL ASSUMPTIONS ---------- */
   const FINANCIAL_ASSUMPTIONS = {
-    meta: { lastUpdated: 'Configurable default', source: 'Illustrative planning assumptions — NOT forecasts', period: 'n/a', note: 'Change these in Settings → Rates & Assumptions' },
+    meta: { lastUpdated: 'Configurable default', source: 'Illustrative planning assumptions — NOT forecasts', period: 'n/a', note: 'Change these in Data & Sources → Update rates & limits' },
     inflation: 6,
     // How SIP future value is calculated (see calculations.js): nominal-start | nominal-end | effective-start | effective-end
     sipMethod: 'nominal-start',
@@ -103,7 +116,7 @@ window.FOS = window.FOS || {};
     oppRates: [0, 4, 7, 10, 12],
     oppYears: [5, 10, 20],
     // Rule-of-thumb health benchmarks (shown with their limitations)
-    benchmarks: { emergencyMonthsLow: 3, emergencyMonthsOk: 6, savingsRateLow: 10, savingsRateOk: 20, dtiOk: 20, dtiHigh: 40, termCoverMultiple: 10 },
+    benchmarks: { emergencyMonthsLow: 3, emergencyMonthsOk: 6, savingsRateLow: 10, savingsRateOk: 20, dtiOk: 20, dtiHigh: 40, termCoverMultiple: 12 },
     // Affordability rules of thumb (used by the Affordability Check). These are widely quoted guidelines, NOT laws or advice.
     affordability: {
       meta: 'Rules of thumb only. Lenders allow more than is comfortable; your own cash-flow test matters more.',
@@ -115,10 +128,12 @@ window.FOS = window.FOS || {};
       other: { label: 'Other purchase', downMin: 0, tenureMax: 3, emiMax: 10, note: 'General guideline for optional purchases.' }
     },
     // Salary assumptions
-    salary: { employerPfPctOfBasic: 12, employeePfPctOfBasic: 12, gratuityPctOfBasic: 4.81, professionalTaxMonthly: 200 }
+    salary: { employerPfPctOfBasic: 12, employeePfPctOfBasic: 12, gratuityPctOfBasic: 4.81, professionalTaxMonthly: 200, gratuityCap: 2000000, epsWageCeiling: 15000, epsPct: 8.33 },
+    // Net worth as a multiple of yearly income by age — a rule of thumb from retirement-savings studies, NOT a target or a forecast
+    netWorthMultiples: [[25, 0.25], [30, 1], [35, 2], [40, 3], [45, 4.5], [50, 6], [55, 7], [60, 8], [65, 10]]
   };
 
-  /* ---------- MODULE REGISTRY (the 43 modules) ---------- */
+  /* ---------- MODULE REGISTRY ---------- */
   // lvl = knowledge level (1-10) the module counts towards; tool = custom tool rendered at top
   const M = (id, title, grp, blurb, o) => Object.assign({ id, title, grp, blurb, calcs: [], chk: [] }, o || {});
   const MODULES = [
@@ -128,8 +143,10 @@ window.FOS = window.FOS || {};
     M('income', 'Income & Salary', 'Foundations', 'CTC, gross, net and take-home — what actually reaches your account.', { lvl: 1, calcs: ['salary', 'savingsrate'] }),
     M('budgeting', 'Budgeting', 'Foundations', 'Give every rupee a job: 50/30/20, zero-based, envelope and more.', { lvl: 2, tool: 'budget', calcs: ['savingsrate'] }),
     M('spending', 'Everyday Spending', 'Foundations', 'See what small purchases cost over years — before you spend.', { lvl: 2, tool: 'spending', calcs: ['subscription', 'oppcost'], chk: ['pay'] }),
+    M('mindset', 'Money Psychology & Habits', 'Foundations', 'Why smart people make poor money choices — and the habits, rules and systems that fix it.', { lvl: 2, chk: ['habits'] }),
     M('bankrates', 'Bank Rates Book', 'Foundations', 'The real banks you use, their FD / savings / loan rates — compare them and refresh every financial year.', { tool: 'bankrates', calcs: ['fd', 'rd', 'emi'] }),
     M('banking', 'Banking', 'Foundations', 'Accounts, UPI, FD, RD — and the fees banks rarely highlight.', { lvl: 3, calcs: ['fd', 'rd', 'compound'], chk: ['bank'] }),
+    M('economy', 'How the Economy Affects Your Money', 'Foundations', 'Inflation, interest rates, the rupee and market cycles — what they mean for your loan, your FD and your investments.', { lvl: 5, calcs: ['inflation', 'whatif-emi', 'whatif-inflation'] }),
     M('cards', 'Credit Cards', 'Credit & Debt', 'A short-term loan with rewards attached. Know the real price.', { lvl: 4, calcs: ['cardpay', 'utilization'], chk: ['card', 'sign-card'] }),
     M('score', 'Credit Score', 'Credit & Debt', 'What lenders look at and how to read your credit report.', { lvl: 4, calcs: ['utilization'] }),
     M('loans', 'Loans', 'Credit & Debt', 'Personal, home, vehicle, education, gold, business — one framework.', { lvl: 5, tool: 'loancompare', calcs: ['afford', 'emi', 'loancost'], chk: ['loan', 'sign-loan'] }),
@@ -137,6 +154,10 @@ window.FOS = window.FOS || {};
     M('insurance', 'Insurance', 'Protect', 'Health, term, motor and more — what to compare before you pay.', { lvl: 6, tool: 'quotes', calcs: ['cover'], chk: ['insurance', 'sign-insurance'] }),
     M('emergency', 'Emergency Fund', 'Protect', 'Your buffer between a bad month and a bad decision.', { lvl: 6, calcs: ['emergency', 'whatif-job'] }),
     M('scams', 'Scam Protection', 'Protect', 'Recognise the patterns behind ponzi, OTP, UPI and fake-app frauds.', { lvl: 6, tool: 'scamchecker' }),
+    M('digital', 'Digital Money, Cyber Safety & Records', 'Protect', 'UPI, cards and apps safely: how fraud works, who pays when it happens, and how to keep your documents and passwords in order.', { lvl: 6, chk: ['digisafe'] }),
+    M('rights', 'Your Rights & How to Complain', 'Protect', 'When a bank, insurer, broker or builder wrongs you: who to write to, in what order, and how to escalate to an ombudsman or consumer commission.', { lvl: 6, chk: ['complaint'] }),
+    M('socialsec', 'Government Benefits & Social Security', 'Protect', 'EPF, pension, ESIC, health cover, accident and life schemes, savings-linked benefits — what you may already be entitled to.', { lvl: 6, calcs: ['epf', 'gratuity'] }),
+    M('estate', 'Will, Nominee & Inheritance', 'Protect', 'Who gets what when you are gone, how to make a valid will, why a nominee is not an owner, and how families actually claim money.', { lvl: 9, chk: ['estate'] }),
     M('investing', 'Investing', 'Invest', 'Risk, return, liquidity, diversification and time horizon.', { lvl: 7, calcs: ['sip', 'lumpsum', 'cagr', 'allocation'], chk: ['invest'] }),
     M('mutualfunds', 'Mutual Funds', 'Invest', 'NAV, expense ratio, SIP, SWP, STP and how fees compound against you.', { lvl: 7, calcs: ['sip', 'lumpsum', 'fees', 'whatif-invest'], chk: ['mf'] }),
     M('stocks', 'Stocks', 'Invest', 'Ownership in a business: ratios to understand, not predictions to follow.', { lvl: 7, calcs: ['cagr', 'absreturn', 'dividend', 'pe', 'allocation'], chk: ['stocks'] }),
@@ -144,9 +165,12 @@ window.FOS = window.FOS || {};
     M('gold', 'Gold', 'Invest', 'Jewellery, coins, ETFs, digital gold, SGBs — compare real costs.', { lvl: 7, calcs: ['goldcalc'], chk: ['gold'] }),
     M('govt', 'Government Schemes', 'Invest', 'PPF, NSC, KVP, SCSS, SSY — configured data with sources.', { lvl: 7, tool: 'schemes', calcs: ['ppf', 'nps'] }),
     M('postoffice', 'Post Office Schemes', 'Invest', 'Savings, TD, RD and MIS from India Post.', { lvl: 7, tool: 'schemes-post', calcs: ['rd', 'fd'] }),
+    M('advinvest', 'Advanced Investing & Portfolio Building', 'Invest', 'A written plan, asset allocation, rebalancing, choosing funds, REITs, SGBs, international and alternative options, and the costs that matter.', { lvl: 10, calcs: ['rebalance', 'xirr', 'allocation', 'fees'], chk: ['mfpick'] }),
     M('retirement', 'Retirement', 'Plan', 'How much is enough, under assumptions you control.', { lvl: 9, calcs: ['retirement', 'nps', 'whatif-retire'] }),
     M('tax', 'Tax Center', 'Plan', 'Rules by year, the best regime for you, and every legal way to pay less.', { lvl: 8, tool: 'taxinfo', calcs: ['taxopt', 'incometax', 'hra', 'capgains'] }),
+    M('taxadv', 'Advanced Tax Planning', 'Plan', 'Capital gains across assets, rent, ESOPs, gifts, HUF, set-off and carry-forward, notices and the new Income-tax Act — for situations beyond a salary slip.', { lvl: 10, calcs: ['propertycg', 'advancetax', 'esoptax', 'capgains', 'taxopt'], chk: ['itrfile'] }),
     M('property', 'Property', 'Plan', 'Rent vs buy and the full cost of owning a home.', { lvl: 9, calcs: ['afford', 'rentbuy', 'emi', 'whatif-rent'], chk: ['house', 'sign-property'] }),
+    M('rental', 'Rental Income & Landlord Finance', 'Plan', 'Letting a home: yield, agreements, tax on rent, TDS, deposits, repairs, vacancy and when selling beats holding.', { lvl: 9, calcs: ['rentalyield', 'propertycg'], chk: ['landlord'] }),
     M('vehicle', 'Vehicle', 'Plan', 'Monthly, annual, 5-year cost and cost per km.', { lvl: 9, calcs: ['car', 'afford', 'emi'], chk: ['car', 'usedveh', 'newcar'] }),
     M('education', 'Education Planning', 'Plan', 'Future cost of education under inflation.', { lvl: 9, calcs: ['edu'] }),
     M('marriage', 'Marriage / Family Planning', 'Plan', 'Model costs and buffers without prescribing choices.', { lvl: 9, calcs: ['marriage', 'emergency'] }),
@@ -154,7 +178,15 @@ window.FOS = window.FOS || {};
     M('crypto', 'Crypto / Bitcoin', 'Invest', 'Education, risk scenarios, taxes and security — never a tip.', { lvl: 10, calcs: ['cryptoscen'], chk: ['crypto'] }),
     M('business', 'Business / Entrepreneurship', 'Plan', 'Revenue, margin, break-even, runway.', { lvl: 10, calcs: ['breakeven', 'roi', 'runway'], chk: ['business'] }),
     M('bizstart', 'Start a Business: Step by Step', 'Plan', 'A practical, ordered guide from idea to first customers, registrations, taxes and cash flow.', { lvl: 10, tool: 'bizideas', calcs: ['breakeven', 'runway', 'roi'], chk: ['bizsteps', 'business'] }),
+    M('bizacct', 'Small-Business Accounts, GST & Compliance', 'Plan', 'Bookkeeping, invoicing, GST registration and returns, TDS, payroll and the yearly compliance calendar for a small business.', { lvl: 10, calcs: ['gst', 'breakeven', 'roi'], chk: ['bizcompliance'] }),
+    M('startup', 'Startup Funding & Equity', 'Plan', 'Equity, cap tables, dilution, term sheets, option pools, valuation and unit economics — for founders and early employees.', { lvl: 10, calcs: ['dilution', 'unitecon', 'runway', 'breakeven'] }),
     M('earnmore', 'Earn More & Save More', 'Plan', 'Raise income, cut leaks, and keep more of what you earn — with the maths.', { lvl: 9, tool: 'expenses', calcs: ['subscription', 'whatif-salary', 'whatif-invest'] }),
+    M('career', 'Career Growth, ESOPs & Stock Pay', 'Plan', 'Negotiating, switching jobs, variable pay, notice periods, gratuity and PF, and how stock options and RSUs are taxed.', { lvl: 9, calcs: ['offercompare', 'esoptax', 'gratuity', 'epf'], chk: ['jobswitch'] }),
+    M('firstjob', 'Student to First Job', 'Life stages', 'From pocket money and a student loan to your first payslip: PF, tax, insurance, your first emergency fund and first SIP.', { lvl: 2, calcs: ['salary', 'offercompare', 'savingsrate'], chk: ['firstjob'] }),
+    M('family', 'Couples, Parents & Family Money', 'Life stages', 'Talking about money, joint and separate accounts, supporting parents, caring costs, separation and widowhood — the human side of finance.', { lvl: 9, chk: ['family'] }),
+    M('women', 'Women & Money', 'Life stages', 'Financial independence for women: own accounts and assets, career breaks, stridhan, property and safety nets.', { lvl: 9, calcs: ['cover'], chk: ['women'] }),
+    M('seniors', 'Senior Citizens & Retirement Income', 'Life stages', 'Turning savings into a safe monthly income, senior schemes, health cover after 60, long-term care, and keeping fraud out.', { lvl: 9, calcs: ['swp', 'retirement', 'epf'], chk: ['seniors'] }),
+    M('nri', 'NRI, Moving Abroad & Returning', 'Life stages', 'Residential status, NRE/NRO accounts, FEMA, tax in two countries, investing from abroad, and coming back to India.', { lvl: 10, calcs: ['residency'], chk: ['nri'] }),
     M('playbook', 'Life Playbook: Settle Well', 'Decide', 'What to do in which order, decade by decade — and how to handle the hard moments.', { lvl: 9, tool: 'ladder', calcs: ['emergency', 'fi', 'lifesim'] }),
     M('suggestions', 'My Suggestions', 'Decide', 'What to do next, in order, based on your savings, spending, debts and goals — tick them off as you go.', { tool: 'suggestions', calcs: ['taxopt', 'sip', 'emergency'] }),
     M('plan', 'My Action Plan', 'Decide', 'Your numbers turned into an ordered plan with amounts: debt, buffer, cover, tax, investing, goals.', { tool: 'plan', calcs: ['taxopt', 'sip', 'emergency'] }),
@@ -172,6 +204,7 @@ window.FOS = window.FOS || {};
     M('jargon', 'Money Words A–Z', 'Learn & Tools', 'Every short form and unfamiliar word in banking, tax, insurance, loans, investing, property and more — in plain language.', { tool: 'jargon' }),
     M('guides', 'Expert Guides', 'Learn & Tools', 'In-depth expert guide for every topic: types, real documents to check, costs, traps, tax and my recommendation.', { tool: 'guides' }),
     M('knowledge', 'Financial Knowledge', 'Learn & Tools', 'Levels 0–10, quizzes and your progress.', { tool: 'knowledge' }),
+    M('paths', 'Learning Paths', 'Learn & Tools', 'A step-by-step curriculum for every stage of life — from beginner to expert — with your progress.', { tool: 'paths' }),
     M('checklists', 'Checklists', 'Learn & Tools', 'Before you pay, sign, borrow or invest.', { tool: 'checklists' }),
     M('calculators', 'Calculator Library', 'Learn & Tools', 'Every calculator with formulas and assumptions.', { route: '#/calculators' }),
     M('sources', 'Data & Sources', 'Learn & Tools', 'Official links for every rate and rule — and where you update them.', { route: '#/sources' }),
@@ -266,9 +299,9 @@ window.FOS = window.FOS || {};
     ['Amortization', 'How each EMI is split between interest and principal.', 'A schedule where interest = opening balance × monthly rate; remainder reduces principal.', 'Early EMIs are mostly interest; later ones mostly principal.', 'amortization', ['EMI']],
     ['Prepayment', 'Paying extra towards a loan to finish it sooner.', 'Extra principal reduces future interest; check foreclosure / part-payment charges.', 'An extra ₹5,000/month on a 20-year home loan can cut years off the tenure.', 'prepayment', ['EMI']],
     ['CAGR', 'The steady yearly growth rate that links a start value to an end value.', 'CAGR = (End/Start)^(1/years) − 1.', '₹1 lakh becoming ₹2 lakh in 7 years ≈ 10.4% CAGR.', 'cagr', ['XIRR', 'Absolute return']],
-    ['XIRR', 'Yearly return when you invest at different dates.', 'The discount rate that sets the net present value of dated cash flows to zero.', 'Used for SIP returns where each instalment is a separate cash flow.', 'sip', ['CAGR', 'SIP']],
+    ['XIRR', 'Yearly return when you invest at different dates.', 'The discount rate that sets the net present value of dated cash flows to zero.', 'Used for SIP returns where each instalment is a separate cash flow.', 'xirr', ['CAGR', 'SIP']],
     ['SIP', 'Investing a fixed amount regularly.', 'Systematic Investment Plan: periodic purchase of fund units, averaging the purchase price.', '₹10,000/month for 10 years.', 'sip', ['Lumpsum', 'SWP', 'STP']],
-    ['SWP', 'Withdrawing a fixed amount regularly from an investment.', 'Systematic Withdrawal Plan: periodic redemption of units; taxes apply on gains portion.', '₹30,000/month from a ₹50 lakh fund.', 'retirement', ['SIP']],
+    ['SWP', 'Withdrawing a fixed amount regularly from an investment.', 'Systematic Withdrawal Plan: periodic redemption of units; taxes apply on gains portion.', '₹30,000/month from a ₹50 lakh fund.', 'swp', ['SIP', 'Retirement']],
     ['STP', 'Moving money gradually from one fund to another.', 'Systematic Transfer Plan, e.g. from a debt fund into an equity fund in instalments.', 'Move ₹6 lakh into equity at ₹1 lakh/month.', 'sip', ['SIP']],
     ['Lumpsum', 'Investing a big amount at once.', 'One-time investment compounding at the assumed rate.', '₹5 lakh bonus invested today.', 'lumpsum', ['SIP']],
     ['NAV', 'Price of one unit of a mutual fund.', 'Net Asset Value = (assets − liabilities) / units outstanding.', 'NAV ₹50, invest ₹10,000 → 200 units.', 'sip', ['AUM', 'Expense ratio']],
@@ -325,18 +358,18 @@ window.FOS = window.FOS || {};
     ['Break-even', 'The sales level at which you stop losing money.', 'Fixed costs / (price − variable cost).', '₹1 lakh fixed, ₹100 margin → 1,000 units.', 'breakeven', ['ROI']],
     ['ROI', 'Gain relative to what you put in.', '(Gain − cost) / cost × 100.', '₹1 lakh becomes ₹1.2 lakh → 20%.', 'roi', ['CAGR']],
     ['Runway', 'How many months a business can survive.', 'Cash balance / monthly net burn.', '₹12 lakh / ₹2 lakh = 6 months.', 'runway', ['Burn rate']],
-    ['Ponzi scheme', 'Paying old investors with new investors\' money.', 'Fraud that collapses when inflows slow; promises steady high returns.', 'Guaranteed 3% weekly returns.', 'cryptoscen', ['Scam']],
+    ['Ponzi scheme', 'Paying old investors with new investors\' money.', 'Fraud that collapses when inflows slow; promises steady high returns.', 'Guaranteed 3% weekly returns.', '', ['Scam']],
     ['Blockchain', 'A shared record that many computers keep in sync.', 'A distributed ledger of blocks linked by cryptographic hashes.', 'Bitcoin runs on one.', 'cryptoscen', ['Private key']],
     ['Private key', 'The secret that controls crypto.', 'A cryptographic secret that signs transactions; whoever holds it controls the funds.', 'Lose it and funds are gone.', 'cryptoscen', ['Blockchain']],
     ['Financial year', 'The 12-month period for tax: 1 April to 31 March.', 'Income earned in FY 2030-31 is assessed in AY 2031-32.', 'Salary earned between 1 Apr 2030 and 31 Mar 2031 is declared in AY 2031-32.', 'incometax', ['Income tax']],
-    ['Nominee', 'The person who receives funds if you die.', 'Named in accounts, policies and investments; legal heir rules may still apply.', 'Add a nominee to each account.', 'networthcalc', ['Insurance']],
-    ['IFSC', 'The code that identifies a bank branch.', '11-character code used in NEFT / RTGS / IMPS.', 'ABCD0123456', 'fd', ['UPI']],
-    ['UPI', 'Instant bank-to-bank payments on your phone.', 'Unified Payments Interface; never share your UPI PIN to receive money.', 'Scan-and-pay.', 'subscription', ['Scam']],
-    ['RC (Registration Certificate)', 'The official document proving who owns a vehicle.', 'Issued by the RTO; lists registration number, chassis and engine numbers, owner, make/model, hypothecation. Transfers happen by updating the RC.', 'Always compare RC numbers with the metal stamping on the vehicle.', 'afford', ['Chassis number', 'Hypothecation']],
-    ['Chassis number', 'The unique ID stamped on a vehicle\'s frame.', 'VIN-style identifier punched on the chassis; must match RC, insurance and invoice. Engine number is a separate stamping on the engine.', 'A mismatch or re-stamping is a serious red flag when buying second-hand.', 'afford', ['RC (Registration Certificate)']],
-    ['Hypothecation', 'A loan lender\'s claim on a vehicle until the loan is repaid.', 'The RC carries a lender endorsement; removal needs Form 35 and a loan-closure/NOC letter.', 'Buying a hypothecated vehicle without a NOC can leave you with the seller\'s debt problem.', 'afford', ['RC (Registration Certificate)', 'NOC']],
-    ['NOC', 'A letter saying “no objection” — e.g. from a lender or RTO.', 'No Objection Certificate: lender NOC confirms loan closure; RTO NOC allows re-registration in another state.', 'Ask for the lender NOC before paying for a used vehicle.', 'afford', ['Hypothecation']],
-    ['Challan', 'A traffic fine or penalty notice.', 'E-challans are linked to the registration number and can transfer with the vehicle if unpaid.', 'Check pending challans before buying a used vehicle.', 'afford', ['RC (Registration Certificate)']],
+    ['Nominee', 'The person who receives funds if you die.', 'Named in accounts, policies and investments; legal heir rules may still apply.', 'Add a nominee to each account.', '', ['Insurance', 'Will']],
+    ['IFSC', 'The code that identifies a bank branch.', '11-character code used in NEFT / RTGS / IMPS.', 'ABCD0123456', '', ['UPI']],
+    ['UPI', 'Instant bank-to-bank payments on your phone.', 'Unified Payments Interface; never share your UPI PIN to receive money.', 'Scan-and-pay.', '', ['Scam']],
+    ['RC (Registration Certificate)', 'The official document proving who owns a vehicle.', 'Issued by the RTO; lists registration number, chassis and engine numbers, owner, make/model, hypothecation. Transfers happen by updating the RC.', 'Always compare RC numbers with the metal stamping on the vehicle.', 'car', ['Chassis number', 'Hypothecation']],
+    ['Chassis number', 'The unique ID stamped on a vehicle\'s frame.', 'VIN-style identifier punched on the chassis; must match RC, insurance and invoice. Engine number is a separate stamping on the engine.', 'A mismatch or re-stamping is a serious red flag when buying second-hand.', 'car', ['RC (Registration Certificate)']],
+    ['Hypothecation', 'A loan lender\'s claim on a vehicle until the loan is repaid.', 'The RC carries a lender endorsement; removal needs Form 35 and a loan-closure/NOC letter.', 'Buying a hypothecated vehicle without a NOC can leave you with the seller\'s debt problem.', 'car', ['RC (Registration Certificate)', 'NOC']],
+    ['NOC', 'A letter saying “no objection” — e.g. from a lender or RTO.', 'No Objection Certificate: lender NOC confirms loan closure; RTO NOC allows re-registration in another state.', 'Ask for the lender NOC before paying for a used vehicle.', 'car', ['Hypothecation']],
+    ['Challan', 'A traffic fine or penalty notice.', 'E-challans are linked to the registration number and can transfer with the vehicle if unpaid.', 'Check pending challans before buying a used vehicle.', 'car', ['RC (Registration Certificate)']],
     ['Chit fund', 'A group savings scheme where members pay monthly and take turns receiving the pot.', 'Regulated by the Chit Funds Act, 1982 and state Registrars; foreman takes a commission; prize amount is often auctioned at a discount.', 'A registered ₹5 lakh chit of 50 months with ₹10,000 instalments.', 'rd', ['Ponzi scheme']],
     ['FOIR', 'The share of your income lenders allow for all EMIs.', 'Fixed Obligation to Income Ratio = total monthly obligations ÷ net monthly income; banks often cap it around 40–55% — but that is lender limit, not a comfort level.', 'EMIs ₹30,000 on ₹1 lakh = 30% FOIR.', 'dti', ['DTI', 'EMI']],
     ['Udyam registration', 'Free government registration for small businesses (MSME).', 'Online registration on the Udyam portal; helps with priority-sector loans, subsidies and some tender benefits.', 'A home-based business registering as a micro enterprise.', 'breakeven', ['GST']],
@@ -344,7 +377,16 @@ window.FOS = window.FOS || {};
     ['HRA', 'A salary component to cover house rent; partly tax-exempt in the old regime.', 'Exemption is the least of: actual HRA, rent paid − 10% of basic, and 50%/40% of basic (metro/non-metro). Requires genuine rent and receipts.', 'Claiming HRA on fake rent is illegal.', 'salary', ['Income tax']],
     ['Advance tax', 'Tax you pay during the year instead of at the end.', 'Due in instalments (mid-June, September, December, March) when tax after TDS exceeds a threshold — verify dates.', 'Business owners and people with large interest or capital gains.', 'incometax', ['TDS']],
     ['Working capital', 'The cash needed to run the business day to day.', 'Current assets − current liabilities; growth usually needs more of it (inventory, receivables).', 'A shop selling on credit needs cash to cover 30-day payments.', 'runway', ['Runway']],
-    ['Scam', 'A trick to take your money or secrets.', 'Social-engineering or fake-product fraud.', 'Fake customer-care numbers.', 'cryptoscen', ['Ponzi scheme']]
+    ['Scam', 'A trick to take your money or secrets.', 'Social-engineering or fake-product fraud.', 'Fake customer-care numbers.', '', ['Ponzi scheme']],
+    ['Absolute return', 'The total gain or loss as a % of what you put in, ignoring how long it took.', '(Sell value − buy value − costs) ÷ buy value × 100. Use CAGR to compare investments held for different periods.', '₹1 lakh → ₹1.3 lakh is a 30% absolute return, whether it took 2 years or 10.', 'absreturn', ['CAGR']],
+    ['Assets', 'Things you own that have value.', 'Cash, bank balances, deposits, investments, gold, property and vehicles at today\'s realistic selling value (not purchase price).', 'Savings ₹2 lakh + FD ₹3 lakh + bike ₹40,000 = ₹5.4 lakh of assets.', 'networthcalc', ['Liabilities', 'Net worth']],
+    ['Liabilities', 'Money you owe.', 'Loans, credit-card dues and any other amount payable. Record the outstanding balance, the EMI and the interest rate.', 'Home loan ₹20 lakh + card dues ₹30,000 = ₹20.3 lakh of liabilities.', 'networthcalc', ['Assets', 'Net worth']],
+    ['Budget', 'A plan for how your income will be used this month.', 'Planned income, expenses and savings by category, compared with what actually happened (see the Expense Log and Monthly Statement).', '₹60,000 income: ₹30,000 needs, ₹18,000 wants, ₹12,000 savings.', 'savingsrate', ['Savings rate']],
+    ['Retirement', 'The stage when you no longer depend on earning a salary.', 'Planned as a corpus that funds inflation-adjusted expenses for decades; sources include EPF, PPF, NPS, investments and any pension.', 'Needing ₹50,000 a month today may mean ₹1.6 lakh a month at 60 after 20 years of 6% inflation.', 'retirement', ['NPS', 'SWP']],
+    ['Burn rate', 'How much cash a business (or household) uses up each month.', 'Monthly cash outflow minus cash inflow. Runway = cash ÷ net burn.', 'Spending ₹3 lakh a month and earning ₹1 lakh means a net burn of ₹2 lakh.', 'runway', ['Runway']],
+    ['Insurance', 'A contract where you pay a small premium so an insurer pays a large loss.', 'Risk transfer: the insurer pools many policyholders. Health, term life, motor, home and accident cover are the core types.', '₹12,000 a year for ₹10 lakh of health cover.', 'cover', ['Sum insured', 'Nominee']],
+    ['Will', 'A legal document saying who gets your assets after you die.', 'A signed, witnessed declaration of how your property is distributed, who is guardian of minor children and who executes the wishes. Without one, succession law decides.', 'A will can name a guardian for a child; a nominee cannot.', '', ['Nominee', 'Legal heir']],
+    ['Legal heir', 'The person the law says inherits when someone dies.', 'Decided by the will, or — if there is none — by the succession law that applies to the deceased\'s religion (for example the Hindu Succession Act or the Indian Succession Act).', 'A nominee holds money for the legal heirs; the heirs are the real owners.', '', ['Will', 'Nominee']]
   ];
 
   Object.assign(FOS, { INTEREST_RATES, GOVERNMENT_SCHEMES, TAX_RULES, FINANCIAL_ASSUMPTIONS, MODULES, LEVELS, CHECKLISTS, GLOSSARY });
