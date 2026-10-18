@@ -220,3 +220,29 @@ input[type=date], input[type=month], input[type=time], input[type=datetime-local
 .gsec > summary::marker { color: var(--primary); } .gsec table.data { margin: .6rem 0; } .gsec > :last-child { margin-bottom: .2rem; } .gsec h4 { margin: .8rem 0 .3rem; }
 .advisor { border: 2px solid var(--primary); background: linear-gradient(135deg, var(--primary-soft), var(--surface)); } .advisor h2 { margin-top: 0; } .advisor li { margin: .4rem 0; }
 .guide-cta { display: flex; gap: .9rem; align-items: center; border-left: 5px solid var(--primary); background: linear-gradient(135deg, var(--primary-soft), var(--surface)); } .guide-cta .gc-ic { font-size: 1.8rem; } .guide-cta p { margin: .1rem 0; font-size: .9rem; color: var(--ink2); } .guide-cta small { color: var(--muted); }
+
+/* ---------- start-my-journey wizard ---------- */
+.field > small.hint { display: block; color: var(--muted); font-weight: 400; font-size: .8rem; line-height: 1.4; margin-top: .3rem; }
+.onb-list { padding-left: 1.1rem; } .onb-list li { margin: .5rem 0; overflow-wrap: anywhere; }
+.modal-body .lead { margin: .2rem 0 .6rem; color: var(--ink2); }
+.modal-body .steps { margin-bottom: .6rem; }
+
+/* ---------- Money Words A–Z + dashboard "how calculated" ---------- */
+.jw-list { display: grid; gap: .6rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); }
+.jw-item { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: .7rem .9rem; min-width: 0; box-shadow: var(--shadow); } .jw-item p { margin: .35rem 0 0; overflow-wrap: anywhere; line-height: 1.5; }
+.jw-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: .35rem .6rem; } .jw-t { font-size: 1.05rem; color: var(--primary); overflow-wrap: anywhere; } .jw-f { color: var(--ink2); font-size: .85rem; overflow-wrap: anywhere; } .jw-h .pill { margin-left: auto; font-size: .7rem; }
+.jw-more { display: inline-block; margin-top: .4rem; font-size: .85rem; }
+.calc-how table.data td:nth-child(2), .calc-how table.data td:nth-child(3) { overflow-wrap: anywhere; }
+
+/* ---------- Google Drive cloud icon (top bar), demo banner, version history, conflict dialog ---------- */
+.sync-btn { position: relative; font-size: 1.2rem; } .sync-btn[hidden] { display: none; }
+.sync-btn .sy-mark { position: absolute; right: 2px; bottom: 4px; width: 14px; height: 14px; border-radius: 50%; font-style: normal; font-size: .6rem; font-weight: 800; line-height: 14px; text-align: center; background: var(--good); color: #fff; border: 2px solid var(--surface); box-sizing: content-box; }
+.sync-btn[data-state="needsignin"] .sy-mark, .sync-btn[data-state="paused"] .sy-mark { background: var(--warn); }
+.sync-btn[data-state="conflict"] .sy-mark, .sync-btn[data-state="error"] .sy-mark { background: var(--bad); }
+.sync-btn[data-state="offline"] .sy-mark { background: var(--muted); }
+.sync-btn[data-state="syncing"] .sy-mark { background: var(--accent); animation: sy-spin 1s linear infinite; }
+@keyframes sy-spin { to { transform: rotate(360deg); } }
+.demo-banner { display: flex; gap: .8rem; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: .6rem 1rem; border-radius: 12px; background: var(--warn-soft); color: var(--warn); border: 1px solid var(--line2); font-size: .92rem; } .demo-banner[hidden] { display: none; } .demo-banner .btn { flex: none; }
+.lock-box.wide { width: min(560px, 100%); text-align: left; } .lock-box.wide h1, .lock-box.wide .logo-lg { text-align: center; }
+table.hist td, table.hist th { vertical-align: top; } .hist-sum { font-size: .85rem; margin-top: .25rem; } .hist-act { white-space: nowrap; } .hist-act .btn { margin: .1rem .1rem; }
+.cmp-card { margin: 0; } .cmp-card h4 { margin-top: 0; }
