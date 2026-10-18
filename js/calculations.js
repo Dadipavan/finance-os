@@ -17,16 +17,29 @@ window.FOS = window.FOS || {};
     // short: ₹1.25 Cr / ₹4.5 L / ₹12.3K
     short(n) {
       if (!Number.isFinite(n)) return '—';
-      const a = Math.abs(n), s = n < 0 ? '-' : '';
-      if (a >= 1e7) return s + '₹' + +(a / 1e7).toFixed(2) + ' Cr';
-      if (a >= 1e5) return s + '₹' + +(a / 1e5).toFixed(2) + ' L';
-      if (a >= 1e3) return s + '₹' + +(a / 1e3).toFixed(1) + 'K';
+      const a = Math.abs(n), s = n < 0 ? '-' : '', r = (x, d) => +x.toFixed(d);
+      if (a >= 1e7 || r(a / 1e5, 2) >= 100) return s + '₹' + r(a / 1e7, 2) + ' Cr';   // 99.999 L rounds up to 1 Cr, not "100 L"
+      if (a >= 1e5 || r(a / 1e3, 1) >= 100) return s + '₹' + r(a / 1e5, 2) + ' L';
+      if (a >= 1e3) return s + '₹' + r(a / 1e3, 1) + 'K';
       return s + '₹' + Math.round(a);
     },
     pct(n, d = 1) { return Number.isFinite(n) ? n.toLocaleString('en-IN', { maximumFractionDigits: d }) + '%' : '—'; },
-    months(m) { if (!Number.isFinite(m)) return '—'; const y = Math.floor(m / 12), mo = Math.round(m % 12); return (y ? y + ' yr ' : '') + (mo || !y ? mo + ' mo' : '').trim(); },
+    months(m) { if (!Number.isFinite(m)) return '—'; const t = Math.round(m), y = Math.floor(t / 12), mo = t % 12; return [y ? y + ' yr' : '', mo || !y ? mo + ' mo' : ''].filter(Boolean).join(' '); },
     years(y) { return Number.isFinite(y) ? +y.toFixed(1) + ' yrs' : '—'; },
     date(d) { try { return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }); } catch (e) { return '—'; } }
+  };
+
+  /* ---------- dates ----------
+     LOCAL calendar days. Date.toISOString() is UTC: in India (UTC+5:30) it returns yesterday between 00:00 and 05:30,
+     and local midnight of any day serialises to the previous day. Use these helpers for every date the user sees or types. */
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const dates = {
+    iso: (d) => { d = d || new Date(); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); },
+    month: (d) => { d = d || new Date(); return d.getFullYear() + '-' + pad2(d.getMonth() + 1); },
+    parse: (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || '')); if (!m) return null; const d = new Date(+m[1], +m[2] - 1, +m[3]); return d.getMonth() === +m[2] - 1 ? d : null; },
+    // same day of month, n months later, clamped to that month's last day (31 Jan + 1 month = 28/29 Feb, never 3 Mar)
+    addMonths: (d, n) => { const t = d.getFullYear() * 12 + d.getMonth() + n, y = Math.floor(t / 12), m = t - y * 12; return new Date(y, m, Math.min(d.getDate(), new Date(y, m + 1, 0).getDate())); },
+    fy: (d) => { d = d || new Date(); const y = d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1; return 'FY' + y + '-' + pad2((y + 1) % 100); }
   };
 
   /* ---------- basic time value ---------- */
@@ -156,23 +169,60 @@ window.FOS = window.FOS || {};
   };
 
   /* ---------- tax ---------- */
+  // slabs: [[upper limit, rate %], …] (null = no limit). Surcharge tiers use the same shape and apply to TOTAL taxable income.
+  const slabTaxOn = (income, slabs) => {
+    let tax = 0, prev = 0;
+    for (const [lim, rate] of slabs) {
+      const upper = lim === null ? Infinity : lim;
+      if (income > prev) tax += (Math.min(income, upper) - prev) * rate / 100;
+      prev = upper; if (income <= upper) break;
+    }
+    return tax;
+  };
+  const surchargePct = (income, tiers) => { for (const [lim, pct] of tiers || []) if (lim === null || income <= lim) return pct; return 0; };
+  // Surcharge with marginal relief: tax + surcharge may not exceed (tax + surcharge at the threshold just crossed) + the income above that threshold.
+  const surchargeFor = (base, income, regime) => {
+    const tiers = regime.surcharge, pct = surchargePct(income, tiers);
+    if (!pct) return 0;
+    let sc = base * pct / 100, th = 0;
+    for (const [lim] of tiers) if (lim !== null && lim < income) th = lim;
+    if (th > 0) {
+      const cap = slabTaxOn(th, regime.slabs) * (1 + surchargePct(th, tiers) / 100) + (income - th);
+      if (base + sc > cap) sc = Math.max(0, cap - base);
+    }
+    return sc;
+  };
   C.incomeTax = function (taxable, regime) {
     taxable = Math.max(0, taxable);
-    let tax = 0, prev = 0;
-    for (const [lim, rate] of regime.slabs) {
-      const upper = lim === null ? Infinity : lim;
-      if (taxable > prev) tax += (Math.min(taxable, upper) - prev) * rate / 100;
-      prev = upper; if (taxable <= upper) break;
-    }
+    const tax = slabTaxOn(taxable, regime.slabs);
     let rebate = 0;
     const rb = regime.rebate;
     if (rb) {
       if (taxable <= rb.limit) rebate = Math.min(tax, rb.max);
       else if (rb.marginalRelief && tax > taxable - rb.limit) rebate = tax - (taxable - rb.limit);
     }
-    const base = Math.max(0, tax - rebate), cess = base * (regime.cessPct || 0) / 100;
-    return { slabTax: tax, rebate, cess, total: base + cess };
+    const base = Math.max(0, tax - rebate), surcharge = surchargeFor(base, taxable, regime), cess = (base + surcharge) * (regime.cessPct || 0) / 100;
+    return { slabTax: tax, rebate, surcharge, cess, total: base + surcharge + cess };
   };
+  // Highest taxable income on which this regime charges no tax at all (rebate + marginal relief), found by search so it follows the configured rules.
+  C.zeroTaxLimit = function (regime) {
+    let lo = 0, hi = 1e8; if (C.incomeTax(hi, regime).total <= 0) return hi;
+    for (let i = 0; i < 80; i++) { const mid = (lo + hi) / 2; if (C.incomeTax(mid, regime).total <= 0.5) lo = mid; else hi = mid; }
+    return Math.floor(lo);
+  };
+
+  /* ---------- internal rate of return ---------- */
+  // IRR of cash flows at equal intervals (flows[0] now; negative = paid out). Returns the rate PER PERIOD as a fraction, or NaN.
+  // XIRR: flows = [{t: years since the first flow, v}] — same idea for irregular dates (annual rate).
+  const rootOf = (f) => {
+    let lo = -0.9999, hi = 1, flo = f(lo), fhi = f(hi);
+    while (flo * fhi > 0 && hi < 1e7) { hi *= 2; fhi = f(hi); }
+    if (!(flo * fhi <= 0) || !Number.isFinite(flo) || !Number.isFinite(fhi)) return NaN;
+    for (let i = 0; i < 200; i++) { const mid = (lo + hi) / 2, fm = f(mid); if (fm * flo <= 0) { hi = mid; fhi = fm; } else { lo = mid; flo = fm; } }
+    return (lo + hi) / 2;
+  };
+  C.irr = (flows) => (flows.some((v) => v > 0) && flows.some((v) => v < 0) ? rootOf((r) => flows.reduce((a, v, i) => a + v / Math.pow(1 + r, i), 0)) : NaN);
+  C.xirr = (flows) => (flows.some((x) => x.v > 0) && flows.some((x) => x.v < 0) ? rootOf((r) => flows.reduce((a, x) => a + x.v / Math.pow(1 + r, x.t), 0)) : NaN);
 
   /* ---------- cards ---------- */
   C.cardPayoff = function (o) {
@@ -223,5 +273,5 @@ window.FOS = window.FOS || {};
   };
 
   C.r2 = r2; C.fmt = fmt; C.num = num;
-  FOS.calc = C; FOS.fmt = fmt;
+  FOS.calc = C; FOS.fmt = fmt; FOS.dates = dates;
 })();
