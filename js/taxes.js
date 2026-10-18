@@ -5,22 +5,24 @@
 (function () {
   'use strict';
   const { F, S, reg } = FOS, C = FOS.calc, fmt = FOS.fmt, U = FOS.ui, esc = U.esc;
-  const yearsOpt = () => Object.keys(FOS.TAX_RULES.years).map((k) => [k, FOS.TAX_RULES.years[k].label]);
+  const yearsOpt = () => Object.keys(FOS.TAX_RULES.years).map((k) => [k, FOS.TAX_RULES.years[k].label + (FOS.TAX_RULES.years[k].verified === false ? ' — unverified copy' : '')]);
 
   FOS.sourceBlock = (meta) => `<div class="source" role="note"><b>Source:</b> ${esc(meta.source)} · <b>Last updated:</b> ${esc(meta.lastUpdated)} · <b>Applicable:</b> ${esc(meta.period || meta.label || '')} · <b class="warn-t">${esc(meta.note || 'Verify before acting')}</b></div>`;
 
   reg({
-    id: 'incometax', title: 'Income Tax Estimator (New vs Old regime)', group: 'Tax', module: 'tax', tags: 'income tax slab regime new old rebate cess deduction 80c tds',
+    id: 'incometax', title: 'Income Tax Estimator (New vs Old regime)', group: 'Tax', module: 'tax', tags: 'income tax slab regime new old rebate cess surcharge deduction 80c tds',
     intro: 'Estimate tax under both regimes using the rules for the selected year from the configuration.',
-    fields: [F.sel('yr', 'Tax year', () => FOS.TAX_RULES.defaultYear, yearsOpt()), F.money('sal', 'Annual salary / business income', 1500000, 10000000, 50000), F.money('oth', 'Other income (interest, rent etc.)', 50000, 2000000, 5000), F.money('ded', 'Old-regime deductions (80C, 80D, NPS, home-loan interest…)', 200000, 1000000, 5000)],
-    formula: ['Taxable income = Income − Standard deduction (− deductions in old regime)', 'Tax = Σ (slab portion × slab rate), minus rebate, plus 4% cess'], vars: ['Marginal relief near the rebate limit is modelled for the new regime where configured'], assumptions: ['Capital gains and special-rate income are not included (use the Capital Gains tool)', 'Surcharge is not modelled (applies to very high incomes)'],
+    fields: [F.sel('yr', 'Tax year', () => FOS.TAX_RULES.defaultYear, yearsOpt()), F.money('sal', 'Annual salary / pension income', 1500000, 10000000, 50000), F.money('biz', 'Business / professional income (net profit)', 0, 10000000, 50000), F.money('oth', 'Other income (interest, rent, dividends…)', 50000, 2000000, 5000), F.money('ded', 'Old-regime deductions (80C, 80D, NPS, home-loan interest…)', 200000, 1000000, 5000)],
+    formula: ['Taxable income = Income − Standard deduction (salary or pension only) (− deductions in old regime)', 'Tax = Σ (slab portion × slab rate), minus rebate, plus surcharge on very high incomes (with marginal relief), plus 4% cess'],
+    vars: ['The standard deduction can only be claimed against salary or pension income — never against business or other income', 'Marginal relief just above the rebate limit and above each surcharge threshold is modelled where configured'],
+    assumptions: ['Capital gains and other special-rate income are not included (use the Capital Gains tool)', 'Surcharge on special-rate income (capital gains, dividends) is capped differently and is not modelled', 'Business income means the net profit you declare; presumptive-tax schemes are not modelled'],
     compute(v) {
-      const yr = FOS.TAX_RULES.years[v.yr] || FOS.TAX_RULES.years[FOS.TAX_RULES.defaultYear], gross = v.sal + v.oth;
-      const calc = (k) => { const r = yr.regimes[k], ti = Math.max(0, gross - r.stdDeduction - (k === 'old' ? v.ded : 0)); return { ti, ...C.incomeTax(ti, r) }; };
+      const yr = FOS.TAX_RULES.years[v.yr] || FOS.TAX_RULES.years[FOS.TAX_RULES.defaultYear], gross = v.sal + v.biz + v.oth;
+      const calc = (k) => { const r = yr.regimes[k], std = Math.min(v.sal, r.stdDeduction), ti = Math.max(0, gross - std - (k === 'old' ? v.ded : 0)); return { ti, std, ...C.incomeTax(ti, r) }; };
       const n = calc('new'), o = calc('old');
       return { summary: [S('New regime: taxable income', n.ti), S('New regime: tax', n.total, 'inr', true), S('Old regime: taxable income', o.ti), S('Old regime: tax', o.total, 'inr', true), S('Difference (old − new)', o.total - n.total), S('New regime: average rate', gross > 0 ? n.total / gross * 100 : NaN, 'pct'), S('Old regime: average rate', gross > 0 ? o.total / gross * 100 : NaN, 'pct')],
-        table: { head: ['', 'New regime', 'Old regime'], rows: [['Standard deduction', fmt.inr(yr.regimes.new.stdDeduction), fmt.inr(yr.regimes.old.stdDeduction)], ['Slab tax', fmt.inr(n.slabTax), fmt.inr(o.slabTax)], ['Rebate', fmt.inr(n.rebate), fmt.inr(o.rebate)], ['Cess', fmt.inr(n.cess), fmt.inr(o.cess)], ['Total tax', fmt.inr(n.total), fmt.inr(o.total)]] }, tableTitle: 'Breakdown',
-        notes: ['Rules used: ' + yr.label + ' — ' + yr.note + '. Source: ' + yr.source + '.', 'Which regime suits you depends on the deductions you will actually use; recompute every year.'] };
+        table: { head: ['', 'New regime', 'Old regime'], rows: [['Standard deduction used', fmt.inr(n.std), fmt.inr(o.std)], ['Slab tax', fmt.inr(n.slabTax), fmt.inr(o.slabTax)], ['Rebate', fmt.inr(n.rebate), fmt.inr(o.rebate)], ['Surcharge', fmt.inr(n.surcharge), fmt.inr(o.surcharge)], ['Cess', fmt.inr(n.cess), fmt.inr(o.cess)], ['Total tax', fmt.inr(n.total), fmt.inr(o.total)]] }, tableTitle: 'Breakdown',
+        notes: ['Rules used: ' + yr.label + ' — ' + yr.note + '. Source: ' + yr.source + '.', 'Which regime suits you depends on the deductions you will actually use; recompute every year.'].concat(yr.verified === false ? ['These rules are an UNVERIFIED copy of the previous year — check them in Data & Sources before relying on the result.'] : []) };
     }
   });
 
@@ -32,7 +34,7 @@
     compute(v) {
       const yr = FOS.TAX_RULES.years[v.yr], cg = yr.capitalGains[v.kind], gain = v.sell - v.buy, cess = yr.other.standardCess || 0;
       const rate = cg.rate === 'slab' ? v.slab : cg.rate, taxable = Math.max(0, gain - (cg.exemption || 0)), tax = gain > 0 ? taxable * rate / 100 * (1 + cess / 100) : 0;
-      return { summary: [S('Gain / loss', gain, 'inr', true), S('Exemption applied', gain > 0 ? Math.min(gain, cg.exemption || 0) : 0), S('Rate used', rate, 'pct'), S('Estimated tax (incl. cess)', tax, 'inr', true), S('Gain after tax', gain - tax)], notes: [cg.note, 'Rules: ' + yr.label + '. ' + yr.note] };
+      return { summary: [S('Gain / loss', gain, 'inr', true), S('Exemption applied', gain > 0 ? Math.min(gain, cg.exemption || 0) : 0), S('Rate used', rate, 'pct'), S('Estimated tax (incl. cess)', tax, 'inr', true), S('Gain after tax', gain - tax)], notes: [cg.note, 'Rules: ' + yr.label + '. ' + yr.note].concat(yr.verified === false ? ['These rules are an UNVERIFIED copy of the previous year — check them in Data & Sources.'] : []) };
     }
   });
 
@@ -60,7 +62,7 @@
             <div class="grid-2"><div><h4>${esc(y.regimes.new.name)}</h4>${slabTable(y.regimes.new)}</div><div><h4>${esc(y.regimes.old.name)}</h4>${slabTable(y.regimes.old)}</div></div>
             <h4>Old-regime deduction limits</h4><ul>${Object.entries(y.deductionsOld).map(([a, b]) => `<li>${esc(a)}: up to ${fmt.inr(b)}</li>`).join('')}</ul>
             <h4>Capital gains</h4><ul>${Object.entries(y.capitalGains).map(([a, b]) => `<li><b>${esc(a)}</b>: ${b.rate === 'slab' ? 'slab rate' : b.rate + '%'}${b.exemption ? ' (exemption ' + fmt.inr(b.exemption) + ')' : ''}${b.tds ? ', TDS ' + b.tds + '%' : ''} — ${esc(b.note || '')}</li>`).join('')}</ul>
-            <p class="note">These values live in <code>TAX_RULES</code> in <code>js/data.js</code>. Edit that one object and every calculator and screen updates.</p></div>`;
+            <p class="note">Change these numbers in <a href="#/sources">Data &amp; Sources → Update tax rules</a>; every calculator and screen updates. (They are stored as <code>TAX_RULES</code> in <code>js/data.js</code>.)</p></div>`;
           el.querySelector('#ty').onchange = (e) => draw(e.target.value);
         };
         draw(FOS.TAX_RULES.defaultYear);
@@ -73,7 +75,7 @@
   function schemes(root, ids) {
     const G = FOS.GOVERNMENT_SCHEMES, list = ids || Object.keys(G.schemes), rows = [['Purpose', 'purpose'], ['Eligibility', 'eligibility'], ['Minimum', 'min'], ['Maximum', 'max'], ['Tenure', 'tenure'], ['Interest mechanism', 'mechanism'], ['Tax treatment', 'tax'], ['Withdrawal', 'withdrawal'], ['Lock-in', 'lockin'], ['Risk', 'risk'], ['Liquidity', 'liquidity']];
     const val = (s, k) => (k === 'min' || k === 'max' ? (s[k] == null ? 'No fixed limit' : fmt.inr(s[k])) : esc(s[k]));
-    root.innerHTML = `<div class="card"><h3>Scheme data (configurable)</h3>${FOS.sourceBlock(G.meta)}<p class="muted">Rates, limits and tax treatment change. Edit <code>GOVERNMENT_SCHEMES</code> in <code>js/data.js</code>, or override a rate in Settings → Rates &amp; Assumptions.</p>
+    root.innerHTML = `<div class="card"><h3>Scheme data (configurable)</h3>${FOS.sourceBlock(G.meta)}<p class="muted">Rates, limits and tax treatment change. Update them in <a href="#/sources">Data &amp; Sources → Update rates &amp; limits</a>.</p>
       <div class="table-scroll"><table class="data schemes"><thead><tr><th>Item</th>${list.map((id) => `<th>${esc(id)}<br><small>${esc(G.schemes[id].name)}</small></th>`).join('')}</tr></thead><tbody>
       <tr><th scope="row">Interest rate (p.a.)</th>${list.map((id) => `<td><b>${FOS.store.schemeRate(id)}%</b></td>`).join('')}</tr>
       ${rows.map(([l, k]) => `<tr><th scope="row">${l}</th>${list.map((id) => `<td>${val(G.schemes[id], k)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
