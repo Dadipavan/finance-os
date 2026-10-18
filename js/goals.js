@@ -65,12 +65,12 @@
     id: 'fi', title: 'Financial Independence Calculator', group: 'Retirement', module: 'fi', tags: 'financial independence fire corpus savings rate years to fi',
     intro: 'When could your investments cover your expenses? Explore how savings rate and returns change the answer.',
     fields: [F.money('exp', 'Monthly expenses', 50000, 500000, 1000, { lo: 1 }), F.money('inv', 'Current investments', 500000, 50000000, 50000), F.money('sav', 'Monthly investing', 30000, 300000, 1000), F.pct('r', 'Return assumption', 10, 18, 0.1), F.pct('inf', 'Inflation', () => FOS.store.assume('inflation'), 12, 0.1), F.pct('wr', 'Sustainable withdrawal rate assumption', 3.5, 8, 0.1, { lo: 0.5 })],
-    formula: ['FI number = Annual expenses ÷ withdrawal rate', 'Each year: Corpus = Corpus × (1+r) + yearly investing;  FI number grows with inflation'], vars: ['A 3–4% withdrawal rate is a widely discussed rule of thumb; it is NOT a guarantee'], assumptions: ['Investing amount stays constant in today\'s rupees? No — it is constant in nominal terms here (conservative if your income grows)', DISC],
+    formula: ['FI number = Annual expenses ÷ withdrawal rate', 'Each year: Corpus = Corpus × (1+r) + yearly investing;  FI number grows with inflation'], vars: ['A 3–4% withdrawal rate is a widely discussed rule of thumb; it is NOT a guarantee'], assumptions: ['Your monthly investing is held constant in rupees (not raised for inflation or pay rises) — conservative if your income grows', DISC],
     compute(v) {
       const run = (r) => { let c = v.inv, e = v.exp * 12; for (let y = 0; y <= 70; y++) { const need = e / (v.wr / 100); if (c >= need) return { years: y, need, c }; c = c * (1 + r / 100) + v.sav * 12 * (1 + r / 200); e *= 1 + v.inf / 100; } return { years: NaN }; };
       const b = run(v.r), rows = [Math.max(0, v.r - 3), v.r, v.r + 3].map((r) => { const o = run(r); return [r + '%', Number.isFinite(o.years) ? o.years + ' years' : 'Not within 70 years', Number.isFinite(o.years) ? fmt.inr(o.need) : '—']; });
       const pts = [], tg = []; { let c = v.inv, e = v.exp * 12; for (let y = 0; y <= Math.min(45, Number.isFinite(b.years) ? b.years + 5 : 40); y++) { pts.push({ x: y, y: c }); tg.push({ x: y, y: e / (v.wr / 100) }); c = c * (1 + v.r / 100) + v.sav * 12 * (1 + v.r / 200); e *= 1 + v.inf / 100; } }
-      return { summary: [S('FI number today', v.exp * 12 / (v.wr / 100), 'inr', true), S('Current savings rate needs income — see dashboard', v.inv, 'inr'), S('Years to FI (base)', b.years, 'years', true), S('FI number at that time', b.need, 'inr')], table: { head: ['Return assumption', 'Years to FI', 'FI number then'], rows }, tableTitle: 'Scenarios', charts: [ch().line({ xLabel: 'Year', yfmt: 'inr', series: [{ name: 'Your investments', data: pts }, { name: 'FI number (inflating)', data: tg, dash: true }] })], notes: [DISC] };
+      return { summary: [S('FI number today', v.exp * 12 / (v.wr / 100), 'inr', true), S('Your investments today', v.inv, 'inr'), S('Years to FI (base)', b.years, 'years', true), S('FI number at that time', b.need, 'inr')], table: { head: ['Return assumption', 'Years to FI', 'FI number then'], rows }, tableTitle: 'Scenarios', charts: [ch().line({ xLabel: 'Year', yfmt: 'inr', series: [{ name: 'Your investments', data: pts }, { name: 'FI number (inflating)', data: tg, dash: true }] })], notes: [DISC] };
     }
   });
 
@@ -117,10 +117,11 @@
     formula: ['Each year: Pool = Pool × (1 + return) + Income − Expenses − Debt payment', 'Income grows by the growth rate until retirement; expenses grow by inflation', 'Net worth = Pool − Debt outstanding'], vars: ['After retirement, income is zero and the pool funds expenses'], assumptions: ['This is a mathematical scenario model, not a prediction of your future.', 'Taxes are assumed included in “take-home”. One-time events (house, children) are not modelled — add them by changing expenses.'],
     compute(v) {
       if (v.life <= v.age || v.ret <= v.age) return { summary: [], notes: ['Retirement and end ages must be above current age.'] };
-      let pool = v.sav, debt = v.debt, inc = v.inc * 12, exp = v.exp * 12, dp = C.emi(v.debt, v.dr, Math.round(v.dy * 12)) * 12, rows = [], pts = [], depleted = null;
+      let pool = v.sav, debt = v.debt, inc = v.inc * 12, exp = v.exp * 12, rows = [], pts = [], depleted = null;
+      const dEmi = C.emi(v.debt, v.dr, Math.round(v.dy * 12));   // the debt is repaid month by month, so it clears in the years you entered
       for (let a = v.age; a <= v.life; a++) {
-        const working = a < v.ret, interest = debt * v.dr / 100, pay = debt > 0 ? Math.min(dp, debt + interest) : 0;
-        debt = Math.max(0, debt + interest - pay);
+        const working = a < v.ret; let pay = 0;
+        for (let k = 0; k < 12 && debt > 0.005; k++) { const interest = debt * v.dr / 1200, p = Math.min(dEmi, debt + interest); debt = Math.max(0, debt + interest - p); pay += p; }
         const income = working ? inc : 0, surplus = income - exp - pay;
         pool = pool * (1 + (working ? v.r : v.pr) / 100) + surplus;
         if (pool < 0 && depleted === null) depleted = a;
@@ -147,7 +148,7 @@
       cols: [{ k: 'name', label: 'Goal name', type: 'text' }, { k: 'type', label: 'Type', type: 'select', options: types }, { k: 'target', label: 'Target (today ₹)', type: 'money' }, { k: 'current', label: 'Saved so far', type: 'money' }, { k: 'deadline', label: 'Deadline', type: 'date' }, { k: 'inflation', label: 'Inflation %', type: 'number' }, { k: 'ret', label: 'Return %', type: 'number' }],
       blank: () => ({ name: '', type: 'Emergency Fund', target: '', current: '', deadline: '', inflation: 5, ret: 6 }),
       computed: { label: 'Required contribution', fn: req },
-      footer: (items) => items.length ? `<div class="goal-bars">${items.map((g) => `<div><div class="between"><span>${U.esc(g.name || g.type)}</span><b>${fmt.pct((+g.current || 0) / (+g.target || 1) * 100, 0)}</b></div>${ch().progress((+g.current || 0) / (+g.target || 1) * 100, g.name)}</div>`).join('')}</div>` : ''
+      footer: (items) => items.length ? `<div class="goal-bars">${items.map((g) => `<div><div class="between"><span>${U.esc(g.name || g.type)}</span><b>${+g.target > 0 ? fmt.pct(Math.min(100, (+g.current || 0) / +g.target * 100), 0) : '—'}</b></div>${ch().progress(+g.target > 0 ? (+g.current || 0) / +g.target * 100 : 0, g.name)}</div>`).join('')}</div>` : ''
     });
   };
 })();
