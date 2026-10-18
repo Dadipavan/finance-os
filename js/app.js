@@ -11,10 +11,11 @@
   const modHref = (m) => m.route || '#/m/' + m.id;
 
   /* ---------------- settings → DOM ---------------- */
+  const prefersDark = () => !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
   function applySettings() {
-    const s = store.get().settings, r = document.documentElement;
-    r.dataset.theme = s.theme; r.dataset.text = s.textSize; r.dataset.contrast = s.contrast ? 'high' : 'normal'; r.dataset.motion = s.reduceMotion ? 'reduce' : 'full';
-    $$('[data-theme-btn]').forEach((b) => { b.textContent = s.theme === 'dark' ? '☀' : '☾'; b.setAttribute('aria-label', s.theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'); });
+    const s = store.get().settings, r = document.documentElement, dark = s.theme === 'dark' || (s.theme === 'auto' && prefersDark());
+    r.dataset.theme = dark ? 'dark' : 'light'; r.dataset.text = s.textSize; r.dataset.contrast = s.contrast ? 'high' : 'normal'; r.dataset.motion = s.reduceMotion ? 'reduce' : 'full';
+    $$('[data-theme-btn]').forEach((b) => { b.textContent = dark ? '☀' : '☾'; b.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode'); });
   }
 
   /* ---------------- navigation ---------------- */
@@ -36,7 +37,8 @@
   /* ---------------- router ---------------- */
   function parse() {
     const raw = (location.hash || '#/home').slice(1), [path, qs] = raw.split('?'), seg = path.split('/').filter(Boolean), q = {};
-    (qs || '').split('&').forEach((p) => { const [k, v] = p.split('='); if (k) q[k] = decodeURIComponent(v || ''); });
+    const dec = (t) => { try { return decodeURIComponent(t); } catch (e) { return t; } };
+    (qs || '').split('&').forEach((p) => { const [k, v] = p.split('='); if (k) q[k] = dec(v || ''); });
     return { seg, q };
   }
   function page(title, html, after) {
@@ -63,7 +65,7 @@
       if (r === 'glossary') return glossary(q.t);
       if (r === 'reports') return page('My Reports', '<h1 class="ph">My Reports</h1>' + FOS.aboutHTML('page', 'reports') + '<div id="rep"></div>', () => FOS.renderReports($('#rep')));
       if (r === 'settings') return settings();
-      if (r === 'search') { const term = decodeURIComponent(seg.slice(1).join('/')); return page('Search: ' + term, `<h1 class="ph">Search results for “${esc(term)}”</h1><div class="card">${FOS.searchHTML(term)}</div>`); }
+      if (r === 'search') { let term = seg.slice(1).join('/'); try { term = decodeURIComponent(term); } catch (e) { /* show it as typed */ } return page('Search: ' + term, `<h1 class="ph">Search results for “${esc(term)}”</h1><div class="card">${FOS.searchHTML(term)}</div>`); }
       return home();
     } catch (e) { console.error(e); page('Something went wrong', `<h1 class="ph">Something went wrong</h1><div class="card"><p>This page hit an unexpected error: <code>${esc(e.message)}</code>. Your data is safe in this browser.</p><a class="btn" href="#/home">Go home</a></div>`); }
   };
@@ -87,7 +89,7 @@
       <section class="card flow"><h2>How every decision should flow</h2><ol class="steps-flow">${['LEARN', 'UNDERSTAND', 'CALCULATE', 'COMPARE', 'CHECK RISKS', 'TAXES / FEES', 'OPPORTUNITY COST', 'LONG-TERM IMPACT', 'YOU DECIDE'].map((s) => `<li>${s}</li>`).join('')}</ol><p class="muted">Finance OS shows the facts, the full cost, the risks and the alternatives — and then gives you a clear verdict with the numbers behind it.</p></section>
       <section class="card"><h2>Your financial journey</h2><p class="muted">From a ₹50 purchase to financial independence. Each step opens the matching module.</p><ol class="journey">${FOS.JOURNEY.map(([t, mod], i) => `<li><a href="#/m/${mod}"><b>${i + 1}</b><span>${esc(t)}</span></a></li>`).join('')}</ol></section>
       <section class="grid-3">
-        <a class="card feature" href="#/m/decision"><h3>Decision Engine</h3><p>WHAT ARE YOU ABOUT TO DO? Costs, fees, taxes, risks, worst case and alternatives — never a yes/no.</p></a>
+        <a class="card feature" href="#/m/decision"><h3>Decision Engine</h3><p>WHAT ARE YOU ABOUT TO DO? Costs, fees, taxes, risks, worst case and alternatives — then a clear verdict with reasons. The decision stays yours.</p></a>
         <a class="card feature" href="#/calc/oppcost"><h3>Opportunity Cost</h3><p>What could the same money become under hypothetical assumptions? Clearly labelled, never guaranteed.</p></a>
         <a class="card feature" href="#/m/scenarios"><h3>WHAT IF?</h3><p>Job loss, rate rise, inflation, a market fall — simulate the maths before life does.</p></a>
         <a class="card feature" href="#/m/health"><h3>Transparent health</h3><p>No mystery score. Every metric shows how it is calculated and where it falls short.</p></a>
@@ -96,6 +98,8 @@
         <a class="card feature" href="#/m/suggestions"><h3>My Suggestions</h3><p>A prioritised to-do list from your own savings, spending and debts — tick items off as you go.</p></a>
         <a class="card feature" href="#/m/insights"><h3>My Money Review</h3><p>Your own numbers turned into observations, questions and ideas to earn and save more.</p></a>
         <a class="card feature" href="#/m/bizstart"><h3>Start a Business</h3><p>Practical steps: validate, numbers, structure, registrations, funding, taxes, first 90 days.</p></a>
+        <a class="card feature" href="#/tool/paths"><h3>Learning paths</h3><p>A step-by-step curriculum for every stage of life — beginner to expert — with your progress.</p></a>
+        <a class="card feature" href="#/m/estate"><h3>Will &amp; inheritance</h3><p>Who gets what, why a nominee is not an owner, and how to make a valid will.</p></a>
         <a class="card feature" href="#/calc/afford"><h3>Can I afford it?</h3><p>Car 20/4/10, home, bike and phone guidelines — with the highest price that fits.</p></a></section>
       <section class="card quote"><p>You don't need to become a financial expert overnight. You need to understand the important numbers before making important decisions.</p></section>
       <p class="safety">🔒 Local-first: everything you enter stays in this browser. Never enter Aadhaar, PAN, account or card numbers, passwords, OTPs, PINs or CVVs.</p>`, (el) => { $('#h-start', el).onclick = FOS.onboarding; });
@@ -297,11 +301,10 @@
 
   /* ---------------- settings ---------------- */
   function settings() {
-    const s = store.get(), ov = s.overrides;
-    const rateRow = (k, label, cur, def) => `<label class="rate-row"><span>${esc(label)}</span><input class="input mini" type="number" inputmode="decimal" step="0.05" min="0" data-ov="${k}" value="${ov[k] !== undefined && ov[k] !== '' ? ov[k] : ''}" placeholder="${def}"><small>default ${def}</small></label>`;
+    const s = store.get(), demo = store.isDemo();
     page('Settings', `<h1 class="ph">Settings</h1>${FOS.aboutHTML('page', 'settings')}<nav class="jump" aria-label="Jump to a section">${[['sec-look', 'Appearance'], ['sec-install', 'Install'], ['sec-rates', 'Rates'], ['sec-gate', 'Access key'], ['sec-lock', 'Lock'], ['sec-sync', 'Drive'], ['sec-test', 'Test'], ['sec-data', 'My data']].map(([id, t]) => `<button class="chip" data-jump="${id}">${t}</button>`).join('')}</nav>
       <section class="card" id="sec-look"><h2>Appearance &amp; accessibility</h2><div class="fields">
-        <div class="field"><label for="st-theme">Theme</label><select class="input" id="st-theme"><option value="light" ${s.settings.theme === 'light' ? 'selected' : ''}>Light</option><option value="dark" ${s.settings.theme === 'dark' ? 'selected' : ''}>Dark</option></select></div>
+        <div class="field"><label for="st-theme">Theme</label><select class="input" id="st-theme"><option value="auto" ${s.settings.theme === 'auto' ? 'selected' : ''}>Match my device</option><option value="light" ${s.settings.theme === 'light' ? 'selected' : ''}>Light</option><option value="dark" ${s.settings.theme === 'dark' ? 'selected' : ''}>Dark</option></select></div>
         <div class="field"><label for="st-text">Text size</label><select class="input" id="st-text"><option value="normal" ${s.settings.textSize === 'normal' ? 'selected' : ''}>Normal</option><option value="large" ${s.settings.textSize === 'large' ? 'selected' : ''}>Large</option><option value="xlarge" ${s.settings.textSize === 'xlarge' ? 'selected' : ''}>Extra large</option></select></div>
         <div class="field"><label class="check"><input type="checkbox" id="st-contrast" ${s.settings.contrast ? 'checked' : ''}> High contrast</label></div>
         <div class="field"><label class="check"><input type="checkbox" id="st-motion" ${s.settings.reduceMotion ? 'checked' : ''}> Reduce motion</label></div></div></section>
@@ -311,25 +314,52 @@
       <section class="card" id="sec-lock"></section>
       <section class="card" id="sec-sync"></section>
       <section class="card" id="sec-test"></section>
-      <section class="card" id="sec-data"><h2>Your data — private and local</h2><p>Everything is stored in this browser (localStorage). Nothing is sent anywhere. Clearing browser data erases it, so export a backup now and then or turn on Google Drive sync. Current size: <b id="st-size"></b>.</p>
-        <div class="row-actions"><button class="btn" id="st-export">Export my data (JSON)</button><label class="btn file">Import my data<input type="file" id="st-import" accept="application/json,.json" hidden></label><button class="btn ghost" id="st-sample">Load sample data</button>${FOS.hasSample && FOS.hasSample() ? '<button class="btn" id="st-sample-clear">Remove sample data</button>' : ''}<button class="btn danger" id="st-delete">Delete all my data</button></div></section>
+      <section class="card" id="sec-data"><h2>Your data — private and local</h2>${demo ? '<p class="status warn"><b>Demo mode is on.</b> You are looking at sample numbers; nothing here is saved or synced. <button class="btn sm" id="st-exitdemo">Exit demo</button></p>' : ''}<p>Everything is stored in this browser (localStorage). Nothing is sent anywhere unless you connect Google Drive. Clearing browser data erases it, so export a backup now and then or connect Google Drive. Current size: <b id="st-size"></b>. <span id="st-persist" class="muted"></span></p>
+        <div class="row-actions"><button class="btn" id="st-export">Export my data (JSON)</button><label class="btn file">Import my data<input type="file" id="st-import" accept="application/json,.json" hidden></label><button class="btn ghost" id="st-sample">Try a demo with sample numbers</button>${FOS.hasLegacySample && FOS.hasLegacySample() ? '<button class="btn" id="st-sample-clear">Remove leftover sample rows</button>' : ''}<button class="btn danger" id="st-delete">Delete all my data…</button></div>
+        <p class="note">The demo never touches your saved data or your Google Drive copy. Importing or restoring first keeps a safety copy of what you had.</p>
+        <h3>Safety copies on this device</h3><div id="st-snaps"></div></section>
       <section class="card"><h2>Privacy</h2><p>Everything is stored in this browser only and never sent anywhere. Export a backup regularly. Never type card or account numbers, passwords, OTPs, PINs or CVVs.</p></section>`, (el) => {
       U.$$('[data-install]', el).forEach((b) => { b.hidden = !FOS.installEvent; b.onclick = async () => { if (!FOS.installEvent) return; FOS.installEvent.prompt(); await FOS.installEvent.userChoice; FOS.installEvent = null; b.hidden = true; }; });
       if (FOS.renderGateSettings) FOS.renderGateSettings($('#sec-gate', el));
       FOS.renderLockSettings($('#sec-lock', el)); FOS.renderSyncSettings($('#sec-sync', el)); FOS.renderTestBox($('#sec-test', el));
       const sz = JSON.stringify(store.get()).length; $('#st-size', el).textContent = (sz / 1024).toFixed(0) + ' KB of about 5,000 KB available in this browser';
+      FOS.requestPersistence().then((ok) => { const e2 = $('#st-persist', el); if (e2) e2.textContent = ok ? '✓ The browser has promised to keep this data.' : 'The browser may erase this data if space runs low — keep a backup or Drive copy.'; });
       U.$$('[data-jump]', el).forEach((b) => { b.onclick = () => { const t = document.getElementById(b.dataset.jump); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }; });
       const set = (fn) => { store.update(fn); applySettings(); };
       $('#st-theme', el).onchange = (e) => set((st) => { st.settings.theme = e.target.value; });
       $('#st-text', el).onchange = (e) => set((st) => { st.settings.textSize = e.target.value; });
       $('#st-contrast', el).onchange = (e) => set((st) => { st.settings.contrast = e.target.checked; });
       $('#st-motion', el).onchange = (e) => set((st) => { st.settings.reduceMotion = e.target.checked; });
-      $('#st-export', el).onclick = () => { U.download('finance-os-data-' + new Date().toISOString().slice(0, 10) + '.json', store.exportJSON(), 'application/json'); };
-      $('#st-import', el).onchange = (e) => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = async () => { try { if (!confirm('Importing replaces the data currently in this browser. Continue?')) return; try { store.importJSON(r.result); } catch (err) { if (!err.needsPass) throw err; const p = prompt('This backup is encrypted. Enter its passphrase:'); if (!p) return; await store.importEncrypted(r.result, p); } applySettings(); U.toast('Data imported'); FOS.go('#/dashboard'); } catch (err) { U.toast(err.message); } }; r.readAsText(f); };
-      $('#st-sample', el).onclick = FOS.loadSample;
-      const sc = $('#st-sample-clear', el); if (sc) sc.onclick = () => { if (confirm('Remove all sample data? Anything you added yourself stays.')) FOS.removeSample(); };
-      $('#st-delete', el).onclick = () => { if (prompt('This permanently deletes everything stored by Finance OS in this browser. Type DELETE to confirm.') === 'DELETE') { store.reset(); applySettings(); U.toast('All data deleted'); FOS.go('#/home'); } };
+      $('#st-export', el).onclick = () => { U.download('finance-os-data-' + FOS.dates.iso() + (store.isDemo() ? '-DEMO' : '') + '.json', store.exportJSON(), 'application/json'); };
+      $('#st-import', el).onchange = (e) => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = async () => { try { if (!confirm('Importing replaces the data currently in this browser. A safety copy is kept first. Continue?')) return; try { store.importJSON(r.result); } catch (err) { if (!err.needsPass) throw err; const p = prompt('This backup is encrypted. Enter its passphrase:'); if (!p) return; await store.importEncrypted(r.result, p); } applySettings(); U.toast('Data imported'); FOS.go('#/dashboard'); } catch (err) { U.toast(err.message); } }; r.readAsText(f); };
+      $('#st-sample', el).onclick = () => { if (store.isDemo()) return U.toast('The demo is already on.'); FOS.startDemo(); };
+      const xd = $('#st-exitdemo', el); if (xd) xd.onclick = () => { store.exitDemo(); FOS.route(); U.toast('Back to your own data.'); };
+      const sc = $('#st-sample-clear', el); if (sc) sc.onclick = () => { if (confirm('Remove the leftover sample rows from an earlier version? Rows you added yourself stay.')) FOS.removeSample(); };
+      $('#st-delete', el).onclick = () => deleteDialog();
+      snapshotsPanel($('#st-snaps', el));
     });
+  }
+  function snapshotsPanel(el) {
+    const list = store.snapshots();
+    el.innerHTML = list.length ? `<p class="muted">Kept automatically before anything that replaces your data (import, restore, Drive load, delete) and once a day. The newest three are kept.</p><div class="table-scroll"><table class="data"><thead><tr><th>Saved</th><th>Why</th><th>Records</th><th></th></tr></thead><tbody>${list.map((x) => `<tr><th scope="row">${esc(new Date(x.t).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }))}</th><td>${esc(x.reason || '')}${x.enc ? ' 🔒' : ''}</td><td>${x.n}</td><td><button class="btn sm" data-restore="${esc(x.id)}">Restore</button></td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">No safety copies yet. One is made automatically before any action that replaces your data.</p>';
+    el.onclick = async (e) => { const b = e.target.closest('[data-restore]'); if (!b) return; if (!confirm('Restore this safety copy? What you have now is saved as a new safety copy first.')) return; try { await store.restoreSnapshot(b.dataset.restore); applySettings(); U.toast('Restored.'); FOS.go('#/dashboard'); } catch (err) { U.toast(err.message); } };
+  }
+  // Delete-all asks for the typed word, offers to remove the extra copies, and keeps a safety copy unless told otherwise.
+  function deleteDialog() {
+    if (store.isDemo()) { store.exitDemo(); FOS.route(); return U.toast('Demo closed. Your own data was never changed.'); }
+    const drive = FOS.drive && FOS.drive.connected();
+    const box = U.modal('Delete all my data', `<p>This permanently removes everything Finance OS stored in <b>this browser</b>. A safety copy is kept on this device so an accident can be undone (Settings → Safety copies).</p>
+      <label class="check"><input type="checkbox" id="dl-copies"> Also erase the safety copies on this device (cannot be undone)</label>
+      ${drive ? '<label class="check"><input type="checkbox" id="dl-drive"> Also delete my Google Drive copies and history (cannot be undone)</label><p class="note">If you leave this unticked, your Drive copy is left alone and will come back the next time you sync.</p>' : ''}
+      <p>Type <b>DELETE</b> to confirm:</p><input class="input" id="dl-type" autocomplete="off" aria-label="Type DELETE"><div class="row-actions"><button class="btn danger" id="dl-go">Delete</button><button class="btn ghost" id="dl-no">Cancel</button></div>`);
+    $('#dl-no', box).onclick = () => U.closeModal();
+    $('#dl-go', box).onclick = async () => {
+      if ($('#dl-type', box).value.trim() !== 'DELETE') return U.toast('Type DELETE (capital letters) to confirm.');
+      const wantDrive = drive && $('#dl-drive', box).checked, copies = $('#dl-copies', box).checked;
+      try { if (wantDrive) await FOS.driveDeleteAll(); } catch (e) { return U.toast('Could not delete the Drive copies: ' + e.message + ' Nothing was deleted.'); }
+      store.reset({ eraseCopies: copies }); try { localStorage.removeItem('fos.syncinfo'); } catch (e) { /* ignore */ }
+      applySettings(); U.closeModal(); U.toast('All data deleted' + (copies ? '' : ' (a safety copy was kept)')); FOS.go('#/home');
+    };
   }
 
   /* ---------------- quick checks (phone: replaces the floating buttons) ---------------- */
@@ -339,8 +369,25 @@
   };
 
   /* ---------------- boot ---------------- */
+  /* ---------------- demo banner + unreadable-data recovery ---------------- */
+  FOS.renderDemoBanner = function () {
+    const b = $('#demo-banner'); if (!b) return; const on = store.isDemo(); b.hidden = !on; document.body.classList.toggle('is-demo', on);
+    b.innerHTML = on ? '<span>🧪 <b>Demo mode</b> — sample numbers only. Nothing here is saved, and your own data and Google Drive copy are untouched.</span><button class="btn sm" id="demo-exit">Exit demo</button>' : '';
+    const x = $('#demo-exit'); if (x) x.onclick = () => { store.exitDemo(); FOS.route(); U.toast('Back to your own data.'); };
+  };
+  function showLoadProblem() {
+    const lp = store.loadProblem(), d = document.createElement('div'); d.className = 'lock-screen';
+    d.innerHTML = `<div class="lock-box wide"><div class="logo-lg">🛟</div><h1>Your saved data could not be read</h1><p>Finance OS found data on this device but could not open it (${esc(lp.message)}). <b>Nothing has been changed or deleted.</b>${lp.copy ? ` A copy was set aside in this browser as <code>${esc(lp.copy)}</code>.` : ''}</p><div class="sheet-actions"><button class="sheet-btn" data-a="dl"><b>Download the unreadable data</b><span>Keep it safe — it can often be repaired.</span></button><label class="sheet-btn"><b>Restore from a backup file</b><span>Choose a file you exported earlier (or downloaded from Drive history).</span><input type="file" accept="application/json,.json" hidden></label><button class="sheet-btn" data-a="fresh"><b>Start with an empty app</b><span>The unreadable data stays set aside; nothing is erased.</span></button></div></div>`;
+    document.body.appendChild(d);
+    d.onclick = (e) => { const b = e.target.closest('[data-a]'); if (!b) return; if (b.dataset.a === 'dl') U.download('finance-os-unreadable.json', lp.text || '', 'application/json'); if (b.dataset.a === 'fresh') { store.resolveLoadProblem('fresh'); location.reload(); } };
+    d.onchange = (e) => { const f = e.target.files && e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = async () => { try { store.resolveLoadProblem('fresh'); try { store.importJSON(r.result); } catch (err) { if (!err.needsPass) throw err; const p = prompt('This backup is encrypted. Enter its passphrase:'); if (!p) return; await store.importEncrypted(r.result, p); } store.flush(); location.reload(); } catch (err) { U.toast(err.message); } }; r.readAsText(f); };
+  }
+
   function boot() {
-    applySettings(); buildNav();
+    applySettings(); buildNav(); FOS.requestPersistence();
+    if (window.matchMedia) { try { const mq = window.matchMedia('(prefers-color-scheme: dark)'); if (mq.addEventListener) mq.addEventListener('change', applySettings); else if (mq.addListener) mq.addListener(applySettings); } catch (e) { /* older browsers */ } }
+    store.subscribe((st, o) => { if (o && 'demo' in o) { FOS.renderDemoBanner(); applySettings(); if (FOS.paintSyncChip) FOS.paintSyncChip(); } });
+    const chip = $('#sync-btn'); if (chip) chip.onclick = () => FOS.syncChipClick && FOS.syncChipClick();
     document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('[data-theme-btn]')) { store.update((s) => { s.settings.theme = s.settings.theme === 'dark' ? 'light' : 'dark'; }); applySettings(); } if (e.target.closest && e.target.closest('#drawer-close')) document.body.classList.remove('nav-open'); });
     $('#menu-btn').onclick = () => document.body.classList.toggle('nav-open');
     $('#scrim').onclick = () => document.body.classList.remove('nav-open');
@@ -374,11 +421,14 @@
     pop.onclick = () => { pop.hidden = true; inp.value = ''; document.body.classList.remove('search-open'); };
     document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-h]'); if (t) { e.preventDefault(); FOS.openHelpSection(t.dataset.h); } });
     window.addEventListener('hashchange', FOS.route);
-    const start = () => { applySettings(); FOS.route(); FOS.checkReminders && FOS.checkReminders(); FOS.initIdle && FOS.initIdle(); FOS.syncResume && FOS.syncResume(); };
+    const start = () => {
+      if (store.loadProblem()) { showLoadProblem(); return; }
+      applySettings(); FOS.renderDemoBanner(); FOS.route(); FOS.checkReminders && FOS.checkReminders(); FOS.initIdle && FOS.initIdle(); FOS.syncResume && FOS.syncResume(); if (FOS.paintSyncChip) FOS.paintSyncChip();
+    };
     const go = () => { if (store.isLocked()) FOS.showUnlock(start); else start(); };
     if (FOS.accessGate) FOS.accessGate(go); else go();
     // Installable + offline: register the service worker on https (GitHub Pages) only
-    if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && location.hostname !== 'localhost' || ('serviceWorker' in navigator && location.hostname === 'localhost')) { navigator.serviceWorker.register('sw.js').catch(() => { /* offline support is optional */ }); }
+    if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) { navigator.serviceWorker.register('sw.js').catch(() => { /* offline support is optional */ }); }
     window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); FOS.installEvent = e; U.$$('[data-install]').forEach((b) => { b.hidden = false; }); });
     window.addEventListener('appinstalled', () => { FOS.installEvent = null; U.toast('Installed — open Finance OS from your home screen.'); });
   }
