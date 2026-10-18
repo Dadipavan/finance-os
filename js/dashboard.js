@@ -20,9 +20,15 @@
 
   /* ---------- dashboard ---------- */
   function upcoming(days) {
-    const now = new Date(); now.setHours(0, 0, 0, 0); const lim = new Date(now.getTime() + days * 864e5), out = [];
-    store.get().reminders.forEach((r) => { let d = r.date ? new Date(r.date) : null; if (!d || isNaN(d)) return; const step = { monthly: 1, quarterly: 3, yearly: 12 }[r.freq]; while (step && d < now) d = new Date(d.getFullYear(), d.getMonth() + step, d.getDate()); if (d >= now && d <= lim) out.push({ name: r.title, date: d, amt: r.amount }); });
-    store.get().recurring.forEach((r) => { if (!r.renew) return; const d = new Date(r.renew); if (d >= now && d <= lim) out.push({ name: r.name + ' (renewal)', date: d, amt: r.amount }); });
+    const D = FOS.dates, now = new Date(); now.setHours(0, 0, 0, 0); const lim = new Date(now.getTime() + days * 864e5), out = [];
+    // Every repeat is counted from the ORIGINAL date (31 Jan + 9 months = 31 Oct), so month-end reminders never drift to the 3rd.
+    store.get().reminders.forEach((r) => {
+      const base = D.parse(r.date) || (r.date ? new Date(r.date) : null); if (!base || isNaN(base)) return;
+      const step = { monthly: 1, quarterly: 3, yearly: 12 }[r.freq]; let d = base, k = 0;
+      while (step && d < now && k < 2400) { k++; d = D.addMonths(base, k * step); }
+      if (d >= now && d <= lim) out.push({ name: r.title, date: d, amt: r.amount });
+    });
+    store.get().recurring.forEach((r) => { if (!r.renew) return; const d = D.parse(r.renew) || new Date(r.renew); if (d >= now && d <= lim) out.push({ name: r.name + ' (renewal)', date: d, amt: r.amount }); });
     return out.sort((a, b) => a.date - b.date);
   }
   FOS.upcoming = upcoming;
@@ -40,7 +46,7 @@
   function howCalculated(m) {
     const s = store.get(), b = s.budget, p = s.profile, I = (v) => fmt.inr(v), P = (v) => (Number.isFinite(v) ? fmt.pct(v, 1) : '—');
     const src = sourceOf(), incSrc = src.inc, expSrc = src.exp;
-    const efCats = 'assets in the “Emergency Fund” category + the “current” amount of any Emergency Fund goal';
+    const efCats = 'the larger of (a) assets in the “Emergency Fund” category and (b) the “saved so far” of any Emergency Fund goal — the same money is never counted twice';
     const rows = [
       ['Monthly income', I(m.income), 'Taken from ' + incSrc + '.'],
       ['Monthly expenses', I(m.expenses), 'Taken from ' + expSrc + '.'],
@@ -61,8 +67,8 @@
     const s = store.get(), m = FOS.metrics(), empty = !m.income && !s.assets.length && !s.liabilities.length && !s.goals.length;
     const up = upcoming(30), by = (arr) => Object.entries(arr.reduce((a, x) => { a[x.cat] = (a[x.cat] || 0) + n(x.value); return a; }, {})).map(([name, value]) => ({ name, value }));
     const snaps = [...s.snapshots].sort((a, b) => a.date.localeCompare(b.date));
-    root.innerHTML = `${empty ? `<div class="card hero-empty"><h3>Welcome. Your dashboard is empty — and that\'s fine.</h3><p>Answer a few optional questions, add a budget, or explore a sample to see how it works.</p><div class="row-actions"><button class="btn primary" data-act="onboard">START MY FINANCIAL JOURNEY</button><button class="btn" data-act="sample">Load sample data</button><a class="btn ghost" href="#/tool/budget">Create a budget</a></div></div>` : ''}
-      <div class="kpis big">${kpi('Monthly income', fmt.inr(m.income), '', { num: m.income })}${kpi('Monthly expenses', fmt.inr(m.expenses), '', { num: m.expenses })}${kpi('Monthly savings', fmt.inr(m.savings), '', { num: m.savings })}${kpi('Savings rate', fmt.pct(m.savingsRate, 1), '', { num: m.savingsRate, f: 'pct', tip: 'Savings ÷ Income × 100' })}${kpi('Total assets', fmt.inr(m.assets), '', { num: m.assets })}${kpi('Total liabilities', fmt.inr(m.liabilities), '', { num: m.liabilities })}${kpi('Net worth', fmt.inr(m.netWorth), 'assets − liabilities', { num: m.netWorth, hi: true })}${kpi('Emergency fund', fmt.inr(m.ef), Number.isFinite(m.efMonths) ? `${fmt.months(m.efMonths)} of essentials` : 'add essentials in Budget', { num: m.ef })}${kpi('Total investments', fmt.inr(m.investments), '', { num: m.investments })}${kpi('Total debt', fmt.inr(m.liabilities), m.emi ? `EMIs ${fmt.inr(m.emi)}/mo` : '', { num: m.liabilities })}${kpi('Recurring expenses', fmt.inr(m.recurringMonthly), 'per month', { num: m.recurringMonthly })}${kpi('Upcoming (30 days)', up.length + '', up[0] ? esc(up[0].name) + ' · ' + fmt.date(up[0].date) : 'nothing due')}</div>
+    root.innerHTML = `${empty ? `<div class="card hero-empty"><h3>Welcome. Your dashboard is empty — and that\'s fine.</h3><p>Answer a few optional questions, add a budget, or try a demo with sample numbers to see how it works.</p><div class="row-actions"><button class="btn primary" data-act="onboard">START MY FINANCIAL JOURNEY</button><button class="btn" data-act="sample">Try a demo (your data stays safe)</button><a class="btn ghost" href="#/tool/budget">Create a budget</a></div></div>` : ''}
+      <div class="kpis big">${kpi('Monthly income', fmt.inr(m.income), '', { num: m.income })}${kpi('Monthly expenses', fmt.inr(m.expenses), '', { num: m.expenses })}${kpi('Monthly savings', fmt.inr(m.savings), '', { num: m.savings })}${kpi('Savings rate', fmt.pct(m.savingsRate, 1), '', { num: m.savingsRate, f: 'pct', tip: 'Savings ÷ Income × 100' })}${kpi('Total assets', fmt.inr(m.assets), '', { num: m.assets })}${kpi('Total liabilities', fmt.inr(m.liabilities), '', { num: m.liabilities })}${kpi('Net worth', fmt.inr(m.netWorth), 'assets − liabilities', { num: m.netWorth, hi: true })}${kpi('Emergency fund', fmt.inr(m.ef), Number.isFinite(m.efMonths) ? `${fmt.months(m.efMonths)} of essentials` : 'add essentials in Budget', { num: m.ef })}${kpi('Total investments', fmt.inr(m.investments), '', { num: m.investments })}${kpi('Debt-to-income', fmt.pct(m.dti, 1), m.emi ? `EMIs ${fmt.inr(m.emi)}/mo` : 'EMIs ÷ income', { num: m.dti, f: 'pct' })}${kpi('Recurring expenses', fmt.inr(m.recurringMonthly), 'per month', { num: m.recurringMonthly })}${kpi('Upcoming (30 days)', up.length + '', up[0] ? esc(up[0].name) + ' · ' + fmt.date(up[0].date) : 'nothing due')}</div>
       ${howCalculated(m)}
       <div class="grid-2">
         <div class="card"><h3>Income vs expenses</h3>${ch().bar({ title: 'Income vs expenses', cats: ['Income', 'Expenses', 'Savings'], series: [{ name: 'Monthly', data: [m.income, m.expenses, Math.max(0, m.savings)], color: ch().PALETTE[0] }], yfmt: 'inr' })}</div>
@@ -83,45 +89,54 @@
 
   FOS.saveSnapshot = function (monthKey) {
     // Balances are today's figures (entered by you). Income / spending / saving are stored ONLY if you recorded them for that month — otherwise null, never a guess.
-    const m = FOS.metrics(), d = typeof monthKey === 'string' ? monthKey : new Date().toISOString().slice(0, 7), f = FOS.monthFacts ? FOS.monthFacts(d) : { income: null, expenses: null };
+    const m = FOS.metrics(), d = typeof monthKey === 'string' ? monthKey : FOS.dates.month(), f = FOS.monthFacts ? FOS.monthFacts(d) : { income: null, expenses: null };
     store.update((s) => { const rec = { date: d, assets: m.assets, liabilities: m.liabilities, nw: m.netWorth, income: f.income, expenses: f.expenses, savings: f.income !== null && f.expenses !== null ? f.income - f.expenses : null }; const i = s.snapshots.findIndex((x) => x.date === d && !x.sample); if (i >= 0) s.snapshots[i] = rec; else s.snapshots.push(rec); });
     U.toast('Snapshot saved for ' + d);
   };
 
-  FOS.loadSample = function () {
-    if (!confirm('Load a sample profile? This replaces your current data in this browser (export first if unsure).')) return;
-    const u = store.uid, now = new Date();
-    store.update((s) => {
-      s.meta.sample = true; s.profile.sampleSet = true;
-      Object.assign(s.profile, { age: 28, monthlyIncome: 60000, annualIncome: 720000, monthlyExpenses: 40000, dependents: 0, retAge: 60, hasHealth: true, healthCover: 500000, hasTerm: false, onboarded: true });
-      s.budget = { sample: true, method: '50-30-20', income: 60000, items: [['Rent', 12000, 'need'], ['Food', 6000, 'need'], ['Transport', 4000, 'need'], ['Utilities', 3000, 'need'], ['Subscriptions', 1000, 'want'], ['Entertainment', 3000, 'want'], ['Investments', 15000, 'save'], ['Emergency Fund', 5000, 'save'], ['Other', 2000, 'want']].map(([name, amount, kind]) => ({ id: u(), name, amount, kind, spent: '', sample: true })) };
-      s.assets = [['Savings account', 'Bank', 80000], ['Emergency fund', 'Emergency Fund', 50000], ['Fixed deposit', 'FD', 100000], ['Index fund SIP', 'Investments', 180000], ['Phone / laptop', 'Other', 40000]].map(([name, cat, value]) => ({ id: u(), name, cat, value }));
-      s.liabilities = [{ id: u(), name: 'Credit card dues', cat: 'Credit card', value: 20000, emi: 0 }, { id: u(), name: 'Personal loan', cat: 'Personal loan', value: 150000, emi: 5000 }];
-      s.goals = [{ id: u(), name: 'Emergency fund', type: 'Emergency Fund', target: 240000, current: 0, deadline: '', inflation: 5, ret: 6 }, { id: u(), name: 'Laptop', type: 'Laptop', target: 90000, current: 30000, deadline: new Date(now.getFullYear() + 1, now.getMonth(), 1).toISOString().slice(0, 10), inflation: 5, ret: 6 }];
-      s.recurring = [['Streaming', 'OTT / streaming', 499, 'monthly'], ['Gym', 'Gym / fitness', 1500, 'monthly'], ['Cloud storage', 'Cloud storage', 1300, 'yearly']].map(([name, cat, amount, freq]) => ({ id: u(), name, cat, amount, freq, renew: '' }));
-      s.reminders = [{ id: u(), title: 'Credit card due', date: new Date(now.getFullYear(), now.getMonth(), Math.min(28, now.getDate() + 5)).toISOString().slice(0, 10), freq: 'monthly', amount: 20000, note: '' }];
-      const tag = (arr) => arr.map((x) => Object.assign({}, x, { sample: true }));
-      s.snapshots = Array.from({ length: 6 }, (_, i) => { const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1); const nw = 300000 + i * 28000; return { date: d.toISOString().slice(0, 7), assets: nw + 170000, liabilities: 170000, nw, income: 60000, expenses: 40000 + (i % 2) * 1500, savings: 20000 - (i % 2) * 1500 }; });
-    });
-    store.update((s) => { s.budget.sample = true; ['assets', 'liabilities', 'goals', 'recurring', 'reminders', 'snapshots'].forEach((k) => { s[k] = s[k].map((x) => Object.assign({}, x, { sample: true })); }); s.budget.items = s.budget.items.map((x) => Object.assign({}, x, { sample: true })); });
-    U.toast('Sample data loaded — these are example numbers, not yours. Remove them in Settings.'); FOS.route();
+  /* ---------- demo (sample numbers) ----------
+     The demo is an isolated in-memory copy (storage.js): it can never overwrite your saved data or your Google Drive copy,
+     it is not saved, and reloading the page ends it. Rows carry sample:true so exports and counts can tell them from yours. */
+  function sampleState() {
+    const u = store.uid, now = new Date(), D = FOS.dates, s = store.prepare({}), tag = (arr) => arr.map((x) => Object.assign({}, x, { sample: true }));
+    const mk = (i) => D.month(new Date(now.getFullYear(), now.getMonth() - i, 1)), day = (m, d) => mk(m) + '-' + String(d).padStart(2, '0');
+    s.meta.sample = true;
+    Object.assign(s.profile, { age: 28, monthlyIncome: 60000, annualIncome: 720000, monthlyExpenses: 40000, dependents: 0, retAge: 60, hasHealth: true, healthCover: 500000, hasTerm: false, onboarded: true, sampleSet: true });
+    s.budget = { sample: true, method: '50-30-20', income: 60000, items: tag([['Rent', 12000, 'need'], ['Food', 6000, 'need'], ['Transport', 4000, 'need'], ['Utilities', 3000, 'need'], ['Subscriptions', 1000, 'want'], ['Entertainment', 3000, 'want'], ['Investments', 15000, 'save'], ['Emergency Fund', 5000, 'save'], ['Other', 2000, 'want']].map(([name, amount, kind]) => ({ id: u(), name, amount, kind, spent: '' }))) };
+    s.assets = tag([['Savings account', 'Bank', 80000], ['Emergency fund', 'Emergency Fund', 50000], ['Fixed deposit', 'FD', 100000], ['Index fund SIP', 'Investments', 180000], ['Phone / laptop', 'Other', 40000]].map(([name, cat, value]) => ({ id: u(), name, cat, value })));
+    s.liabilities = tag([{ id: u(), name: 'Credit card dues', cat: 'Credit card', value: 20000, emi: 0 }, { id: u(), name: 'Personal loan', cat: 'Personal loan', value: 150000, emi: 5000 }]);
+    s.goals = tag([{ id: u(), name: 'Emergency fund', type: 'Emergency Fund', target: 240000, current: 0, deadline: '', inflation: 5, ret: 6 }, { id: u(), name: 'Laptop', type: 'Laptop', target: 90000, current: 30000, deadline: D.iso(new Date(now.getFullYear() + 1, now.getMonth(), 1)), inflation: 5, ret: 6 }]);
+    s.recurring = tag([['Streaming', 'OTT / streaming', 499, 'monthly'], ['Gym', 'Gym / fitness', 1500, 'monthly'], ['Cloud storage', 'Cloud storage', 1300, 'yearly']].map(([name, cat, amount, freq]) => ({ id: u(), name, cat, amount, freq, renew: '' })));
+    s.reminders = tag([{ id: u(), title: 'Credit card due', date: D.iso(new Date(now.getFullYear(), now.getMonth(), Math.min(28, now.getDate() + 5))), freq: 'monthly', amount: 20000, note: '' }]);
+    s.snapshots = tag(Array.from({ length: 6 }, (_, i) => { const nw = 300000 + i * 28000; return { date: mk(5 - i), assets: nw + 170000, liabilities: 170000, nw, income: 60000, expenses: 40000 + (i % 2) * 1500, savings: 20000 - (i % 2) * 1500 }; }));
+    s.months = { [mk(1)]: { income: 60000, sample: true } };
+    s.expenses = tag([[1, 3, 'Rent / housing', 12000, 'Bank transfer'], [1, 5, 'Food & groceries', 2400, 'UPI'], [1, 9, 'Eating out', 1800, 'UPI'], [1, 12, 'Transport / fuel', 1500, 'Debit card'], [1, 18, 'Utilities & bills', 2600, 'UPI'], [1, 21, 'Subscriptions', 1999, 'Credit card'], [1, 25, 'Shopping', 3200, 'Credit card'], [0, 2, 'Food & groceries', 2100, 'UPI'], [0, 4, 'Eating out', 900, 'Cash']].map(([m, d, cat, amount, mode]) => ({ id: u(), date: day(m, d), cat, amount, mode, note: '' })));
+    return s;
+  }
+  FOS.startDemo = FOS.loadSample = function () {
+    if (store.isDemo()) { U.toast('The demo is already on. Use “Exit demo” to return to your own data.'); return; }
+    store.enterDemo(sampleState());
+    U.toast('Demo mode: sample numbers only. Your own data and Google Drive copy are untouched.'); FOS.route();
   };
-
-  FOS.hasSample = () => !!(store.get().meta && store.get().meta.sample);
-  // Removes ONLY what the sample created; anything you added yourself stays.
+  // Rows left by the OLD version, which mixed sample rows into real data, can still be cleaned up.
+  FOS.hasLegacySample = () => { const s = store.get(); return !store.isDemo() && !!((s.meta && s.meta.sample) || (s.assets || []).some((a) => a.sample)); };
+  FOS.hasSample = () => store.isDemo() || FOS.hasLegacySample();
   FOS.removeSample = function () {
+    if (store.isDemo()) { store.exitDemo(); FOS.route(); return; }   // leaving the demo discards it; nothing else was touched
     store.update((s) => {
       ['assets', 'liabilities', 'goals', 'recurring', 'reminders', 'snapshots', 'records', 'expenses'].forEach((k) => { s[k] = (s[k] || []).filter((x) => !x.sample); });
       s.budget.items = s.budget.items.filter((x) => !x.sample);
       if (s.budget.sample) { s.budget = { method: 'custom', income: '', items: s.budget.items }; }
       if (s.profile.sampleSet) { const d = { age: '', monthlyIncome: '', annualIncome: '', monthlyExpenses: '', dependents: '', retAge: 60, hasHealth: false, healthCover: '', hasTerm: false, termCover: '', onboarded: false }; Object.assign(s.profile, d); delete s.profile.sampleSet; }
+      Object.keys(s.months || {}).forEach((k) => { if (s.months[k] && s.months[k].sample) delete s.months[k]; });
       s.meta.sample = false;
     });
-    U.toast('Sample data removed.'); FOS.route();
+    U.toast('Sample rows removed.'); FOS.route();
   };
 
   /* ---------- onboarding ---------- */
   FOS.onboarding = function () {
+    if (store.isDemo()) { U.toast('Exit the demo first — it does not save anything. Then start your own journey.'); return; }
     const p = Object.assign({}, store.get().profile); let step = 0;
     delete p.numbersFrom; // decided again at the review step from what you type now
     const wasSample = !!(store.get().meta && store.get().meta.sample) || !!p.sampleSet;
@@ -191,7 +206,7 @@
     const draw = () => {
       const m = FOS.metrics(), s = store.get(), snaps = [...s.snapshots].sort((a, b) => a.date.localeCompare(b.date));
       root.querySelector('#nw-kpis').innerHTML = `<div class="kpis">${kpi('Total assets', fmt.inr(m.assets))}${kpi('Total liabilities', fmt.inr(m.liabilities))}${kpi('Net worth', fmt.inr(m.netWorth), '', { hi: true })}</div>`;
-      root.querySelector('#nw-tl').innerHTML = (snaps.length > 1 ? ch().line({ title: 'Net worth over time', xfmt: (x) => (snaps[Math.round(x)] || {}).date || '', yfmt: 'inr', area: true, series: [{ name: 'Net worth', data: snaps.map((p, i) => ({ x: i, y: p.nw })) }, { name: 'Assets', data: snaps.map((p, i) => ({ x: i, y: p.assets })), dash: true }, { name: 'Liabilities', data: snaps.map((p, i) => ({ x: i, y: p.liabilities })), dash: true }] }) : '<p class="muted">Save at least two monthly snapshots to see the timeline.</p>') + (snaps.length ? `<div class="table-scroll"><table class="data"><thead><tr><th>Month</th><th>Assets</th><th>Liabilities</th><th>Net worth</th><th></th></tr></thead><tbody>${snaps.map((x) => `<tr><td>${x.date}</td><td>${fmt.inr(x.assets)}</td><td>${fmt.inr(x.liabilities)}</td><td><b>${fmt.inr(x.nw)}</b></td><td><button class="icon-btn" data-del="${x.date}" aria-label="Delete snapshot ${x.date}">🗑</button></td></tr>`).join('')}</tbody></table></div>` : '');
+      root.querySelector('#nw-tl').innerHTML = (snaps.length > 1 ? ch().line({ title: 'Net worth over time', xfmt: (x) => (snaps[Math.round(x)] || {}).date || '', yfmt: 'inr', area: true, series: [{ name: 'Net worth', data: snaps.map((p, i) => ({ x: i, y: p.nw })) }, { name: 'Assets', data: snaps.map((p, i) => ({ x: i, y: p.assets })), dash: true }, { name: 'Liabilities', data: snaps.map((p, i) => ({ x: i, y: p.liabilities })), dash: true }] }) : '<p class="muted">Save at least two monthly snapshots to see the timeline.</p>') + (snaps.length ? `<div class="table-scroll"><table class="data"><thead><tr><th>Month</th><th>Assets</th><th>Liabilities</th><th>Net worth</th><th></th></tr></thead><tbody>${snaps.map((x) => `<tr><td>${esc(x.date)}</td><td>${fmt.inr(x.assets)}</td><td>${fmt.inr(x.liabilities)}</td><td><b>${fmt.inr(x.nw)}</b></td><td><button class="icon-btn" data-del="${esc(x.date)}" aria-label="Delete snapshot ${esc(x.date)}">🗑</button></td></tr>`).join('')}</tbody></table></div>` : '');
     };
     FOS.crud(root.querySelector('#nw-a'), { list: (s) => s.assets, addLabel: 'Add asset', empty: 'Add cash, FD, investments, gold, property…', cols: [{ k: 'name', label: 'Name', type: 'text' }, { k: 'cat', label: 'Category', type: 'select', options: ASSET_CATS }, { k: 'value', label: 'Value ₹', type: 'money' }], blank: () => ({ name: '', cat: 'Bank', value: '' }), onChange: draw });
     FOS.crud(root.querySelector('#nw-l'), { list: (s) => s.liabilities, addLabel: 'Add liability', empty: 'Add credit-card dues, loans…', cols: [{ k: 'name', label: 'Name', type: 'text' }, { k: 'cat', label: 'Category', type: 'select', options: LIAB_CATS }, { k: 'value', label: 'Outstanding ₹', type: 'money' }, { k: 'emi', label: 'EMI / month ₹', type: 'money' }, { k: 'rate', label: 'Interest % (optional)', type: 'number' }], blank: () => ({ name: '', cat: 'Personal loan', value: '', emi: '', rate: '' }), onChange: draw });
