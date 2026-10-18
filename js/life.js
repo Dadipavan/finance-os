@@ -26,8 +26,9 @@
   FOS.dataNotice = function (now) {
     now = now || new Date(); const meta = store.get().meta || {}, day = 864e5;
     if (meta.noticeSnooze && now - new Date(meta.noticeSnooze) < 0) return null;
-    const y = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1, fy = 'FY' + y + '-' + String(y + 1).slice(2);
-    if (!FOS.TAX_RULES.years[fy]) return { kind: 'year', text: `A new financial year (${fy}) has started and your tax rules are still for ${FOS.TAX_RULES.defaultYear}. Check the Budget changes and update the few numbers that changed.` };
+    const fy = FOS.dates.fy(now), cur = FOS.TAX_RULES.years[fy];
+    if (!cur) return { kind: 'year', text: `A new financial year (${fy}) has started and your tax rules are still for ${FOS.TAX_RULES.defaultYear}. Check the Budget changes and add the new year (Data & Sources → Update tax rules).` };
+    if (cur.verified === false) return { kind: 'unverified', text: `Your ${fy} tax rules are a copy of the previous year that has not been checked against the Budget yet. Tax results are only estimates until you check the numbers and tick “I have checked these numbers”.` };
     const last = meta.configChecked ? new Date(meta.configChecked) : null;
     if (!last || now - last > 90 * day) return { kind: 'stale', text: last ? `Rates and limits were last checked on ${fmt.date(last)}. Small-savings and bank rates change every few months.` : 'Rates and limits are still the built-in defaults. Check them against the official sites once so your results use current numbers.' };
     return null;
@@ -36,12 +37,12 @@
   const dismissed = () => { try { return JSON.parse(sessionStorage.getItem('fos.dismissed') || '[]'); } catch (e) { return []; } };
   FOS.buildNotices = function (now) {
     const out = [], soon = FOS.upcoming(3), mn = FOS.monthNotice && FOS.monthNotice(now), note = FOS.dataNotice(now);
-    if (FOS.hasSample && FOS.hasSample()) out.push({ id: 'sample', icon: '🧪', tone: 'warn', title: 'Sample data is loaded', text: 'The numbers you see are examples, not yours. Remove them before you enter your own.', actions: [{ label: 'Remove sample data', act: 'sample-clear', primary: true }] });
+    if (FOS.hasSample && FOS.hasSample()) out.push(store.isDemo() ? { id: 'sample', icon: '🧪', tone: 'warn', title: 'Demo mode is on', text: 'You are looking at sample numbers. Nothing here is saved, and your own data and Google Drive copy are untouched.', actions: [{ label: 'Exit demo', act: 'sample-clear', primary: true }] } : { id: 'sample', icon: '🧪', tone: 'warn', title: 'Sample rows are mixed into your data', text: 'An earlier version added example rows to your data. Remove them before you rely on the numbers.', actions: [{ label: 'Remove sample rows', act: 'sample-clear', primary: true }] });
     if (soon.length) out.push({ id: 'due', icon: '⏰', tone: 'warn', title: 'Due soon', text: soon.slice(0, 3).map((x) => x.name + ' · ' + fmt.date(x.date)).join('\n'), actions: [{ label: 'Open reminders', href: '#/tool/reminders', primary: true }] });
     if (mn) out.push({ id: 'month', icon: '🗓', tone: 'info', title: 'Close ' + FOS.monthLabel(mn.key), text: 'Add last month\'s expenses, update balances and save it — about two minutes.', actions: [{ label: 'Close month', href: '#/tool/monthend', primary: true }, { label: 'Later', act: 'month-later' }] });
-    if (FOS.syncNeeded && FOS.syncNeeded()) out.push({ id: 'sync', icon: '☁️', tone: 'info', title: 'Google Drive sync', text: 'A quick sign-in is needed to keep your data backed up.', actions: [{ label: 'Sign in & sync', act: 'sync-go', primary: true }] });
+    if (FOS.syncNeeded && FOS.syncNeeded()) out.push({ id: 'sync', icon: '☁️', tone: 'info', title: 'Google Drive sync', text: 'Tap to sign in with Google — your account is remembered, so it is one tap. Your data is safe on this device meanwhile.', actions: [{ label: 'Sign in with Google', act: 'sync-go', primary: true }] });
     const bk = FOS.bankRatesStale && FOS.bankRatesStale(now); if (bk) out.push({ id: 'banks', icon: '🏦', tone: 'warn', title: 'Update your bank rates', text: bk.text, actions: [{ label: 'Update rates', href: '#/tool/bankrates', primary: true }, { label: 'I\'ve checked', act: 'bank-ok' }, { label: 'Later', act: 'bank-later' }] });
-    if (note) out.push({ id: 'data', icon: '📅', tone: 'warn', title: note.kind === 'year' ? 'New financial year' : 'Check your rates', text: note.text, actions: [{ label: 'Update now', href: '#/sources', primary: true }, { label: 'I\'ve checked', act: 'data-ok' }, { label: 'Later', act: 'data-later' }] });
+    if (note) out.push({ id: 'data', icon: '📅', tone: 'warn', title: note.kind === 'year' ? 'New financial year' : note.kind === 'unverified' ? 'Check your tax rules' : 'Check your rates', text: note.text, actions: note.kind === 'stale' ? [{ label: 'Update now', href: '#/sources', primary: true }, { label: 'I\'ve checked', act: 'data-ok' }, { label: 'Later', act: 'data-later' }] : [{ label: 'Update now', href: '#/sources', primary: true }, { label: 'Later', act: 'data-later' }] });
     return out.filter((n) => dismissed().indexOf(n.id) < 0);
   };
   FOS.noticeCount = () => FOS.buildNotices().length;
@@ -62,7 +63,7 @@
       if (k === 'bank-ok') { store.update((s) => { s.meta.bankChecked = new Date().toISOString(); }); hide(id); }
       if (k === 'bank-later') { store.update((s) => { s.meta.bankSnooze = new Date(Date.now() + 30 * 864e5).toISOString(); }); hide(id); }
       if (k === 'data-later') { store.update((s) => { s.meta.noticeSnooze = new Date(Date.now() + 30 * 864e5).toISOString(); }); hide(id); }
-      if (k === 'sample-clear') { if (confirm('Remove all sample data? Anything you added yourself stays.')) { closePanel(); FOS.removeSample(); } }
+      if (k === 'sample-clear') { if (store.isDemo() || confirm('Remove the sample rows? Anything you added yourself stays.')) { closePanel(); FOS.removeSample(); } }
     };
   }
   // The bell shows only a number; the notices themselves appear when you press it.
@@ -81,7 +82,7 @@
     const soon = FOS.upcoming(3);
     FOS.renderNotices();
     if (soon.length && store.get().settings.notify && 'Notification' in window && Notification.permission === 'granted') {
-      const key = 'fos.notified.' + new Date().toISOString().slice(0, 10);
+      const key = 'fos.notified.' + FOS.dates.iso();
       if (!sessionStorage.getItem(key)) { sessionStorage.setItem(key, '1'); try { new Notification('Finance OS reminder', { body: soon.slice(0, 3).map((x) => x.name + ' – ' + fmt.date(x.date)).join('\n') }); } catch (e) { /* ignore */ } }
     }
   };
