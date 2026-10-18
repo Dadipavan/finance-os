@@ -16,8 +16,8 @@
   <title>Finance OS — Your money. Your decisions. Your future.</title>
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
   <script>
-    // Apply saved theme before paint (avoids a flash of the wrong theme)
-    try { var t = localStorage.getItem('fos.theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+    // Apply the saved theme before paint (avoids a flash of the wrong theme). "auto" (the default) follows the device.
+    try { var t = localStorage.getItem('fos.theme'); if (!t || t === 'auto') t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; document.documentElement.dataset.theme = t; } catch (e) {}
   </script>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/components.css">
@@ -35,6 +35,7 @@
     </div>
     <a class="btn ghost sm hide-mobile" href="#/dashboard">Dashboard</a>
     <button class="icon-btn search-toggle" id="search-toggle" aria-label="Search" title="Search">🔍</button>
+    <button class="icon-btn sync-btn" id="sync-btn" hidden aria-label="Google Drive sync" title="Google Drive sync" data-state="off"><span aria-hidden="true">☁</span><i class="sy-mark" aria-hidden="true">✓</i></button>
     <button class="icon-btn bell-btn" id="bell-btn" aria-label="Notifications" aria-haspopup="dialog" aria-expanded="false" title="Notifications">🔔<span class="bell-badge" id="bell-badge" hidden>0</span></button>
     <a class="icon-btn settings-btn" href="#/settings" id="settings-btn" aria-label="Settings" title="Settings">⚙</a>
     <a class="icon-btn help-btn" href="#/help" id="help-btn" aria-label="Help: how to use Finance OS" title="Help — how to use this website">?</a>
@@ -44,6 +45,7 @@
   <nav class="sidebar" id="nav" aria-label="Main navigation"></nav>
 
   <div id="notice-panel" class="notice-panel" role="dialog" aria-label="Notifications" hidden></div>
+  <div id="demo-banner" class="alert-bar demo-banner" role="status" hidden></div>
   <main id="main" class="main" tabindex="-1"></main>
   <div id="live" class="sr" aria-live="polite"></div>
 
@@ -78,6 +80,7 @@
   <script src="js/taxes.js" defer></script>
   <script src="js/insurance.js" defer></script>
   <script src="js/scenarios.js" defer></script>
+  <script src="js/calc-more.js" defer></script>
   <script src="js/decision.js" defer></script>
   <script src="js/dashboard.js" defer></script>
   <script src="js/life.js" defer></script>
@@ -93,9 +96,18 @@
   <script src="js/guides-3.js" defer></script>
   <script src="js/guides-4.js" defer></script>
   <script src="js/guides-5.js" defer></script>
+  <script src="js/guides-6.js" defer></script>
+  <script src="js/guides-7.js" defer></script>
+  <script src="js/guides-8.js" defer></script>
+  <script src="js/content-2.js" defer></script>
+  <script src="js/lessons-a.js" defer></script>
+  <script src="js/lessons-b.js" defer></script>
+  <script src="js/lessons-c.js" defer></script>
+  <script src="js/curriculum.js" defer></script>
   <script src="js/sync.js" defer></script>
   <script src="js/about.js" defer></script>
   <script src="js/examples.js" defer></script>
+  <script src="js/calc-more-help.js" defer></script>
   <script src="js/help.js" defer></script>
   <script src="js/gate.js" defer></script>
   <script src="js/search.js" defer></script>
