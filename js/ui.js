@@ -16,18 +16,27 @@ window.FOS = window.FOS || {};
     toastTimer = setTimeout(() => t.classList.remove('show'), Math.min(7000, 2400 + String(msg).length * 40));
   }
 
-  let lastFocus = null;
+  let lastFocus = null, onCloseCb = null;
   function modal(title, html, opts = {}) {
-    const root = $('#modal-root'); lastFocus = document.activeElement;
+    if (onCloseCb) { const prev = onCloseCb; onCloseCb = null; prev(); }   // a dialog that is replaced counts as closed
+    const root = $('#modal-root'); lastFocus = document.activeElement; onCloseCb = opts.onClose || null;
     root.innerHTML = `<div class="modal-back" data-close><div class="modal ${opts.wide ? 'wide' : ''}" role="dialog" aria-modal="true" aria-label="${esc(title)}" tabindex="-1">
       <div class="modal-head"><h2>${esc(title)}</h2><button class="icon-btn" data-close aria-label="Close dialog">✕</button></div>
       <div class="modal-body">${html}</div></div></div>`;
     const box = $('.modal', root); box.focus();
     root.onclick = (e) => { if (e.target.hasAttribute && e.target.hasAttribute('data-close') && (e.target.classList.contains('modal-back') || e.target.classList.contains('icon-btn'))) closeModal(); };
-    root.onkeydown = (e) => { if (e.key === 'Escape') closeModal(); };
+    root.onkeydown = (e) => {
+      if (e.key === 'Escape') closeModal();
+      else if (e.key === 'Tab') {   // keep keyboard focus inside the dialog
+        const f = $$('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])', box).filter((x) => !x.disabled && !x.hidden);
+        if (!f.length) return;
+        const first = f[0], last = f[f.length - 1], cur = document.activeElement;
+        if (e.shiftKey && (cur === first || cur === box)) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && cur === last) { e.preventDefault(); first.focus(); }
+      }
+    };
     return box;
   }
-  function closeModal() { const root = $('#modal-root'); root.innerHTML = ''; if (lastFocus && lastFocus.focus) lastFocus.focus(); }
+  function closeModal() { const root = $('#modal-root'), cb = onCloseCb; onCloseCb = null; root.innerHTML = ''; if (lastFocus && lastFocus.focus) lastFocus.focus(); if (cb) cb(); }
 
   // Animate a number inside an element
   function animate(el, to, format) {
@@ -53,12 +62,16 @@ window.FOS = window.FOS || {};
     try { await navigator.clipboard.writeText(text); toast('Copied to clipboard'); }
     catch (e) { const t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); toast('Copied to clipboard'); } catch (x) { toast('Copy failed — select and copy manually'); } t.remove(); }
   }
-  // Refuse anything that looks like a secret or long account/card number
+  // Refuse anything that looks like a secret or a long account/card/ID number. A word alone ("Aadhaar fee", "password manager") is fine;
+  // a word followed by a value is not. Grouped numbers (4-4-4) and contiguous 12+ digit numbers are blocked; lists of amounts are not.
+  const RE_LONG = /\b\d{12,}\b/,RE_GROUPED = /\b\d{4}[ -]\d{4}[ -]\d{4}(?:[ -]\d{1,7})?\b/, RE_PAN = /\b[A-Z]{5}\d{4}[A-Z]\b/i;
+  const RE_ACCT = /\b(?:a\/c|acct?|account)\s*(?:no\.?|number|#)?\s*[:=-]?\s*\d{8,}\b/i;
+  const RE_SECRET = /\b(?:password|passwd|passcode|otp|cvv2?|cvc|mpin|pin(?!\s*code\b))\b\W{0,3}(?:(?:is|was|are|no|number)\W{1,3}){0,2}[^\s]*\d[^\s]*/i;
   function looksSensitive(str) {
     const s = String(str || '');
-    return /\d{12,}/.test(s.replace(/[\s-]/g, '')) || /\b(password|passwd|otp|cvv|cvc|upi\s*pin|atm\s*pin|net\s*banking|aadhaar|aadhar)\b/i.test(s);
+    return RE_LONG.test(s) || RE_GROUPED.test(s) || RE_PAN.test(s) || RE_ACCT.test(s) || RE_SECRET.test(s);
   }
-  const SENSITIVE_MSG = 'This looks like a card/account number or a secret (password, OTP, PIN, CVV, Aadhaar). Finance OS never needs these — please remove it.';
+  const SENSITIVE_MSG = 'This looks like a card, account, PAN or Aadhaar number, or a password / OTP / PIN / CVV. Finance OS never needs these — please remove it.';
   const parse = (v) => { const x = parseFloat(String(v).replace(/,/g, '')); return Number.isFinite(x) ? x : 0; };
   const tip = (t) => `<span class="tip" tabindex="0" role="note" aria-label="${esc(t)}" data-tip="${esc(t)}">ⓘ</span>`;
   const disclaimer = 'Projection based on the assumed return.';
@@ -105,8 +118,8 @@ window.FOS = window.FOS || {};
     function draw() {
       const all = list(), items = all.slice(0, shown), cs = cols();
       root.innerHTML = `<div class="table-scroll crud-wrap"><table class="data crud"><thead><tr>${cs.map((c) => `<th scope="col">${esc(c.label)}</th>`).join('')}${cfg.computed ? `<th scope="col">${esc(cfg.computed.label)}</th>` : ''}<th><span class="sr">Remove</span></th></tr></thead><tbody>
-        ${items.length ? items.map((it) => `<tr data-id="${it.id}">${cs.map((c) => `<td data-label="${esc(c.label)}">${cell(c, it)}</td>`).join('')}${cfg.computed ? `<td class="comp" data-label="${esc(cfg.computed.label)}">${cfg.computed.fn(it)}</td>` : ''}<td class="del"><button class="icon-btn" data-del="${it.id}" aria-label="Remove row">🗑</button></td></tr>`).join('') : `<tr><td colspan="${cs.length + 2}" class="muted">${esc(cfg.empty || 'Nothing here yet.')}</td></tr>`}
-        </tbody></table></div>${all.length > shown ? `<div class="row-actions"><button class="btn ghost" data-more>Show ${Math.min(100, all.length - shown)} more (showing ${shown} of ${FOS.fmt.num(all.length)})</button></div>` : ''}<div class="row-actions"><button class="btn" data-add>＋ ${esc(cfg.addLabel || 'Add')}</button>${cfg.extraButtons || ''}</div><div class="crud-foot">${cfg.footer ? cfg.footer(all) : ''}</div>`;
+        ${items.length ? items.map((it) => `<tr data-id="${esc(it.id)}">${cs.map((c) => `<td data-label="${esc(c.label)}">${cell(c, it)}</td>`).join('')}${cfg.computed ? `<td class="comp" data-label="${esc(cfg.computed.label)}">${cfg.computed.fn(it)}</td>` : ''}<td class="del"><button class="icon-btn" data-del="${esc(it.id)}" aria-label="Remove row">🗑</button></td></tr>`).join('') : `<tr><td colspan="${cs.length + 2}" class="muted">${esc(cfg.empty || 'Nothing here yet.')}</td></tr>`}
+        </tbody></table></div>${all.length > shown ? `<div class="row-actions"><button class="btn ghost" data-more>Show ${Math.min(100, all.length - shown)} more (showing ${shown} of ${FOS.fmt.num(all.length)})</button></div>` : ''}<div class="row-actions"><button class="btn" data-add>＋ ${esc(cfg.addLabel || 'Add')}</button>${Object.prototype.hasOwnProperty.call(cfg, 'extraButtons') ? cfg.extraButtons : ''}</div><div class="crud-foot">${cfg.footer ? cfg.footer(all) : ''}</div>`;
     }
     root.onclick = (e) => {
       if (e.target.closest('[data-more]')) { shown += 100; draw(); return; }
