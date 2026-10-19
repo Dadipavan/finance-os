@@ -5,7 +5,7 @@ window.FOS = window.FOS || {};
   const G = FOS.G;
 
   G({
-    id: 'basics', module: 'basics', cat: 'Money basics', read: '16 min read', title: 'Money basics — the ideas behind every decision',
+    id: 'basics', module: 'basics', cat: 'Money basics', read: '32 min read', title: 'Money basics — the ideas behind every decision',
     summary: `Inflation, interest, compounding, the time value of money, risk vs return, needs vs wants, and the Rule of 72 — explained with rupees.`,
     calcs: ['inflation', 'compound', 'fv', 'pv', 'cagr'],
     sections: [
@@ -13,26 +13,58 @@ window.FOS = window.FOS || {};
         `Prices rise ~5–7% a year in India. ₹100 of groceries today costs ₹179 in 10 years at 6%. **Money that doesn't grow faster than inflation is quietly shrinking.**`,
         ['ex', `₹10 lakh in a 3.5% savings account with 6% inflation loses about 2.5% of purchasing power a year — in 20 years its "real" value is ~₹6 L.`]],
       [`Simple vs compound interest`,
-        ['ul', `**Simple:** interest on the original amount only. ₹1 L at 8% for 10 years = ₹1.8 L.`, `**Compound:** interest on interest. Same ₹1 L becomes ₹2.16 L. At 20 years: ₹3.2 L vs ₹2.6 L.`, `**Rule of 72:** years to double ≈ 72 ÷ rate. At 8% → 9 years; at 12% → 6 years; at 36% card interest → 2 years (debt doubles fast).`]],
+        ['ul', `**Simple:** interest on the original amount only. ₹1 L at 8% for 10 years = ₹1.8 L.`, `**Compound:** interest on interest. Same ₹1 L becomes ₹2.16 L. At 20 years: ₹4.66 L vs ₹2.6 L.`, `**Rule of 72:** years to double ≈ 72 ÷ rate. At 8% → 9 years; at 12% → 6 years; at 36% card interest → 2 years (debt doubles fast).`]],
       [`Time value of money`, `₹1 lakh today is worth more than ₹1 lakh in 5 years, because today's money can earn and inflation erodes the future money. Use **PV** (what a future sum is worth today) and **FV** (what today's money will become).`],
       [`Risk and return`, `Higher potential return always comes with the chance of loss. Safe assets protect; growth assets build. Diversify across asset classes; match risk to the time you can wait.`],
       [`Needs, wants, habits`, `Needs: housing, food, health, transport, insurance. Wants: upgrades, dining out. Habits: automatic spending you never decided (subscriptions). Trim habits first; they are invisible and large.`],
       [`Six principles`,
-        ['ol', `Spend less than you earn.`, `Pay yourself first (automate savings).`, `Build a buffer, then insure.`, `Avoid high-interest debt.`, `Invest early and steadily, by goal.`, `Review yearly; ignore noise.`]]
+        ['ol', `Spend less than you earn.`, `Pay yourself first (automate savings).`, `Build a buffer, then insure.`, `Avoid high-interest debt.`, `Invest early and steadily, by goal.`, `Review yearly; ignore noise.`]],
+      [`Compounding in numbers — what ₹10,000 becomes`,
+        ['tbl', ['Rate a year', '10 years', '20 years', '30 years'], [
+          [`4% (savings account-like)`, `₹14,802`, `₹21,911`, `₹32,434`],
+          [`8%`, `₹21,589`, `₹46,610`, `₹1,00,627`],
+          [`10%`, `₹25,937`, `₹67,275`, `₹1,74,494`],
+          [`12%`, `₹31,058`, `₹96,463`, `₹2,99,599`],
+          [`36% a year (card debt left unpaid, 3% a month)`, `₹3.47 lakh — about 35 times`, `—`, `—`]]],
+        ['ul', `**Time matters more than rate:** ₹10,000 at 8% for 30 years (₹1.0 lakh) beats ₹10,000 at 12% for 20 years (₹96,000).`, `**Debt compounds against you:** an unpaid balance at 36% roughly doubles in 2 years. That is why high-interest debt is the first thing to remove.`, `**Rule of 72 / 114 / 144:** years to double ≈ 72 ÷ rate; to triple ≈ 114 ÷ rate; to quadruple ≈ 144 ÷ rate.`]],
+      [`The same rate, said four ways (so no one confuses you)`,
+        ['tbl', ['Term', 'Meaning', 'Example'], [
+          [`Nominal annual rate (APR)`, `The quoted yearly rate`, `12% a year, compounded monthly`],
+          [`Monthly rate`, `Annual rate ÷ 12`, `1% a month`],
+          [`Effective annual rate (EAR / effective yield)`, `What you actually earn in a year after compounding`, `(1.01)¹² − 1 = 12.68%`],
+          [`Flat rate`, `Interest on the original amount for the whole term (not on the reducing balance)`, `9% flat on a 4-year loan ≈ 16–17% reducing`],
+          [`Real rate`, `Rate after inflation`, `(1 + 7%) ÷ (1 + 6%) − 1 ≈ 0.9%`]]],
+        ['tip', `When two products quote different rates, convert both to the **effective annual rate** (or compare the total rupees paid) before choosing.`]],
+      [`Real vs nominal, with tax`,
+        ['ex', `A 7% FD for someone in the 30% slab (31.2% with cess): after tax 4.8%; with 6% inflation the real return is (1.048 ÷ 1.06) − 1 = **−1.1%**. ₹5 lakh in a 3% savings account with 6% inflation keeps only about ₹3.75 lakh of today's buying power after 10 years. An asset must beat **inflation and tax** to grow your wealth.`]],
+      [`Risk and return — what the trade-off looks like`,
+        ['tbl', ['Asset', 'Typical long-run return (illustrative)', 'Typical bad year', 'Time you should be able to wait'], [
+          [`Savings account`, `2.5–4%`, `0`, `None`],
+          [`FD / PPF / EPF`, `6.5–8.25%`, `0 (bank risk for FD)`, `1–15 years`],
+          [`Debt funds`, `6–8%`, `−3% to −5%`, `1–3 years`],
+          [`Gold`, `8–10% (uneven)`, `−20% or worse`, `5+ years`],
+          [`Equity index funds`, `11–13% over 15+ years`, `−35% to −50%`, `7–10+ years`]]],
+        `Higher return is the **payment for waiting through bad years**. If you cannot wait, you cannot earn the higher return.`],
+      [`Present value — what a future promise is worth today`,
+        ['ex', `A promise of ₹1 lakh in 5 years, discounted at 8%, is worth 1,00,000 ÷ 1.08⁵ = **₹68,058 today**. Conversely, to have ₹1 lakh in 5 years you need ₹68,058 now at 8%. Use the Present Value and Future Value calculators to compare options with different timings, for example a bonus now versus a larger one later.`]],
+      [`The words you will meet (a mini-glossary; the Money Words tool has the long list)`,
+        ['ul', `**Asset:** something you own that has value. **Liability:** something you owe.`, `**Net worth:** assets − liabilities.`, `**Liquidity:** how fast you can turn something into cash without losing value.`, `**Diversification:** spreading money across assets so one failure does not ruin you.`, `**Principal:** the original amount; **interest:** the price of using money.`, `**EMI:** a fixed monthly instalment of principal + interest.`, `**CAGR / XIRR:** yearly growth rates for one lump sum / for many cash flows.`, `**Expense ratio:** the yearly cost of a fund as a % of your money.`, `**Nominee:** the person named to receive money; not always the owner (see the Estate guide).`, `**KYC:** the identity check for financial accounts.`]],
+      [`Questions beginners ask`,
+        ['ul', `**“Should I start investing or save more first?”** Do both in order: emergency fund and insurance, then SIPs. See the Investing guide.`, `**“Is it too late to start?”** No. The SIP needed is higher, but starting now beats starting later.`, `**“How much should I save?”** 20% of take-home is a good target; 10% is a start; raise it with every raise.`, `**“What is the safest place for money?”** Safe depends on the goal and time; a bank (insured to ₹5 lakh), government schemes or short-term debt for near needs; diversified equity for long ones.`, `**“Do I need a financial adviser?”** Not for basics. A fee-only SEBI-registered adviser helps for complex situations; avoid commission-driven sellers.`]]
     ],
     advisor: [`Set up an automatic transfer of 20% of salary to savings/investments the day pay arrives.`, `Treat inflation as the enemy; hold growth assets for 5+ year goals.`, `Learn one concept a week using the Knowledge section.`],
-    checklist: [`I can explain inflation and compounding.`, `Savings are automated.`, `No high-interest debt.`, `I track one monthly number: savings rate.`],
+    checklist: [`I can explain inflation and compounding.`, `Savings are automated.`, `No high-interest debt.`, `I track one monthly number: savings rate.`, `I can convert a quoted rate to an effective annual rate and to a real (after tax and inflation) rate.`, `I understand that time and rate both drive compounding and that debt compounds too.`],
     verify: [`RBI — inflation data (rbi.org.in)`, `MoSPI — mospi.gov.in (CPI)`]
   });
 
   G({
-    id: 'income', module: 'income', cat: 'Money basics', read: '20 min read', title: 'Income & salary — CTC, payslip, PF, gratuity, Form 16',
+    id: 'income', module: 'income', cat: 'Money basics', read: '34 min read', title: 'Income & salary — CTC, payslip, PF, gratuity, Form 16',
     summary: `Decode your offer letter and payslip: CTC vs gross vs net, each component, PF/ESI, gratuity, variable pay, notice period, Form 16 and negotiation.`,
     calcs: ['salary', 'hra', 'incometax', 'whatif-salary'],
     sections: [
       [`CTC, gross, in-hand`,
         ['tbl', ['Term', 'Meaning'], [[`CTC`, `Cost to company: everything the employer spends on you`], [`Gross`, `Monthly pay before deductions (basic + HRA + allowances)`], [`Net / take-home`, `Gross − PF − professional tax − TDS − other deductions`], [`Variable pay`, `Performance-linked; not guaranteed`], [`Employer-only items`, `Employer PF, gratuity, insurance, bonus — not in your hand monthly`]]],
-        ['ex', `CTC ₹12 L: basic ₹5 L, HRA ₹2.5 L, special allowance ₹2.8 L, employer PF ₹0.6 L, gratuity ₹0.24 L, insurance ₹0.1 L. In-hand ≈ ₹8.9–9.1 L before tax, ≈ ₹73–76k per month after PF and tax (varies by regime).`]],
+        ['ex', `CTC ₹12 L: basic ₹5 L, HRA ₹2 L, special allowance ₹4.06 L (fixed cash pay ₹11.06 L), employer PF ₹0.6 L, gratuity ₹0.24 L, insurance ₹0.1 L. After employee PF (₹0.6 L) and professional tax (₹2,400) the pay is ₹10.44 L a year before income tax. **New regime (FY 2025-26):** taxable ₹10.31 L → tax nil (rebate) → **in-hand ≈ ₹87,000 a month.** **Old regime with no deductions:** tax ≈ ₹1.34 L → in-hand ≈ **₹75,800 a month.** The regime and your deductions can move your take-home by ₹10,000+ a month.`]],
       [`Reading the payslip`,
         ['ul', `**Earnings:** basic, HRA, special allowance, LTA, bonus, reimbursements.`, `**Deductions:** employee PF (12% of basic), professional tax (≤ ₹2,500/yr), TDS, NPS, loan recoveries, health premium.`, `**YTD** totals; verify TDS with Form 16 at year end.`, `Low basic = low PF and gratuity (less retirement money) but higher take-home; high basic = more retirement savings.`]],
       [`PF, gratuity, ESI, bonus`,
@@ -40,15 +72,32 @@ window.FOS = window.FOS || {};
       [`Joining or leaving a job`,
         ['ul', `Get an **offer letter**, **appointment letter** with notice, probation, bond, and variable terms in writing.`, `On exit collect **relieving letter**, **experience letter**, **Form 16**, **full-and-final settlement** statement, **PF transfer**, and ensure **UAN** is active.`, `Keep health cover alive (portability or your own policy).`]],
       [`Negotiating pay`, `Know market pay (Glassdoor, LinkedIn, peers). Negotiate **fixed** pay, not variable; ask about joining bonus, notice buy-out, learning budget, remote days, health cover. Compare offers on **in-hand + benefits + growth**, not CTC alone.`],
-      [`Second income and side income`, `Freelance, teaching, rental, interest, dividends: report in ITR; freelancers can use 44ADA (50% presumptive). Keep invoices and pay advance tax.`]
+      [`Second income and side income`, `Freelance, teaching, rental, interest, dividends: report in ITR; freelancers can use 44ADA (50% presumptive). Keep invoices and pay advance tax.`],
+      [`A payslip, line by line (worked example)`,
+        ['tbl', ['Line', 'Monthly (₹)', 'Notes'], [
+          [`Basic`, `41,667`, `PF and gratuity are computed on it`],
+          [`HRA`, `16,667`, `Tax-exempt only in the old regime and only with rent paid`],
+          [`Special allowance`, `33,829`, `Fully taxable balance`],
+          [`**Gross pay**`, `**92,163**`, `Total fixed monthly pay`],
+          [`Employee PF (12% of basic)`, `− 5,000`, `Goes to your EPF account`],
+          [`Professional tax`, `− 200`, `State tax`],
+          [`TDS (income tax)`, `₹0 (new regime) or ≈ ₹11,200 (old, no deductions)`, `Based on your declaration`],
+          [`**Net pay**`, `**86,963 (new) / 75,763 (old, no deductions)**`, `What reaches your bank`]]],
+        ['ul', `**Year-to-date totals** let you check that TDS is on track; compare with Form 16 in June.`, `**Reimbursements and perquisites** (fuel, phone, meal cards) are taxable in the new regime.`, `**Salary structure matters:** a higher basic raises PF and gratuity (more retirement money) but lowers take-home; a lower basic does the opposite. Under the new Labour Codes basic is expected to be at least half of the total remuneration — check how your employer has re-set your pay.`]],
+      [`Variable pay, bonuses, notice period and bonds`,
+        ['ul', `**Variable pay** is paid only if targets are met; budget with the fixed part only.`, `**Joining bonus** is usually repayable if you leave early; read the clawback.`, `**Notice period:** commonly 1–3 months; you may buy out part of it; plan for the cost.`, `**Bonds and training-cost recovery** must be reasonable and written; do not leave original certificates with the employer.`, `**Probation:** terms may differ for leave and benefits.`, `See the Career guide for how to compare two offers on in-hand pay.`]],
+      [`Form 16, the income-tax return and your salary`,
+        ['ul', `**Form 16** (Part A and B) arrives by 15 June. Check salary, deductions and TDS against your payslips and Form 26AS.`, `**Second job or job change mid-year:** declare the previous employer's salary (Form 12B) to the new employer so that TDS is right.`, `**File your return** even if tax is nil (see the Tax guide).`]],
+      [`Questions people ask`,
+        ['ul', `**“Why is my take-home lower than CTC ÷ 12?”** Because CTC includes employer PF, gratuity and insurance that you do not receive monthly, plus variable pay paid later.`, `**“Should I opt for a lower basic to get more in hand?”** It raises take-home now and lowers PF and gratuity; weigh your needs and the new rules.`, `**“Can my employer change my salary structure?”** Yes if it keeps the total and follows the law; you should receive a revised breakup.`, `**“What is professional tax?”** A state tax on salary (up to ₹2,500 a year in most states).`, `**“How do I check that my employer deposits my PF?”** Use the EPFO passbook every quarter.`]]
     ],
     advisor: [`Ask for a CTC breakup with basic ≥ 40%, PF treatment, variable %, and the in-hand value.`, `Move your spending to what you earn fixed; treat variable pay as savings.`, `Build a second income stream within 3 years.`],
-    checklist: [`CTC breakup read and understood.`, `Payslip verified monthly for the first 3 months.`, `UAN active; PF passbook checked.`, `Form 16 received every June.`, `Notice period and bond terms known.`],
+    checklist: [`CTC breakup read and understood.`, `Payslip verified monthly for the first 3 months.`, `UAN active; PF passbook checked.`, `Form 16 received every June.`, `Notice period and bond terms known.`, `I know my net pay under both tax regimes.`, `I checked how the Labour Codes changed my salary structure.`],
     verify: [`EPFO — epfindia.gov.in`, `Labour codes / Payment of Gratuity Act`, `Income Tax — Form 16 guide`]
   });
 
   G({
-    id: 'budgeting', module: 'budgeting', cat: 'Money basics', read: '16 min read', title: 'Budgeting — 50/30/20, zero-based and envelope systems',
+    id: 'budgeting', module: 'budgeting', cat: 'Money basics', read: '32 min read', title: 'Budgeting — 50/30/20, zero-based and envelope systems',
     summary: `Three proven methods, how to set categories for Indian households, fix irregular expenses with sinking funds, and the monthly routine that makes it stick.`,
     calcs: ['savingsrate', 'subscription'], tools: [['Budget planner', '#/tool/budget'], ['Expense log', '#/tool/expenses']],
     sections: [
@@ -60,32 +109,98 @@ window.FOS = window.FOS || {};
       [`Indian specifics`, `Festival months, weddings, annual insurance premiums, school fees in April, and family support are predictable — plan them. Keep a **"family" line** in the budget for parents or relatives.`],
       [`Monthly routine (15 minutes)`, `Log expenses weekly, close the month on the last day with Month-End Close, compare with budget, move leftover to savings, and reset.`],
       [`Common failures`,
-        ['ul', `Budget too strict → abandoned. Leave a 5–10% "fun" line.`, `Forgetting irregular costs.`, `Not tracking cash/UPI.`, `Saving what is left — nothing is left.`]]
+        ['ul', `Budget too strict → abandoned. Leave a 5–10% "fun" line.`, `Forgetting irregular costs.`, `Not tracking cash/UPI.`, `Saving what is left — nothing is left.`]],
+      [`A monthly budget, worked three ways (take-home ₹80,000)`,
+        ['tbl', ['Category', '50/30/20', 'Zero-based (example)', 'Pay-yourself-first'], [
+          [`Rent/EMI + utilities`, `₹24,000`, `₹26,000`, `₹26,000`],
+          [`Food and household`, `₹10,000`, `₹11,000`, `Remaining (flexible)`],
+          [`Transport, phone, insurance`, `₹6,000`, `₹7,000`, `Remaining`],
+          [`Health, family support`, `₹0 inside needs (add to needs)`, `₹5,000`, `Remaining`],
+          [`Wants (eating out, shopping, trips, OTT)`, `₹24,000`, `₹10,000`, `Remaining`],
+          [`Savings and investments`, `₹16,000 (20%)`, `₹16,000`, `₹16,000 first (SIP, emergency, sinking funds)`],
+          [`Sinking funds (annual costs ÷ 12)`, `inside savings/needs`, `₹5,000`, `Inside the ₹16,000`]]],
+        ['ul', `**50/30/20** is a quick split; **zero-based** gives every rupee a job (income − all planned = 0); **pay-yourself-first** moves savings out on salary day and lets you spend the rest.`, `In cities where rent is high, needs may be 60% — then cut wants, not savings.`, `Use the **Budget planner** tool for your numbers and the **Expense log** to see where money actually went.`]],
+      [`Annual costs: the sinking-fund table`,
+        ['tbl', ['Irregular cost (example)', 'Per year (₹)', 'Set aside each month (₹)'], [
+          [`Health and motor insurance renewals`, `30,000`, `2,500`],
+          [`School fees/admission (April)`, `60,000`, `5,000`],
+          [`Vehicle service, tyres`, `18,000`, `1,500`],
+          [`Festivals, gifts, weddings`, `36,000`, `3,000`],
+          [`Travel`, `48,000`, `4,000`],
+          [`Annual subscriptions, taxes`, `12,000`, `1,000`],
+          [`**Total**`, `**2,04,000**`, `**17,000**`]]],
+        ['tip', `Open a separate “Sinking funds” account; transfer ₹17,000 on salary day; pay the annual bills from it. This single habit removes most budget shocks. If ₹17,000 is too high, trim the categories, not the habit.`]],
+      [`Budgeting with an irregular income (freelancers, commission, gig work)`,
+        ['ol', `**Find your baseline:** the lowest monthly income in the last 12 months (or the average of the lowest 3).`, `**Budget only that baseline** for essentials and savings. Treat anything above it as extra.`, `**Hold a buffer account** equal to 3–6 months of baseline expenses; pay yourself a fixed “salary” from it each month.`, `**Put extra income** first into the emergency fund, then taxes (set aside 15–30%), then goals.`, `**Set aside tax money** (advance tax, GST) the day you are paid.`]],
+      [`The monthly routine and the weekly check`,
+        ['ol', `**Weekly (10 minutes):** log or categorise UPI/card spends; check the balance of each category.`, `**Salary day:** auto-transfers for SIPs, sinking funds, EMIs.`, `**Month-end (15 minutes):** run Month-End Close; compare plan vs actual; move leftover to savings; reset.`, `**Quarterly:** review the top 3 categories and any subscriptions; adjust.`, `**Yearly:** raise savings with your raise; revise the plan with your goals.`]],
+      [`Fixing overspending: the three-leaks method`,
+        ['ol', `**Pull three months** of statements and sort into categories.`, `**Find the three biggest** non-essential or reducible categories (often housing, food ordering, transport, EMIs).`, `**Set a target for each** (for example, cut food delivery from ₹9,000 to ₹5,000; renegotiate the phone/internet plan; shift to a cheaper car loan).`, `**Automate the savings** you free up so they do not leak elsewhere.`, `**Measure after 60 days.**`],
+        ['warn', `Do not start by trimming tiny items while ignoring the big three. A ₹5,000 saving on rent or a car EMI beats ten ₹500 savings.`]],
+      [`Couples, families and budgets`,
+        ['ul', `Use the **hybrid account** structure and a monthly meeting (see the Family guide).`, `Agree on a personal allowance for each adult; no justification needed.`, `Include a line for parents' support and for each child; and a single owner for each bill.`]],
+      [`Questions people ask`,
+        ['ul', `**“Which method is best?”** The one you will keep using. Start with pay-yourself-first plus a simple monthly check.`, `**“How do I track cash?”** Withdraw a fixed amount and log it once a week, or use UPI for most spending.`, `**“What if I overspend in one category?”** Move money from another category the same month (zero-based thinking) rather than ignoring it.`, `**“Do I need an app?”** The Budget tool, the Expense log and your bank's statement export are enough; do not buy a premium app.`, `**“How much should the ‘fun’ line be?”** 5–15% of take-home; a budget with no fun fails.`]]
     ],
     advisor: [`Use **pay-yourself-first**: a SIP and a sinking-fund transfer on salary day; spend the rest freely.`, `Review every category quarterly; cut the top 3 leaks only.`],
-    checklist: [`Income, fixed, variable, irregular listed.`, `Savings automated first.`, `Sinking funds set.`, `Expense log in use.`, `Month-End Close done monthly.`],
+    checklist: [`Income, fixed, variable, irregular listed.`, `Savings automated first.`, `Sinking funds set.`, `Expense log in use.`, `Month-End Close done monthly.`, `I have a sinking-fund account for annual costs.`, `I know my three biggest controllable categories and have a target for each.`],
     verify: [`Your bank/UPI statements`]
   });
 
   G({
-    id: 'spending', module: 'spending', cat: 'Money basics', read: '10 min read', title: 'Everyday spending — the small leaks that cost lakhs',
+    id: 'spending', module: 'spending', cat: 'Money basics', read: '22 min read', title: 'Everyday spending — the small leaks that cost lakhs',
     summary: `The latte factor done honestly: subscriptions, delivery fees, impulse buys and lifestyle creep — and how to decide when a purchase is worth it.`,
     calcs: ['subscription', 'oppcost', 'fv'],
     sections: [
       [`Small daily costs compound`,
-        ['ex', `₹200 a day on snacks/delivery = ₹73,000 a year. Invested at 12% for 20 years: **₹59 lakh**. The point is not never to spend — it is to spend on purpose.`]],
+        ['ex', `₹200 a day on snacks/delivery = ₹73,000 a year. Invested monthly at an assumed 12% for 20 years it becomes about **₹60 lakh**. The point is not never to spend — it is to spend on purpose.`]],
       [`Where leaks hide`,
         ['ul', `**Subscriptions:** OTT, apps, gym, cloud — audit every quarter.`, `**Delivery fees, surge, convenience fees.**`, `**Impulse buys:** sale-driven shopping, BNPL.`, `**Convenience debt:** EMIs on gadgets.`, `**Lifestyle creep:** every raise becomes spending.`]],
       [`The 24-hour / 30-day rule`, `Wait 24 hours before any non-essential purchase under ₹5,000; 30 days above that. Ask: cost per use, what I would give up, can I buy a good used/refurbished one?`],
-      [`Spend on what you value`, `Cut ruthlessly on things you don't care about; spend freely on 2–3 things you love. Budgets fail from deprivation, not from generosity.`]
+      [`Spend on what you value`, `Cut ruthlessly on things you don't care about; spend freely on 2–3 things you love. Budgets fail from deprivation, not from generosity.`],
+      [`A subscription audit (worked list)`,
+        ['tbl', ['Item', 'Per month', 'Per year', 'Keep / cancel'], [
+          [`Two OTT apps`, `₹700`, `₹8,400`, `Keep one, rotate`],
+          [`Music + cloud storage`, `₹400`, `₹4,800`, `Keep cloud, drop duplicate`],
+          [`Gym membership (visited 3 times)`, `₹2,000`, `₹24,000`, `Cancel or switch to a pay-per-use plan`],
+          [`News/learning apps`, `₹500`, `₹6,000`, `Keep what you use`],
+          [`Food-app “membership” + delivery fees`, `₹1,800`, `₹21,600`, `Review: compare with cooking/pickup`],
+          [`Phone plan above what you use`, `₹800`, `₹9,600`, `Downgrade`],
+          [`**Total**`, `**₹6,200**`, `**₹74,400**`, `Cutting half saves ₹37,200 a year`]]],
+        ['tip', `Set a quarterly reminder in the Reminders tool for “subscription audit”. Check your UPI autopay mandates and card statements for recurring charges you forgot.`]],
+      [`Cost per use and the joy test`,
+        ['ul', `**Cost per use** = price ÷ number of uses. A ₹6,000 pair of shoes worn 300 times costs ₹20 a use; a ₹3,000 gadget used 5 times costs ₹600 a use.`, `**Hours of work:** at a take-home of ₹60,000 for 160 hours, one hour is worth ₹375; a ₹3,000 item costs 8 hours of work; a ₹1.2 lakh phone costs 320 hours — eight working weeks (see the Opportunity Cost guide).`, `**Joy test:** after the 24-hour/30-day wait, ask “does this add more to my life than the same money invested for 10 years?”. If yes, buy it without guilt.`, `**Compare used/refurbished** for gadgets and furniture; pay cash, not EMI.`]],
+      [`Delivery, convenience and impulse spending`,
+        ['ul', `**Delivery apps** add fees, taxes and menu mark-ups: a ₹350 meal can cost ₹480 delivered. Ordering four times a week for a household is ₹7,000–9,000 a month.`, `**Sales and flash deals** work by urgency; treat “you save ₹X” as irrelevant — only what you spend matters.`, `**One-click payments and saved cards** remove friction; delete them from shopping apps.`, `**Rewards points** tempt extra spending; ignore them unless you would have bought anyway.`, `**Social spending** (outings, gifts): set a monthly “social” amount and stick to it.`]],
+      [`Lifestyle inflation: the half-the-raise rule`,
+        ['tbl', ['Raise', 'Spend half', 'Invest half (SIP) — value after 20 years at an assumed 10%'], [
+          [`₹3,000 a month`, `₹1,500`, `₹1,500 → ≈ ₹11.4 lakh`],
+          [`₹6,000 a month`, `₹3,000`, `₹3,000 → ≈ ₹22.8 lakh`],
+          [`₹15,000 a month`, `₹7,500`, `₹7,500 → ≈ ₹57 lakh`]]],
+        `You still enjoy half of every raise today; the other half builds your future. Apply it at every raise and bonus.`],
+      [`Questions people ask`,
+        ['ul', `**“Isn't cutting small expenses pointless?”** Small recurring items add up (the audit above shows ₹74,400 a year), but fix the big three first (housing, vehicle, food).`, `**“How do I stop impulse buys?”** Delete saved cards, unsubscribe from sale emails, use the waiting rule.`, `**“What if my family expects me to spend?”** Agree a yearly “gifting and festival” budget in advance.`, `**“Is it okay to splurge sometimes?”** Yes — planned splurges from fun money are part of a sustainable budget.`]],
+      [`A 30-day spending experiment`,
+        ['ol', `**Days 1–7: Notice.** Log every spend (UPI, card, cash) in the Expense log. Do not change anything yet.`, `**Days 8–14: Categorise.** Sort into needs, wants and habits; mark each as “keep”, “reduce” or “cut”.`, `**Days 15–21: Experiment.** Apply the 24-hour rule; cancel two subscriptions; set a food-delivery cap (for example four orders a month); lower your UPI limit.`, `**Days 22–30: Redirect.** Move the money you saved on day 1 of the next month to a SIP or sinking fund; compare the result with the first week.`, `**Review:** keep the changes that cost you nothing in happiness; reverse the ones you hated.`]],
+      [`Reasonable benchmarks (share of take-home; adjust for your city)`,
+        ['tbl', ['Category', 'Typical share', 'Flag if'], [
+          [`Housing (rent or EMI + maintenance)`, `25–30%`, `Above 35%`],
+          [`Food at home and eating out`, `12–18%`, `Above 25%`],
+          [`Transport (including EMI and fuel)`, `8–12%`, `Above 15%`],
+          [`Utilities, phone, internet`, `4–6%`, `Above 8%`],
+          [`Health and insurance premiums`, `5–10%`, `Under 3% (underinsured)`],
+          [`Subscriptions and entertainment`, `2–5%`, `Above 8%`],
+          [`Savings and investments`, `20%+`, `Under 10%`]]]],
+      [`Digital friction and rewards traps`,
+        ['ul', `**Remove saved cards** and one-click buy from shopping apps; the pause helps.`, `**Turn off notifications** from deal apps and “last chance” emails.`, `**Use cash or a debit card** for categories where you overspend.`, `**Treat cashback as a discount, not a reason to buy.**`, `**Never use BNPL for wants;** one missed instalment costs more than the discount.`]]
     ],
     advisor: [`Audit subscriptions today; cancel anything not used in 30 days.`, `Freeze the UPI limit for discretionary apps; adopt the 24-hour rule.`, `Send 50% of every raise straight to investments.`],
-    checklist: [`Subscriptions audited.`, `24-hour rule adopted.`, `Delivery/app spends tracked.`, `Raise → 50% to SIP.`],
+    checklist: [`Subscriptions audited.`, `24-hour rule adopted.`, `Delivery/app spends tracked.`, `Raise → 50% to SIP.`, `I know my cost per use for my biggest purchases this year.`],
     verify: [`Your bank/UPI statements`]
   });
 
   G({
-    id: 'earnmore', module: 'earnmore', cat: 'Plan', read: '18 min read', title: 'Earn more, keep more — income growth and leak plugging',
+    id: 'earnmore', module: 'earnmore', cat: 'Plan', read: '30 min read', title: 'Earn more, keep more — income growth and leak plugging',
     summary: `How to raise income (skills, job moves, side income, business), cut expenses smartly, use tax and benefits fully, and compound both.`,
     calcs: ['whatif-salary', 'savingsrate', 'oppcost'], tools: [['Business ideas', '#/tool/bizideas']],
     sections: [
@@ -96,15 +211,40 @@ window.FOS = window.FOS || {};
       [`Side income ideas (realistic)`,
         ['tbl', ['Idea', 'Start cost', 'Time', 'Notes'], [[`Tutoring / coaching`, `Low`, `5–10 hrs/wk`, `₹500–2,000 per hr`], [`Freelance (design, writing, dev)`, `Low`, `10 hrs`, `Portfolio, platforms`], [`Online store / reselling`, `Medium`, `10+ hrs`, `Inventory risk`], [`Consulting in your field`, `Low`, `Variable`, `Use network`], [`Rent out an asset (room, equipment)`, `Varies`, `Low`, `Rent/tax rules`]]]],
       [`Tax and compliance`, `Side income is taxable; freelancers may use 44ADA, pay advance tax, and need GST only above thresholds. Keep invoices.`],
-      [`Compounding both sides`, `₹5,000 a month more savings for 20 years at 12% ≈ ₹50 lakh. Earning ₹10,000 extra a month and investing half gives ≈ ₹50 lakh too. Do both.`]
+      [`Compounding both sides`, `₹5,000 a month more savings for 20 years at 12% ≈ ₹50 lakh. Earning ₹10,000 extra a month and investing half gives ≈ ₹50 lakh too. Do both.`],
+      [`What a job switch is worth (numbers)`,
+        ['ex', `Salary ₹8 lakh. A 9% annual hike takes it to ₹8.72 lakh in a year and ₹12.3 lakh in 5 years. Switching jobs for a 25% jump takes it to ₹10 lakh at once; two such switches in 5 years, with 8% hikes between, gets to ₹15–16 lakh — about ₹3.5 lakh a year more. Over 5 years the difference adds up to more than ₹10 lakh of extra pay, before the investment growth on the extra savings. Compare the in-hand pay (see the Career guide) and the cost of leaving (notice, bonus, ESOP cliffs).`]],
+      [`Side income in detail`,
+        ['tbl', ['Idea', 'Realistic earnings', 'Tax and rules', 'Start this week'], [
+          [`Tutoring / coaching`, `₹500–2,000 an hour; ₹10,000–40,000 a month for 5–10 hours a week`, `Business/professional income; 44ADA presumptive possible`, `Post on local groups; offer a trial class`],
+          [`Freelance (design, writing, development, accounts)`, `₹20,000–1,00,000+ a month`, `TDS 10% by clients; advance tax; GST above ₹20 lakh`, `Build a 3-piece portfolio; platforms and referrals`],
+          [`Content creation`, `Slow; platform-dependent`, `Business income; GST on larger earnings`, `Consistency for 6 months before judging`],
+          [`Reselling / small online store`, `Margin 15–40% minus fees and returns`, `Business income; GST if thresholds are crossed`, `Test 5 products with ₹5,000`],
+          [`Rent an asset (room, equipment, parking)`, `Varies`, `House property or other-sources income; GST rules for commercial rent`, `Check society rules`],
+          [`Gig/delivery work`, `₹15,000–35,000 a month for part-time`, `Business income; e-Shram registration for benefits`, `Understand platform terms and insurance`]]],
+        ['warn', `**Avoid “earn from home” schemes that ask you to pay first,** investment-linked “tasks”, or MLM recruiting. If you must pay to start earning, it is a scam (see the Scams guide).`]],
+      [`Cost-cutting that does not hurt: a one-hour checklist`,
+        ['ul', `**Insurance:** compare health and motor premiums at renewal; use the same cover with a lower price; drop duplicate covers (see the Insurance guide).`, `**Phone/internet/DTH:** switch to a plan that fits your use; combine services.`, `**Electricity:** efficient appliances and a time-of-day plan can save 10–20%.`, `**Bank and card fees:** close accounts with minimum-balance fees; downgrade cards with annual fees you do not recoup.`, `**Loans:** ask for a rate cut or transfer (see the Loans guide).`, `**Investments:** direct plans, low-cost index funds (see the Advanced Investing guide).`, `**Rent/EMI:** the biggest line; moving or renegotiating once saves more than a year of small cuts.`]],
+      [`A 12-month earn-more plan`,
+        ['tbl', ['Quarter', 'Do this'], [
+          [`1`, `Pick one skill; learn it 3–5 hours a week; start a small side project for one client.`],
+          [`2`, `Get your first paid clients or a certification; update your resume and profile; know your market pay.`],
+          [`3`, `Raise your rate or move to larger clients; ask for a role/raise at work; track results.`],
+          [`4`, `Decide: continue side income, grow it, or apply for a better job; invest half of the extra income; review taxes and advance tax.`]]]],
+      [`Questions people ask`,
+        ['ul', `**“Should I do a side hustle or upskill?”** Upskilling usually raises your main income more; a side hustle adds a second stream. Do the one that fits your time.`, `**“How much of the extra income should I save?”** At least half; the rest on goals you enjoy.`, `**“Do I have to tell my employer?”** Check your contract; but you must declare the income for tax.`, `**“Is a business better than a job?”** Different risks; see the Start a Business and Small-Business Accounts guides.`]],
+      [`Side-income tax, worked example`,
+        ['ex', `An employee with a ₹8 lakh salary earns ₹3 lakh from freelance work (receipts) in FY 2025-26 and opts for the presumptive scheme (Section 44ADA): taxable profit = 50% × ₹3 lakh = **₹1.5 lakh**. Under the new regime the taxable income is ₹8 lakh − ₹75,000 standard deduction + ₹1.5 lakh = **₹8.75 lakh**, which is within the ₹12 lakh rebate limit, so the tax is **nil**. Clients may deduct 10% TDS on the fees (₹30,000), which you claim as a refund when you file. If the total were ₹14 lakh the tax would be well above nil. Track receipts, issue invoices, pay advance tax in one instalment by 15 March if tax is due, and file ITR-3 or ITR-4 as applicable (see the Advanced Tax guide).`]],
+      [`Negotiating a raise or a better offer — a short script`,
+        ['ol', `**Prepare** a one-page list of results and market pay for your role.`, `**Ask for a meeting** with your manager; open with your contribution and what you want (a number or a role).`, `**State the figure** and the reason; stay quiet and listen.`, `**Ask what it would take** if the answer is no, and agree a date to review.`, `**Get the outcome in writing.** If it is a no, use the market data to plan a switch (see the Career guide).`]]
     ],
     advisor: [`Pick one skill and one side income to build this year.`, `Invest at least 50% of extra income.`, `Review fees and renewals every quarter.`],
-    checklist: [`Skill plan for 12 months.`, `Side-income experiment started.`, `Fees and renewals reviewed.`, `Extra income → investments.`],
+    checklist: [`Skill plan for 12 months.`, `Side-income experiment started.`, `Fees and renewals reviewed.`, `Extra income → investments.`, `I know my market pay and the in-hand value of my last offer or raise.`, `I invested at least half of any extra income this year.`],
     verify: [`Income Tax — 44ADA; GST thresholds`]
   });
 
   G({
-    id: 'playbook', module: 'playbook', cat: 'Decide', read: '25 min read', title: 'Life playbook — order of operations, plus will & estate',
+    id: 'playbook', module: 'playbook', cat: 'Decide', read: '42 min read', title: 'Life playbook — order of operations, plus will & estate',
     summary: `What to do in which order from your first salary to retirement, and how to protect your family with a will, nominees and a document trail.`,
     calcs: ['lifesim', 'goal'], tools: [['Life ladder', '#/tool/ladder']],
     sections: [
@@ -113,33 +253,87 @@ window.FOS = window.FOS || {};
       [`By decade`,
         ['tbl', ['Age', 'Focus'], [[`22–30`, `Skills, savings rate, insurance, first SIPs, avoid lifestyle debt`], [`30–40`, `Home decision, kids, term cover, step-up SIPs`], [`40–50`, `Peak earning, education funding, retirement catch-up, rebalance`], [`50–60`, `Debt-free, glide path, health cover, estate plan`], [`60+`, `Buckets, SCSS, annuity, legacy`]]]],
       [`Will, nominee and succession`,
-        ['ul', `**Nominee ≠ owner:** for most assets the nominee is a trustee who must pass money to legal heirs (except insurance, where the nominee under Section 39 beneficiary status may be the beneficial owner). Keep both nominee and will aligned.`, `**Will:** write a simple will on plain paper (or stamp paper); 2 witnesses; name an executor; mention guardians for children; sign each page. **Registration** is optional but adds strength. Update after marriage, kids, property.`, `**Intestate (no will)** → succession by personal law (Hindu Succession Act, Muslim law, etc.). It takes months/years and legal fees.`, `**Documents to leave:** list of accounts, policies, FDs, demat, EPF/NPS UAN/PRAN, property papers, loan details, digital-account access instructions, lockers, passwords (via a password manager with an emergency contact).`, `**Joint holding:** "either or survivor" simplifies bank/demat access.`, `**Power of attorney and health directives** for older age.`]],
+        ['ul', `**Nominee ≠ owner:** for most assets the nominee is a trustee who must pass money to legal heirs (except insurance, where a spouse, child or parent nominee is a “beneficiary nominee” under Section 39). Keep both nominee and will aligned. The Will, Nominee & Inheritance guide has the full step-by-step.`, `**Will:** write a simple will on plain paper (or stamp paper); 2 witnesses; name an executor; mention guardians for children; sign each page. **Registration** is optional but adds strength. Update after marriage, kids, property.`, `**Intestate (no will)** → succession by personal law (Hindu Succession Act, Muslim law, etc.). It takes months/years and legal fees.`, `**Documents to leave:** list of accounts, policies, FDs, demat, EPF/NPS UAN/PRAN, property papers, loan details, digital-account access instructions, lockers, passwords (via a password manager with an emergency contact).`, `**Joint holding:** "either or survivor" simplifies bank/demat access.`, `**Power of attorney and health directives** for older age.`]],
       [`Family communication`, `One hour a year: walk through the Records tool with spouse and parents. If you were unavailable tomorrow, could they find everything in 10 minutes?`],
       [`Big-decision list`,
-        ['ul', `Buying a home → see Property guide.`, `Buying a vehicle → see Vehicle guide.`, `Loans → see Loans guide.`, `Career move → compare in-hand, growth, benefits, risk.`, `Business start → see Start a Business.`]]
+        ['ul', `Buying a home → see Property guide.`, `Buying a vehicle → see Vehicle guide.`, `Loans → see Loans guide.`, `Career move → compare in-hand, growth, benefits, risk.`, `Business start → see Start a Business.`]],
+      [`When to move to the next step — triggers`,
+        ['tbl', ['Step', 'You are done when…', 'Then move on to'], [
+          [`1. Stabilise`, `You know your monthly take-home, spending and savings rate; you have 1 month of essentials saved`, `Protect`],
+          [`2. Protect`, `Health cover (own), term cover if anyone depends on you, personal accident, nominees updated`, `Debt`],
+          [`3. Debt`, `No card balance; no loan above ~12% except secured and planned ones`, `Emergency fund`],
+          [`4. Emergency fund`, `3–6 months of essentials in layers (3–12 for variable income)`, `Retirement + goals`],
+          [`5. Retirement`, `SIP for retirement running with a yearly step-up; EPF/PPF/NPS aligned`, `Goals`],
+          [`6. Goals`, `Each goal has its own SIP and asset class`, `Optimise`],
+          [`7. Optimise`, `Regime chosen, costs checked, allocation rebalanced yearly`, `Estate`],
+          [`8. Estate`, `Will, nominees, one-page index, powers of attorney as needed`, `Review yearly`]]]],
+      [`Life-event checklists`,
+        ['tbl', ['Event', 'Do this in the first 30–90 days'], [
+          [`First job`, `UAN, nominee, health cover, emergency fund start, SIP (see the First Job guide)`],
+          [`Marriage`, `Registration, nominees, insurance, joint/personal accounts, will (see the Marriage and Family guides)`],
+          [`Child`, `Health floater, term cover, will with guardian, SSY/PPF, education SIP (see the Children guide)`],
+          [`Buying a home`, `Affordability, title checks, insurance, will update (see the Property guide)`],
+          [`Job loss`, `Runway, health cover, claim dues, cut costs, protect EMIs (see Emergency Fund and Career guides)`],
+          [`Inheritance or windfall`, `Do nothing big for 30 days; pay costly debt; fund emergency and goals; take advice (see the Estate guide)`],
+          [`Illness or accident`, `Insurance claim steps, emergency fund, family access to accounts (see the Insurance and Family guides)`],
+          [`Divorce or separation`, `Documents, separate accounts, nominees, will, credit history (see the Family and Women guides)`],
+          [`Retirement`, `Buckets, tax plan, health cover, estate update (see the Seniors guide)`],
+          [`Moving abroad or returning`, `Residency, accounts, tax (see the NRI guide)`]]]],
+      [`The annual money day (2–3 hours)`,
+        ['ol', `**Numbers:** update net worth, savings rate, debts.`, `**Protection:** review health, term, accident, home and vehicle insurance; check nominees.`, `**Investments:** rebalance; raise SIPs; check costs.`, `**Taxes:** choose the regime, gather proofs, plan advance tax.`, `**Goals:** update costs and dates; adjust SIPs.`, `**Estate:** check the will and the one-page index; tell your family anything that changed.`, `**Learning:** read one chapter of a guide you have not read; pick one improvement.`]],
+      [`Where each guide fits (the learning paths)`,
+        ['ul', `**Start from zero:** Money Basics → Income → Budgeting → Everyday Spending → Mindset → Banking → Emergency Fund → Insurance.`, `**Build wealth:** Investing → Mutual Funds → Stocks → Bonds → Gold → Government Schemes → Economy → Advanced Investing → Tax → Advanced Tax.`, `**Home, family and children:** Loans → EMI → Property → Rental → Marriage → Family → Women → Children → Education → Vehicle.`, `**Career and business:** Earn More → Career → Business → Start a Business → Small-Business Accounts → Startup Funding.`, `**Protect:** Insurance → Emergency Fund → Scams → Digital Safety → Rights → Government Benefits → Will & Inheritance.`, `**Later life:** Retirement → Financial Independence → Net Worth → Seniors → Will & Inheritance. **Global:** NRI → Advanced Tax → Advanced Investing → Crypto → Scenarios → Decisions.`]],
+      [`Questions people ask`,
+        ['ul', `**“I am overwhelmed. Where do I start?”** With the Stabilise step: know your numbers and automate a small saving. Then follow the order.`, `**“Can I skip a step?”** Rarely; skipping protection or the emergency fund makes the later steps fragile.`, `**“I am 45 and behind. What now?”** Follow the same order faster: protect, clear debt, fund the emergency, then raise retirement SIPs (see the Retirement guide for the cost of delay).`, `**“How often should I read these guides?”** Once, then use the checklists and the annual money day.`]]
     ],
     advisor: [`Follow the order: protect → clear debt → emergency fund → retirement → goals.`, `Write a will this year and update nominees everywhere.`, `Hold an annual family money meeting; keep the Records tool current.`],
-    checklist: [`Insurance in place.`, `Emergency fund funded.`, `Retirement SIP on.`, `Will drafted; nominees updated.`, `Records shared with family.`],
+    checklist: [`Insurance in place.`, `Emergency fund funded.`, `Retirement SIP on.`, `Will drafted; nominees updated.`, `Records shared with family.`, `I know which step of the order I am on and what finishes it.`, `I hold an annual money day.`],
     verify: [`Indian Succession Act / personal laws (indiacode.nic.in)`, `IRDAI — nominee rules`, `Bank/EPFO/NPS nomination portals`]
   });
 
   G({
-    id: 'scenarios', module: 'scenarios', cat: 'Decide', read: '10 min read', title: 'Scenario simulator — ask "what if?" with maths',
+    id: 'scenarios', module: 'scenarios', cat: 'Decide', read: '24 min read', title: 'Scenario simulator — ask "what if?" with maths',
     summary: `Stress-test job loss, rate rises, market falls, inflation and raises using transparent assumptions.`,
     calcs: ['whatif-job', 'whatif-emi', 'whatif-fall', 'whatif-inflation', 'whatif-invest', 'whatif-rent', 'whatif-retire', 'whatif-salary'],
     sections: [
       [`Why scenarios`, `A forecast is a guess; a scenario is a test: "If I lose my job for 6 months, how long does my buffer last?" It shows weak spots before life does.`],
       [`Scenarios worth running every year`,
         ['tbl', ['What if', 'Learn'], [[`Job loss 3–12 months`, `Runway; need for emergency fund`], [`Interest rate +2%`, `EMI stress`], [`Market −30%`, `Portfolio and sequence risk`], [`Inflation 8%`, `Retirement and SIP targets`], [`Salary +10% / +0%`, `Impact of raises on goals`], [`Rent +10%`, `Housing choices`]]]],
-      [`How to use results`, `If a scenario breaks your plan, fix the weak link: more emergency fund, lower EMI, more insurance, better asset mix. Re-run after the fix.`]
+      [`How to use results`, `If a scenario breaks your plan, fix the weak link: more emergency fund, lower EMI, more insurance, better asset mix. Re-run after the fix.`],
+      [`Four scenarios worked with real numbers`,
+        ['ex', `**1. Job loss.** Essentials ₹55,000 a month; fund ₹3.3 lakh → runway = 6 months. With ₹25,000 of freelance income from month 2, the net draw is ₹30,000 and the fund stretches to about 11 months. Use *What if I lose my job?* with your figures. **Pass mark:** at least 6 months of runway with no income.`],
+        ['ex', `**2. Interest rate +2%.** A ₹50 lakh floating home loan at 8.5% has an EMI of ₹43,391. At 10.5% the EMI on the same loan and tenure is ₹49,919 — **₹6,528 a month more** (₹78,000 a year). Can your budget absorb that? If not, borrow less, prepay or keep a cushion. Use *What if my EMI increases?*. **Pass mark:** EMIs still ≤ 40% of take-home at +2%.`],
+        ['ex', `**3. Market −30%.** A ₹20 lakh portfolio with 70% in equity (₹14 lakh) loses ₹4.2 lakh when equity falls 30% → ₹15.8 lakh (−21%). If you need ₹5 lakh next year, can you meet it from the debt part (₹6 lakh) without selling equity? Use *What if my investment falls 50%?*. **Pass mark:** no need to sell equity within 3 years.`],
+        ['ex', `**4. Inflation 8% instead of 6%.** ₹50,000 a month today becomes ₹2.15 lakh a month in 25 years at 6% (corpus at 30× ≈ ₹7.7 crore) but ₹3.42 lakh a month at 8% (corpus ≈ ₹12.3 crore) — **60% more**. Use *What if inflation increases?* and the Retirement Planner. **Pass mark:** a plan that still works at 7–8% or has room to adapt (higher savings, later retirement).`]],
+      [`Reading a stress test`,
+        ['tbl', ['Result', 'What it means', 'What to do'], [
+          [`Pass`, `Your plan survives the shock without selling at a loss or borrowing`, `Re-run yearly`],
+          [`Marginal`, `It survives, but only by cutting essentials or delaying goals`, `Add a buffer: larger emergency fund, lower EMI, more insurance`],
+          [`Fail`, `You would sell investments in a panic or miss EMIs`, `Fix the weak link first: emergency fund, debt reduction, insurance, a more conservative asset mix`]]],
+        ['ul', `**Combine shocks:** a job loss often comes with a market fall; test both together (fund runway while the portfolio is down 30%).`, `**Write the response** to each scenario as a rule (“If I lose my job, I pause SIPs for medium goals, keep insurance and EMIs, and use the fund in layers”).`]],
+      [`Questions people ask`,
+        ['ul', `**“Are the scenarios predictions?”** No; they are tests. They show how much slack your plan has.`, `**“How often should I run them?”** Once a year and at life events; also when rates or your income change.`, `**“What if everything fails?”** Choose the shock that worries you most and fix that first.`, `**“Do scenarios use my real numbers?”** Yes, the inputs are yours; the calculators show their formulas.`]],
+      [`Build your own stress-test sheet`,
+        ['tbl', ['Row', 'What to write', 'Pass test'], [
+          [`Job loss`, `Months of runway with zero income (fund ÷ essentials), then with a reduced budget`, `≥ 6 months (≥ 9–12 if income is variable)`],
+          [`Rate rise`, `EMI today vs EMI at +2%; extra per year`, `Total EMIs ≤ 40% of take-home at +2%`],
+          [`Market fall`, `Portfolio value after −30% in equity and −10% in gold; goals due in the next 3 years`, `Near-term goals not in equity`],
+          [`Medical event`, `Out-of-pocket cost if the insured cover is exhausted or a co-pay applies; medical fund`, `A medical fund of ₹3–5 lakh or a super top-up`],
+          [`Income drop 20%`, `Budget after a 20% pay cut; which costs you can reduce`, `Essentials covered; SIPs can be reduced, not stopped`],
+          [`Death or disability of the earner`, `Term cover vs needs; liquid assets; loan protection`, `Family expenses and loans covered (Life Cover Estimator)`]]],
+        ['ol', `Write the result of each test in one line.`, `Mark each Pass / Marginal / Fail.`, `For every Marginal or Fail, write one action with an amount and a date (for example “raise emergency fund by ₹1.2 lakh by March”).`, `Re-run after the action.`]],
+      [`A pre-mortem: imagine it has already gone wrong`,
+        ['ul', `Ask: “It is two years from now and my finances are in trouble. What happened?” List the three most likely causes (job loss, health bill, a large EMI, a loan to a relative).`, `For each cause, write the early warning sign and the first action.`, `Share the list with your partner; agree who does what.`, `The exercise exposes risks that numbers alone hide, like depending on a single client or a single income.`]],
+      [`Combining shocks: the worst case that is still realistic`,
+        ['ex', `Job loss + market fall 30% + interest rate +1%: fund runway 6 months (₹3.3 lakh ÷ ₹55,000); investments ₹20 lakh fall to ₹15.8 lakh; EMI rises ₹3,200. If the job search takes 9 months, you need ₹1.65 lakh more than the fund holds: reduce expenses to ₹45,000 (runway 7.3 months), add freelance income, and avoid selling equity at the low. Plans that survive this combination are robust.`]]
     ],
     advisor: [`Run job-loss and market-fall scenarios every January.`, `Make sure your plan survives a 30% equity drop without selling.`],
-    checklist: [`Job-loss runway ≥ 6 months.`, `EMI OK at +2% rate.`, `Plan survives −30% equity.`, `Inflation-8% scenario reviewed for retirement.`],
+    checklist: [`Job-loss runway ≥ 6 months.`, `EMI OK at +2% rate.`, `Plan survives −30% equity.`, `Inflation-8% scenario reviewed for retirement.`, `I wrote a response rule for each scenario that failed or was marginal.`],
     verify: [`Your own inputs; see each calculator's note`]
   });
 
   G({
-    id: 'oppcost', module: 'oppcost', cat: 'Decide', read: '8 min read', title: 'Opportunity cost — the price of what you gave up',
+    id: 'oppcost', module: 'oppcost', cat: 'Decide', read: '20 min read', title: 'Opportunity cost — the price of what you gave up',
     summary: `How to compare any spend with the alternative use of the same money and time.`,
     calcs: ['oppcost', 'fv'],
     sections: [
@@ -147,15 +341,43 @@ window.FOS = window.FOS || {};
         ['ex', `A ₹1.2 L phone upgrade vs investing it at 12% for 20 years = ₹11.6 L. The phone's true cost is ₹11.6 L of future freedom, not ₹1.2 L.`]],
       [`How to use it`,
         ['ol', `Write the alternative.`, `Compute future value at a realistic rate.`, `Add time costs (hours worked to pay).`, `Decide consciously; buy if the value exceeds the alternative.`]],
-      [`Time cost`, `Your hourly take-home = monthly take-home ÷ hours. A ₹3,000 item at ₹300/hour costs 10 hours of your life.`]
+      [`Time cost`, `Your hourly take-home = monthly take-home ÷ hours. A ₹3,000 item at ₹300/hour costs 10 hours of your life.`],
+      [`What the alternative is worth: a lookup table`,
+        ['tbl', ['If you invest ₹10,000 at…', 'In 10 years', 'In 20 years', 'In 30 years'], [
+          [`8%`, `₹21,589`, `₹46,610`, `₹1,00,627`],
+          [`10%`, `₹25,937`, `₹67,275`, `₹1,74,494`],
+          [`12%`, `₹31,058`, `₹96,463`, `₹2,99,599`]]],
+        ['ex', `**A ₹60,000 phone** bought instead of investing at 12% for 20 years costs, in future money, ₹60,000 × 9.65 = **₹5.8 lakh**. A **₹15 lakh car** instead of a ₹9 lakh one (the ₹6 lakh difference invested at 10% for 15 years) costs about ₹25 lakh of future wealth. This is not an argument against buying; it is the real price tag to weigh.`]],
+      [`Time is also money: hours of work`,
+        ['ul', `**Your hourly take-home** = monthly take-home ÷ hours worked (include commute). At ₹60,000 for 160 hours it is ₹375.`, `**Hours of work for a purchase** = price ÷ hourly take-home: ₹3,000 → 8 hours; ₹1.2 lakh → 320 hours (8 working weeks).`, `**A commute of 2 hours a day** for 22 days a month is 528 hours a year — 13 working weeks. A slightly higher rent near work can pay for itself in time and energy.`, `**Value your time at a realistic rate** for decisions such as DIY vs paying someone.`]],
+      [`Opportunity cost beyond purchases`,
+        ['tbl', ['Decision', 'What you give up', 'How to think'], [
+          [`Staying in a low-paid job`, `The higher pay you could earn elsewhere`, `Compare the in-hand gap over 5 years (Career guide)`],
+          [`Keeping money in a savings account`, `The return from a better low-risk option (liquid fund, FD, T-bill)`, `Move idle balance above 1–2 months`],
+          [`Prepaying a low-rate loan`, `The return you could earn instead`, `Compare the loan rate with your safe after-tax return (EMI guide)`],
+          [`Buying a bigger home`, `Investing the extra down payment and EMI difference`, `Run Rent vs Buy and the Affordability Check`],
+          [`A degree`, `Years of earnings and the cost`, `ROI test (Education guide)`],
+          [`Holding on to a loser`, `The better use of that money now`, `Would I buy it today?`]]],
+        ['warn', `**Opportunity cost is a tool, not a rule.** Spending on health, relationships and experiences you value is a good use of money; the point is to choose it deliberately rather than by default.`]],
+      [`Questions people ask`,
+        ['ul', `**“Does this mean I should never buy anything?”** No. It means spending on what you value after seeing the full price.`, `**“Which return rate should I use?”** A conservative one (8–10% for equity-like, 6–7% for safe) and show a range.`, `**“What about inflation?”** Both sides are in rupees; use a nominal return or compare real values consistently.`, `**“Can I apply it to a vacation?”** Yes: compare the experience with the alternative, set a budget and save in advance.`]],
+      [`Five real decisions, worked in five minutes`,
+        ['tbl', ['Decision', 'The comparison', 'Result'], [
+          [`Upgrade the phone for ₹80,000 instead of keeping the 2-year-old one`, `₹80,000 invested at an assumed 12% for 10 years`, `≈ ₹2.48 lakh of future wealth. If the old phone still works, the upgrade’s true price is ₹2.48 lakh.`],
+          [`Eat out four times a week (₹6,000/month) instead of cooking half`, `Save ₹3,000 a month, invested at an assumed 10% for 20 years`, `≈ ₹22.8 lakh. Decide whether the meals are worth that.`],
+          [`Prepay ₹2 lakh of a 10% personal loan or invest it`, `Prepaying earns a guaranteed 10%; investing earns an uncertain ~12% before tax (≈ 10.5% after)`, `Nearly equal on paper — prepay (certain, no risk) unless you have none higher-priority needs.`],
+          [`Pay a CA ₹10,000 to save ₹40,000 of tax`, `Net gain ₹30,000 on ₹10,000 spent`, `A 300% return on the fee; worth it if the saving is genuine and legal.`],
+          [`Live 1.5 hours further away to save ₹8,000 a month in rent`, `Extra commute 3 hours a day ≈ 66 hours a month; ₹8,000 ÷ 66 ≈ ₹121 per hour`, `Compare ₹121 per hour with your hourly take-home (₹375 in the example); the saving is worth less than your time.`]]],
+        ['ol', `**Name the alternative** (not “nothing”).`, `**Put numbers on both** (future value of the money; hours of time).`, `**Include tax and risk** in the alternative’s return.`, `**Choose consciously;** write the reason if the amount is large.`],
+        ['warn', `**Common errors:** using an unrealistic 15–20% return for the alternative; ignoring tax; double-counting (the investment return cannot also pay the loan interest you ignored); and treating every purchase as a loss — value, joy and health count.`]]
     ],
     advisor: [`Apply to every purchase above ₹10,000: FV at 10–12% and hours of work.`, `Keep guilt-free categories; the aim is awareness, not deprivation.`],
-    checklist: [`Alternative identified.`, `FV computed.`, `Hours of work computed.`, `Decision made consciously.`],
+    checklist: [`Alternative identified.`, `FV computed.`, `Hours of work computed.`, `Decision made consciously.`, `I know my hourly take-home and used it for the last big purchase.`],
     verify: [`Your own numbers`]
   });
 
   G({
-    id: 'decision', module: 'decision', cat: 'Decide', read: '12 min read', title: 'Decision engine — a method for big money decisions',
+    id: 'decision', module: 'decision', cat: 'Decide', read: '28 min read', title: 'Decision engine — a method for big money decisions',
     summary: `A six-step method: facts, total cost, risks, alternatives, regret test, and reversible vs irreversible.`,
     calcs: ['loancost', 'oppcost', 'rentbuy'], tools: [['Decision Engine', '#/tool/decision']],
     sections: [
@@ -163,25 +385,91 @@ window.FOS = window.FOS || {};
         ['ol', `**Facts:** price, tenure, rate, fees, penalties — write all.`, `**Total cost** over the whole period, not EMI.`, `**Risks:** job loss, rate rise, market fall, health.`, `**Alternatives:** do nothing, cheaper version, later, rent, used.`, `**Regret test:** would I be OK if this went wrong? 10 days, 10 months, 10 years.`, `**Reversibility:** avoid irreversible big bets without a 1-week pause.`]],
       [`Red flags`,
         ['ul', `Pressure to decide today, guaranteed returns, EMI-only pricing, "limited period", a contract you don't fully understand, an advisor paid by commission.`]],
-      [`Get a second opinion`, `For purchases above 3 months' income, share the numbers with a trusted person or a fee-only adviser (SEBI-registered RIA).`]
+      [`Get a second opinion`, `For purchases above 3 months' income, share the numbers with a trusted person or a fee-only adviser (SEBI-registered RIA).`],
+      [`A worked decision: rent or buy a ₹80 lakh flat?`,
+        ['ol', `**Facts:** price ₹80 lakh; down payment ₹16 lakh; loan ₹64 lakh at 8.75% for 20 years = EMI ₹56,550; stamp duty and fees ₹5.6 lakh; maintenance ₹3,000 a month; equivalent rent ₹26,000 a month (growing 5% a year).`, `**Total cost over 10 years (buying):** EMIs ₹67.9 lakh + maintenance ₹3.6 lakh + property tax ~₹1 lakh + upfront costs ₹21.6 lakh (down payment + fees) ≈ ₹94 lakh outflow, but you still own a flat worth (at 5% growth) ₹1.30 crore and owe about ₹45 lakh on the loan: equity ≈ ₹85 lakh (before selling costs of 7–10%).`, `**Total cost over 10 years (renting):** rent ₹26,000 growing 5% = ₹39 lakh; invest the ₹21.6 lakh and the monthly difference (EMI + maintenance − rent ≈ ₹33,500 a month, falling as rent rises) at an assumed 10%: about ₹1.16 crore of investments (before tax). At 5% price growth renting and investing comes out slightly ahead; if the flat's price grows faster, or you value stability, buying wins.`, `**Risks:** buying — job loss, rate rise, price flat, illiquid; renting — rent rises, move risk.`, `**Alternatives:** a cheaper flat, a later purchase, a smaller loan.`, `**Regret test:** if prices fall 10%, can I still live comfortably? If I lose my job, can I carry the EMI? Reversibility: selling costs 7–10%.`, `**Decision:** if you plan to stay 10+ years, can afford the EMI at +2% and prefer ownership, buy; otherwise rent and invest. The numbers are close; the risk profile and your goals decide.`],
+        ['tip', `Run the **Rent vs Buy** calculator and the **Affordability Check** with your own numbers; the figures above are an illustration of the method, not a forecast.`]],
+      [`The decision journal`,
+        ['tbl', ['Field', 'Example entry'], [
+          [`Date and decision`, `12 June — buy a ₹40,000 laptop`],
+          [`Alternatives considered`, `Refurbished ₹22,000; keep the old one`],
+          [`Total cost / benefit`, `₹40,000 now; saves 5 hours a week; cost per use over 3 years about ₹260`],
+          [`Risks`, `Could break; warranty 1 year`],
+          [`Regret test`, `10 days: fine. 10 months: fine. 10 years: irrelevant.`],
+          [`Result (review in 6 months)`, `Used daily; worth it / not used much`]]],
+        `Review the journal every year. You will see your patterns — impulse buys, over-optimism, forgetting costs — and fix them.`],
+      [`Questions to ask a salesperson, agent or adviser`,
+        ['ul', `**“How are you paid?”** (commission, fee, salary?) A commission-based seller has an incentive; a fee-only adviser does not.`, `**“What is the total cost, including all fees, over the full term?”**`, `**“What happens if I want to exit early?”** (penalties, lock-ins, surrender value)`, `**“What is the worst case?”**`, `**“Can I have this in writing, with the product name and number so I can check it independently?”**`, `**“Is this registered with the regulator? Show me the number.”** (SEBI, IRDAI, RBI)`, `**“What will you do if it does not work as you say?”**`],
+        ['warn', `A good decision survives these questions. If you hear “limited time”, “don't tell anyone”, “guaranteed”, or are not allowed to take the document home, walk away.`]],
+      [`When to take a second opinion`,
+        ['ul', `Any commitment above three months of your income.`, `Anything that is hard to reverse (property, long-term insurance, a loan).`, `Anything you do not understand.`, `Choose a **fee-only SEBI-registered investment adviser** (check the list at sebi.gov.in), a **chartered accountant** for tax and a **lawyer** for property and legal matters; pay a fixed fee.`]],
+      [`Questions people ask`,
+        ['ul', `**“What if there is no time to decide?”** Then the deal is probably designed to rush you; most good opportunities survive a 24-hour or 7-day wait.`, `**“Should I trust my gut?”** Use it as an alarm, not as a decision; check it against the numbers.`, `**“How do I decide when the numbers are close?”** Choose the option that is reversible, lower risk and fits your goals.`, `**“Can I use the Decision Engine for personal choices?”** It is built for money decisions; the six steps work for most big choices.`]],
+      [`Decision templates for four common choices`,
+        ['tbl', ['Choice', 'Numbers to compute', 'Questions to ask', 'Walk away if…'], [
+          [`Take a loan`, `APR, total interest and fees, EMI as % of take-home at +2%`, `Fixed or floating? Prepayment charges? What if I lose my job?`, `The EMI plus other EMIs exceeds 40% of take-home or the lender hides charges`],
+          [`Buy an insurance policy`, `Premium as % of take-home; cover vs need; claim-settlement record`, `Waiting periods, exclusions, room-rent limits, surrender value`, `You are told it is an “investment with guaranteed returns”`],
+          [`Invest in a product`, `Costs, tax, worst year, lock-in, the exit route`, `Who regulates it? Can I explain it in two sentences?`, `It promises guaranteed high returns or needs secrecy`],
+          [`Accept a job offer`, `In-hand pay at 50% and 100% variable, notice period, clawbacks, new-city costs`, `Is the offer in writing? What happens at probation end?`, `Terms are verbal or you are asked to pay`]]],
+        ['ul', `**Check your biases:** are you anchored to a price, following the crowd, or avoiding a loss? (See the Money Psychology guide.)`, `**Use the 10/10/10 test:** how will I feel about this in 10 days, 10 months, 10 years?`, `**Sleep on it;** for big commitments write down what would make you reverse the decision, and when you will review.`]]
     ],
     advisor: [`Use the Decision Engine for anything above 1 month's income.`, `Pause 7 days before big commitments.`, `Prefer reversible choices.`],
-    checklist: [`Total cost computed.`, `Risks listed.`, `3 alternatives considered.`, `7-day pause observed.`],
+    checklist: [`Total cost computed.`, `Risks listed.`, `3 alternatives considered.`, `7-day pause observed.`, `I keep a decision journal for choices above a set amount.`],
     verify: [`SEBI — RIA list: sebi.gov.in → Intermediaries`]
   });
 
   G({
-    id: 'health', module: 'health', cat: 'Decide', read: '12 min read', title: 'Financial health — ratios that tell the truth',
+    id: 'health', module: 'health', cat: 'Decide', read: '26 min read', title: 'Financial health — ratios that tell the truth',
     summary: `Savings rate, debt-to-income, emergency months, insurance adequacy, net-worth-to-income and investment-to-income — with target ranges.`,
     calcs: ['savingsrate', 'dti', 'emergency', 'cover'], tools: [['Health check', '#/tool/health']],
     sections: [
       [`The ratios`,
         ['tbl', ['Ratio', 'Formula', 'Healthy'], [[`Savings rate`, `Savings ÷ income`, `≥ 20%`], [`Debt-to-income`, `EMIs ÷ income`, `≤ 35%`], [`Emergency months`, `Liquid savings ÷ essentials`, `≥ 6`], [`Insurance adequacy`, `Term cover ÷ income`, `≥ 15×`], [`Housing cost`, `Rent/EMI ÷ income`, `≤ 30%`], [`Net worth multiple`, `Net worth ÷ annual income`, `Age-based: 1× at 30, 3× at 40, 6× at 50`], [`Credit utilisation`, `Card balance ÷ limit`, `< 30%`]]]],
       [`How to improve`, `Fix the weakest ratio first: usually emergency months or insurance. Re-measure quarterly.`],
-      [`No mystery score`, `Each metric is shown with its formula so you can see what to change; there is no black-box number.`]
+      [`No mystery score`, `Each metric is shown with its formula so you can see what to change; there is no black-box number.`],
+      [`A worked financial health check`,
+        `**Priya, 33, take-home ₹1,00,000 a month.** Her numbers and what they mean:`,
+        ['tbl', ['Ratio', 'Priya', 'Target', 'Verdict', 'Action'], [
+          [`Savings rate`, `15,000 ÷ 1,00,000 = 15%`, `≥ 20%`, `Below target`, `Raise by 5 points; send half of the next raise to a SIP`],
+          [`Debt-to-income`, `EMIs 30,000 ÷ 1,00,000 = 30%`, `≤ 35%`, `OK`, `Avoid new loans; prepay the costliest`],
+          [`Emergency months`, `₹2.5 lakh ÷ ₹60,000 = 4.2 months`, `≥ 6`, `Below target`, `Add ₹2,000 a month until 6 months (₹3.6 lakh)`],
+          [`Insurance adequacy`, `Term ₹1 crore ÷ ₹12 lakh = 8.3×`, `≥ 15×`, `Short`, `Add ₹80 lakh of term cover (needs-based figure)`],
+          [`Housing cost`, `25,000 ÷ 1,00,000 = 25%`, `≤ 30%`, `OK`, `—`],
+          [`Net worth multiple`, `₹18 lakh ÷ ₹12 lakh = 1.5×`, `≈ 1.5–2× at 33`, `On track`, `Keep saving; protect`],
+          [`Credit utilisation`, `20%`, `< 30%`, `OK`, `Keep autopay`]]],
+        ['ol', `**Fix first:** insurance (term cover short), then emergency months, then the savings rate.`, `**Then:** raise the SIP with the next raise.`, `**Re-measure** after 3 months.`]],
+      [`Targets by life stage (guidelines)`,
+        ['tbl', ['Stage', 'Savings rate', 'Emergency fund', 'Debt-to-income', 'Insurance'], [
+          [`Student/first job`, `10–20%`, `1–3 months`, `Education loan only`, `Own health cover`],
+          [`Early career (25–35)`, `20–30%`, `3–6 months`, `≤ 35%`, `Health + term if dependants`],
+          [`Mid-career with family (35–50)`, `25–35%`, `6–9 months`, `≤ 35%, falling`, `Health + term 15×, accident`],
+          [`Pre-retirement (50–60)`, `30%+`, `9–12 months`, `Near zero`, `Health for life; term till loans end`],
+          [`Retired`, `Withdrawal plan`, `12–24 months of income gap`, `Zero`, `Health + medical fund`]]]],
+      [`How to measure each ratio correctly`,
+        ['ul', `**Savings rate** = (income − spending including EMIs) ÷ take-home; include investments and principal repayments as savings.`, `**Debt-to-income** = all EMIs and minimum card payments ÷ take-home.`, `**Emergency months** = liquid savings (savings, FDs, liquid funds) ÷ essential monthly spending.`, `**Insurance adequacy** = term cover ÷ gross yearly income (or use the needs-based Life Cover Estimator).`, `**Net worth multiple** = net worth ÷ gross yearly income (rule of thumb).`, `**Credit utilisation** = card balances on statement date ÷ credit limits.`]],
+      [`A quarterly routine`,
+        ['ol', `Update the Dashboard or Net Worth tool with current balances.`, `Run the Health check tool.`, `Pick the weakest ratio and one action with a date.`, `Review the last action's result.`, `Share the summary with your partner or an accountability friend.`]],
+      [`Questions people ask`,
+        ['ul', `**“Why is there no single score?”** A single number hides what to fix; each ratio points to an action.`, `**“What if all my ratios are green but I feel anxious?”** Check non-financial risks (health, work, family) and your emergency plan; ratios are a floor, not a guarantee.`, `**“Which ratio matters most?”** Emergency months and insurance protect you from disasters; savings rate drives long-term wealth.`, `**“How do I improve several at once?”** Order: emergency → insurance → debt → savings rate.`]],
+      [`The two debt ratios banks use, and the one you should use`,
+        ['tbl', ['Ratio', 'Formula', 'Typical lender limit', 'Your comfort limit'], [
+          [`Housing ratio (front-end)`, `Housing payment ÷ gross income`, `Around 28–35%`, `≤ 30% of take-home`],
+          [`Total debt ratio (back-end / FOIR)`, `All EMIs ÷ gross or net income`, `Around 40–55%`, `≤ 35% of take-home`],
+          [`Debt-to-assets`, `Total liabilities ÷ total assets`, `Not used`, `Falling; < 30%`]]],
+        `Lenders lend to the limit; your comfort limit is lower. The Debt-to-Income calculator and the Affordability Check show where you stand.`],
+      [`Wealth ratios`,
+        ['ul', `**Investment-to-income:** (investments ÷ gross yearly income). A rough path is 1× at 30, 3× at 40, 6× at 50, 8–10× at 60; use the Net Worth by Age calculator.`, `**Liquidity ratio:** liquid assets ÷ monthly essentials (months of safety).`, `**Insurance gap:** needed cover (needs method) − existing cover.`, `**Savings + investment rate** (including EPF/NPS contributions) is the engine of wealth.`]],
+      [`Trade-offs: reading the ratios together`,
+        ['tbl', ['Pattern', 'Meaning', 'Action'], [
+          [`High savings rate, low emergency months`, `You invest but are fragile`, `Redirect savings to the fund first`],
+          [`Low debt, low savings rate`, `You are safe but not building`, `Automate a SIP; step up`],
+          [`High net worth multiple, high DTI`, `Wealth is in assets you may not be able to sell (a home); cash flow is tight`, `Prepay loans; build liquid assets`],
+          [`Good ratios, no insurance`, `One event could undo it all`, `Fix protection first`],
+          [`All green`, `You are on track`, `Raise the targets: retirement, estate plan`]]],
+        ['tip', `In the app, the **Dashboard** and **Health check** tools compute these from your own entries. If a ratio uses a number you have not entered, enter it first; do not guess.`]]
     ],
     advisor: [`Measure quarterly; pick one ratio to improve per quarter.`, `Order: emergency → insurance → debt → savings rate.`],
-    checklist: [`All ratios measured.`, `Weakest ratio has an action.`, `Quarterly review scheduled.`, `Numbers come from my own entries, not estimates.`],
+    checklist: [`All ratios measured.`, `Weakest ratio has an action.`, `Quarterly review scheduled.`, `Numbers come from my own entries, not estimates.`, `I picked the weakest ratio and set an action with a date.`],
     verify: [`Your own statements`]
   });
 })();
