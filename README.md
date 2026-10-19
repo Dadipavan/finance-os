@@ -85,10 +85,23 @@ finance-os/
 │   ├── sources.js       official links + update centre (tax rules, rates, limits, JSON config)
 │   ├── adviser.js       action plan, return ladder, tax optimizer, HRA
 │   ├── playbook.js      practical guides, affordability, expense log, idea finder, ladder, My Money Review
+│   ├── banks.js         Bank Rates Book (FD / savings / loan rates, compare, yearly refresh) + insurance quote comparison
+│   ├── guides.js        Expert Guide engine (`#/guide/<id>`, library, search)
+│   ├── guides-1..8.js   the 55 expert guides: one in-depth guide per knowledge module (1–5 the original topics, deepened; 6 mindset · first job · career · will & inheritance · family · women; 7 seniors · NRI · economy · advanced investing · advanced tax · rental; 8 digital safety · rights & complaints · government benefits · startup funding · small-business accounts)
+│   ├── lessons-a/b/c.js lessons + quizzes for the 17 newer modules (append-only: saved progress is keyed by lesson id)
+│   ├── content-2.js     14 extra checklists (habits, digital safety, complaint, estate, fund picking, ITR, landlord, job switch, first job, family, women, seniors, NRI, business compliance)
+│   ├── calc-more.js · calc-more-help.js   19 extra calculators (gratuity, EPF, offer comparison, ESOP tax, SWP, endowment IRR, home-loan tax, balance transfer, advance tax, property sale tax, GST, rental yield, residency, XIRR, rebalancing, education-loan moratorium, dilution, unit economics, net worth by age) + their explanations and worked examples
+│   ├── curriculum.js    Learning Paths: eight step-by-step routes through the modules, with your progress
 │   ├── search.js        global search (press `/`)
 │   └── app.js           router, calculator engine, module pages, quizzes, glossary, settings
 ├── tests/
-│   ├── logic.js         DOM-free tests — 270+ checks: all calculators, independently verified maths, data update flow, statements, search, no-external-dependency and no-date-bomb scans (run: `jsc tests/logic.js`)
+│   ├── scripts.js       the script list read from index.html, shared by every test
+│   ├── sync.js          Google Drive sync tests against a fake Drive and fake Google sign-in (44 checks)
+│   ├── xcheck/          independent Python re-implementation of 28 calculators, compared on ~1,200 random inputs (0 mismatches)
+│   ├── logic.js         DOM-free tests — 480+ checks: all calculators, independently verified maths, data update flow, statements, search, no-external-dependency and no-date-bomb scans (run: `jsc tests/logic.js`)
+│   ├── e2e.js           end-to-end test that runs inside a REAL page (types, clicks, drags, scroll checks, timings) — run with tests/tools/probe.swift on macOS, or paste into a browser console
+│   ├── tools/           probe.swift (macOS WebKit page runner) + probe-layout.js (finds pages wider than the screen, fields that look like plain text)
+│   ├── perf.js          times the heavy paths with 5,000 expense entries (run: `jsc tests/perf.js`)
 │   ├── smoke.js         walks every page/calculator/tool through the real app code with a fake DOM, fires ~3,300 interactions (bad inputs, every decision type, every quiz) and repeats the run with the clock set to 2226
 │   └── selftest.html    open in a browser: renders every calculator and route, runs the 12 acceptance scenarios
 └── investment_and_business_guide.md   source guide used for lesson content
