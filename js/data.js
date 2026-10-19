@@ -62,9 +62,11 @@ window.FOS = window.FOS || {};
           new: { name: 'New regime (default)', stdDeduction: 75000, cessPct: 4, rebate: { limit: 1200000, max: 60000, marginalRelief: true }, surcharge: SURCHARGE_NEW,
             slabs: [[400000, 0], [800000, 5], [1200000, 10], [1600000, 15], [2000000, 20], [2400000, 25], [null, 30]] },
           old: { name: 'Old regime (with deductions)', stdDeduction: 50000, cessPct: 4, rebate: { limit: 500000, max: 12500, marginalRelief: false }, surcharge: SURCHARGE_OLD,
+            // basic exemption for resident senior citizens (60–79) and super-senior citizens (80+); the slabs above it are the same
+            seniorExemption: 300000, superSeniorExemption: 500000,
             slabs: [[250000, 0], [500000, 5], [1000000, 20], [null, 30]] }
         },
-        deductionsOld: { '80C': 150000, '80D (self/family, <60)': 25000, '80D (parents, <60)': 25000, '80D (parents, senior)': 50000, 'NPS 80CCD(1B)': 50000, 'Home-loan interest (self-occupied)': 200000 },
+        deductionsOld: { '80C': 150000, '80D (self/family, <60)': 25000, '80D (self/family, senior)': 50000, '80D (parents, <60)': 25000, '80D (parents, senior)': 50000, 'NPS 80CCD(1B)': 50000, 'Home-loan interest (self-occupied)': 200000, '80TTA (savings-account interest, under 60)': 10000, '80TTB (deposit interest, senior citizens)': 50000 },
         capitalGains: {
           equitySTCG: { rate: 20, note: 'Listed equity / equity MF held ≤ 12 months' },
           equityLTCG: { rate: 12.5, exemption: 125000, note: 'Held > 12 months; gains above exemption' },
@@ -82,9 +84,10 @@ window.FOS = window.FOS || {};
           new: { name: 'New regime', stdDeduction: 75000, cessPct: 4, rebate: { limit: 700000, max: 25000, marginalRelief: true }, surcharge: SURCHARGE_NEW,
             slabs: [[300000, 0], [700000, 5], [1000000, 10], [1200000, 15], [1500000, 20], [null, 30]] },
           old: { name: 'Old regime', stdDeduction: 50000, cessPct: 4, rebate: { limit: 500000, max: 12500, marginalRelief: false }, surcharge: SURCHARGE_OLD,
+            seniorExemption: 300000, superSeniorExemption: 500000,
             slabs: [[250000, 0], [500000, 5], [1000000, 20], [null, 30]] }
         },
-        deductionsOld: { '80C': 150000, '80D (self/family, <60)': 25000, '80D (parents, <60)': 25000, '80D (parents, senior)': 50000, 'NPS 80CCD(1B)': 50000, 'Home-loan interest (self-occupied)': 200000 },
+        deductionsOld: { '80C': 150000, '80D (self/family, <60)': 25000, '80D (self/family, senior)': 50000, '80D (parents, <60)': 25000, '80D (parents, senior)': 50000, 'NPS 80CCD(1B)': 50000, 'Home-loan interest (self-occupied)': 200000, '80TTA (savings-account interest, under 60)': 10000, '80TTB (deposit interest, senior citizens)': 50000 },
         capitalGains: { equitySTCG: { rate: 20, note: 'Post 23-Jul-2024 transfers' }, equityLTCG: { rate: 12.5, exemption: 125000, note: 'Post 23-Jul-2024 transfers' }, debtMF: { rate: 'slab', note: '' }, gold: { rate: 12.5, note: '' }, crypto: { rate: 30, tds: 1, note: '' } },
         other: { tdsOnFDInterestThreshold: 40000, standardCess: 4, employerNpsPct: { new: 14, old: 10 } }
       }
