@@ -192,6 +192,13 @@ window.FOS = window.FOS || {};
     }
     return sc;
   };
+  // The regime as it applies to a taxpayer of a given age group (0 = under 60, 1 = senior 60–79, 2 = super-senior 80+). Only the OLD regime has higher basic exemptions;
+  // the slabs above the exemption are unchanged, and slabs that fall entirely below the higher exemption disappear. Returns the same object when nothing changes.
+  C.regimeFor = function (regime, age) {
+    const a = +age || 0, ex = a >= 2 ? regime.superSeniorExemption : a === 1 ? regime.seniorExemption : null;
+    if (!ex || !(ex > (regime.slabs[0][0] || 0))) return regime;
+    return Object.assign({}, regime, { slabs: [[ex, 0]].concat(regime.slabs.filter(([lim], i) => i > 0 && (lim === null || lim > ex))) });
+  };
   C.incomeTax = function (taxable, regime) {
     taxable = Math.max(0, taxable);
     const tax = slabTaxOn(taxable, regime.slabs);
