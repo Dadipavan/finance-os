@@ -14,7 +14,7 @@ window.FOS = window.FOS || {};
   FOS.G = (g) => { FOS.GUIDES.push(g); return g; };
   const byId = (id) => FOS.GUIDES.find((g) => g.id === id);
   FOS.guideFor = (moduleId) => FOS.GUIDES.find((g) => g.module === moduleId);
-  const inline = (t) => esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+  const inline = (t) => esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/(^|[^*\w])\*([^*\s][^*]*?)\*(?!\w)/g, '$1<i>$2</i>');   // **bold** and *italic*
   const block = (b) => {
     if (typeof b === 'string') return `<p>${inline(b)}</p>`;
     const [k, ...r] = b;
