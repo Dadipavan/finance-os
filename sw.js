@@ -6,7 +6,7 @@
    WHEN YOU PUBLISH A NEW VERSION: change VERSION below (fos-v7, fos-v8, …). That makes every device download the
    complete new set of files together and drop the old ones, so no one ever mixes old and new files.
    (tests/logic.js checks that this list matches the scripts and styles that index.html loads.) */
-const VERSION = 'fos-v8';
+const VERSION = 'fos-v10';
 const CORE = [
   './',
   'index.html',
@@ -51,6 +51,7 @@ const CORE = [
   'js/guides-6.js',
   'js/guides-7.js',
   'js/guides-8.js',
+  'js/guides-9.js',
   'js/content-2.js',
   'js/lessons-a.js',
   'js/lessons-b.js',
@@ -60,9 +61,12 @@ const CORE = [
   'js/about.js',
   'js/examples.js',
   'js/calc-more-help.js',
+  'js/invest.js',
+  'js/shortforms.js',
   'js/help.js',
   'js/gate.js',
   'js/search.js',
+  'js/minicalc.js',
   'js/app.js'
 ];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(VERSION).then((c) => Promise.all(CORE.map((u) => c.add(u).catch(() => null)))).then(() => self.skipWaiting())); });
