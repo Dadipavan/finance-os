@@ -203,9 +203,17 @@
     if (first && lEmpty && rEmpty) { Object.assign(info, { version: String(remote.version), hash: h, fileId: remote.id }); writeInfo(info); return done(); }
     if ((first && lEmpty) || (!first && !dirty)) { pull(r, remote, info, o.auto ? 'auto' : 'user'); return done(first ? 'Loaded your data from Google Drive.' : 'Updated from Google Drive.'); }
     if (first && rEmpty) { await push(remote, info, await packet(), { safety: true }); return done('Uploaded your data to Google Drive.'); }
-    return resolveConflict(r, remote, info, o);
+    return resolveConflict(r, remote, info, Object.assign({ first }, o));
   }
   async function resolveConflict(r, remote, info, o) {
+    // Both sides changed since the last sync on a device that is already linked: merge quietly (union of rows; a safety copy of each side is kept first).
+    // Only the very first meeting of two different data sets still asks.
+    if (!o.first && !paused) {
+      store.replaceState(mergeStates(store.get(), r.state), { reason: 'before merging with Google Drive' });
+      await push(remote, info, await packet(), { safety: true });
+      if (o.auto) U.toast('Merged changes from another device with Google Drive.');
+      return done('Merged this device with Google Drive.');
+    }
     if (paused && o.auto) { setStatus('conflict', 'Your data differs from Google Drive — tap the cloud to decide.'); return; }
     const choice = await askConflict(r, remote);
     // anything else (dialog closed, unknown answer) = do nothing; the app never overwrites on a guess
