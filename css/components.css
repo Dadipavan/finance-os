@@ -246,3 +246,11 @@ input[type=date], input[type=month], input[type=time], input[type=datetime-local
 .lock-box.wide { width: min(560px, 100%); text-align: left; } .lock-box.wide h1, .lock-box.wide .logo-lg { text-align: center; }
 table.hist td, table.hist th { vertical-align: top; } .hist-sum { font-size: .85rem; margin-top: .25rem; } .hist-act { white-space: nowrap; } .hist-act .btn { margin: .1rem .1rem; }
 .cmp-card { margin: 0; } .cmp-card h4 { margin-top: 0; }
+.fab.fab-calc { padding: .5rem .9rem; font-size: .72rem; }
+.mc { max-width: 18rem; margin: 0 auto; } .mc-trail { min-height: 1.1rem; text-align: right; color: var(--muted); font-size: .8rem; } .mc-out { text-align: right; font-size: 2rem; font-weight: 700; padding: .3rem .6rem; background: var(--surface2); border: 1px solid var(--line); border-radius: 12px; overflow-x: auto; white-space: nowrap; margin-bottom: .6rem; }
+.mc-keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: .4rem; } .mc-k { font: inherit; font-size: 1.1rem; font-weight: 600; padding: .7rem 0; border-radius: 12px; border: 1px solid var(--line2); background: var(--surface); color: var(--ink); cursor: pointer; } .mc-k:hover { border-color: var(--primary); } .mc-k.op { background: var(--primary-soft); }
+
+/* one plain line under each calculator input, and the "short forms" box */
+.fhelp { display: block; color: var(--muted); font-size: .8rem; line-height: 1.4; margin: .1rem 0 .15rem; }
+.abbr-box { margin-top: 1rem; } .abbr-box dl { display: grid; grid-template-columns: max-content 1fr; gap: .3rem .9rem; margin: .4rem 0 0; font-size: .9rem; } .abbr-box dt { font-weight: 700; color: var(--ink); } .abbr-box dd { margin: 0; color: var(--ink2); }
+@media (max-width: 560px) { .abbr-box dl { grid-template-columns: 1fr; gap: 0; } .abbr-box dd { margin-bottom: .45rem; } }
