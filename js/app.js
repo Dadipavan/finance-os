@@ -148,7 +148,7 @@
     page(c.title, `<div class="crumb"><a href="#/calculators">Calculators</a> › <span>${esc(c.group || '')}</span></div><h1 class="ph">${esc(c.title)}</h1><p class="lead">${esc(c.intro)}</p>${FOS.aboutHTML('calc', id)}${m ? `<p class="muted">Related module: <a href="${modHref(m)}">${esc(m.title)}</a></p>` : ''}<div id="calc"></div>`, () => FOS.renderCalc($('#calc'), id));
   }
   const FM = {
-    inr: (v) => fmt.inr(v, Math.abs(v) < 100 && Math.abs(v % 1) > 0.004 ? 2 : 0), pct: (v) => fmt.pct(v, 2), num: (v) => fmt.num(v, Math.abs(v) < 100 ? 1 : 0), months: (v) => fmt.months(Math.round(v)),
+    inr: (v) => fmt.inr(v, Math.abs(v) < 100 && Math.abs(v % 1) > 0.004 ? 2 : 0), inr2: (v) => fmt.inr(v, 2), pct: (v) => fmt.pct(v, 2), num: (v) => fmt.num(v, Math.abs(v) < 100 ? 1 : 0), months: (v) => fmt.months(Math.round(v)),
     years: (v) => fmt.years(v), x: (v) => fmt.num(v, 1) + '×', yn: (v) => (v ? 'Yes' : 'No'), text: (v) => String(v)
   };
   const showVal = (f, v) => (f === 'text' ? String(v) : Number.isFinite(v) ? (FM[f] || FM.inr)(v) : '—');
