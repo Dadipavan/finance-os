@@ -140,10 +140,12 @@
   // Union of two copies: rows are matched by id (this device wins a tie), rows only on one side are kept, flags are OR-ed.
   function mergeStates(local, remote) {
     const cp = (x) => JSON.parse(JSON.stringify(x)), out = cp(remote), has = (v) => v !== '' && v !== undefined && v !== null;
-    ['assets', 'liabilities', 'goals', 'recurring', 'reminders', 'records', 'expenses', 'quotes', 'bankRates', 'timeline'].forEach((k) => {
+    ['assets', 'liabilities', 'goals', 'recurring', 'reminders', 'records', 'expenses', 'quotes', 'bankRates', 'timeline', 'chapters'].forEach((k) => {
       const seen = {}, rows = []; (local[k] || []).forEach((x) => { rows.push(x); seen[x.id] = 1; }); (remote[k] || []).forEach((x) => { if (!seen[x.id]) rows.push(x); }); out[k] = cp(rows);
     });
     const sn = {}; (remote.snapshots || []).forEach((x) => { sn[x.date] = x; }); (local.snapshots || []).forEach((x) => { sn[x.date] = x; }); out.snapshots = cp(Object.keys(sn).sort().map((k) => sn[k]));
+    // the live chapter is the one that started later (chapters only move forward); closed chapters were united above
+    { const lj = local.journey || {}, rj = remote.journey || {}; out.journey = cp((lj.start || '') >= (rj.start || '') ? (lj.start ? lj : rj) : rj); }
     out.budget = cp(remote.budget || {}); const lb = local.budget || {}; if ((lb.items || []).length || has(lb.income)) { out.budget.method = lb.method || out.budget.method; if (has(lb.income)) out.budget.income = lb.income; const seen = {}, rows = []; (lb.items || []).forEach((x) => { rows.push(x); seen[x.id] = 1; }); ((remote.budget || {}).items || []).forEach((x) => { if (!seen[x.id]) rows.push(x); }); out.budget.items = cp(rows); }
     out.profile = cp(remote.profile || {}); Object.keys(local.profile || {}).forEach((k) => { const v = local.profile[k]; if (typeof v === 'boolean') out.profile[k] = v || !!out.profile[k]; else if (has(v) && !(Array.isArray(v) && !v.length)) out.profile[k] = cp(v); });
     out.months = cp(remote.months || {}); Object.keys(local.months || {}).forEach((m) => { out.months[m] = Object.assign({}, out.months[m], cp(local.months[m])); });
