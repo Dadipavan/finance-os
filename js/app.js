@@ -6,7 +6,7 @@
   'use strict';
   const U = FOS.ui, store = FOS.store, fmt = FOS.fmt, esc = U.esc, $ = U.$, $$ = U.$$, ch = FOS.charts;
   const main = () => $('#main');
-  const NAV_EXTRA = [['Snapshot', '#/tool/snapshot'], ['Expense log', '#/tool/expenses'], ['Life ladder', '#/tool/ladder'], ['Business ideas', '#/tool/bizideas'], ['Reminders', '#/tool/reminders'], ['Records', '#/tool/records'], ['Life timeline', '#/tool/timeline'], ['Life simulator', '#/calc/lifesim'], ['Recurring expenses', '#/tool/recurring'], ['Purchase analyzer', '#/tool/purchase']];
+  const NAV_EXTRA = [['My journey', '#/tool/journey'], ['Snapshot', '#/tool/snapshot'], ['Expense log', '#/tool/expenses'], ['Life ladder', '#/tool/ladder'], ['Business ideas', '#/tool/bizideas'], ['Reminders', '#/tool/reminders'], ['Records', '#/tool/records'], ['Life timeline', '#/tool/timeline'], ['Life simulator', '#/calc/lifesim'], ['Recurring expenses', '#/tool/recurring'], ['Purchase analyzer', '#/tool/purchase']];
   const modById = (id) => FOS.MODULES.find((m) => m.id === id);
   const modHref = (m) => m.route || '#/m/' + m.id;
 
@@ -14,7 +14,7 @@
   const prefersDark = () => !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
   function applySettings() {
     const s = store.get().settings, r = document.documentElement, dark = s.theme === 'dark' || (s.theme === 'auto' && prefersDark());
-    r.dataset.theme = dark ? 'dark' : 'light'; r.dataset.text = s.textSize; r.dataset.contrast = s.contrast ? 'high' : 'normal'; r.dataset.motion = s.reduceMotion ? 'reduce' : 'full';
+    r.dataset.theme = dark ? 'dark' : 'light'; r.dataset.text = s.textSize; r.dataset.contrast = s.contrast ? 'high' : 'normal'; r.dataset.motion = s.reduceMotion ? 'reduce' : 'full'; r.dataset.sliders = s.sliders === false ? 'off' : 'on';
     $$('[data-theme-btn]').forEach((b) => { b.textContent = dark ? '☀' : '☾'; b.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode'); });
   }
 
@@ -57,7 +57,7 @@
       if (r === 'dashboard') return toolPage('dashboard', 'My Money Dashboard', 'Everything you have, owe, earn and spend — in one calm view.');
       if (r === 'm') return modulePage(seg[1], q);
       if (r === 'calc') return calcPage(seg[1]);
-      if (r === 'tool') { const m = FOS.MODULES.find((x) => x.tool === seg[1]); return m ? modulePage(m.id, q) : toolPage(seg[1], ({ snapshot: 'My Financial Snapshot', reminders: 'Reminders', records: 'Records', timeline: 'Life Timeline', recurring: 'Recurring Expense Auditor', purchase: 'Purchase Analyzer' })[seg[1]] || 'Tool'); }
+      if (r === 'tool') { const m = FOS.MODULES.find((x) => x.tool === seg[1]); return m ? modulePage(m.id, q) : toolPage(seg[1], ({ snapshot: 'My Financial Snapshot', reminders: 'Reminders', records: 'Records', timeline: 'Life Timeline', recurring: 'Recurring Expense Auditor', purchase: 'Purchase Analyzer', journey: 'My Journey — chapters of my money life' })[seg[1]] || 'Tool'); }
       if (r === 'calculators') return library();
       if (r === 'help') return page('Help', '<h1 class="ph">How to use Finance OS</h1>' + FOS.helpHTML(), () => { if (q.s) FOS.openHelpSection(q.s); });
       if (r === 'guide') { const g = FOS.GUIDES.find((x) => x.id === seg[1]); if (!g) return toolPage('guides', 'Expert Guides', ''); return page(g.title, FOS.guideHTML(g), (el) => FOS.guideAfter(g, el)); }
@@ -84,7 +84,7 @@
     const m = FOS.metrics(), onboarded = store.get().profile.onboarded;
     page('Home', `<section class="hero"><div class="hero-in"><p class="eyebrow">Personal Finance Operating System · private, offline, free</p><h1>YOUR MONEY.<br>YOUR DECISIONS.<br>YOUR FUTURE.</h1><p class="sub">Understand money before money controls your life.</p>
       <ul class="verbs">${['Learn', 'Calculate', 'Compare', 'Plan', 'Protect', 'Grow'].map((v) => `<li>${v}</li>`).join('')}</ul>
-      <p class="newhere"><b>Start here:</b> the first button asks ~15 optional questions (about 4 minutes) and builds your personal snapshot. <br>New here? <a href="#/help">Read the quick guide (first 10 minutes)</a> · <a href="#/help?s=phone">Install on your phone</a></p><div class="cta"><button class="btn primary lg" id="h-start">START MY FINANCIAL JOURNEY</button><a class="btn lg" href="#/dashboard">OPEN MONEY DASHBOARD</a><a class="btn lg" href="#/calculators">EXPLORE CALCULATORS</a><a class="btn lg" href="#/m/basics">LEARN FINANCE FROM ZERO</a></div></div></section>
+      <p class="newhere"><b>Start here:</b> the first button asks ~15 optional questions (about 4 minutes) and builds your personal snapshot. <br>New here? <a href="#/help">Read the quick guide (first 10 minutes)</a> · <a href="#/help?s=phone">Install on your phone</a></p><div class="cta"><button class="btn primary lg" id="h-start">START MY FINANCIAL JOURNEY</button><a class="btn lg" href="#/dashboard">OPEN MONEY DASHBOARD</a><a class="btn lg" href="#/tool/journey">MY JOURNEY — PAST CHAPTERS</a><a class="btn lg" href="#/calculators">EXPLORE CALCULATORS</a><a class="btn lg" href="#/m/basics">LEARN FINANCE FROM ZERO</a></div></div></section>
       ${onboarded || m.income ? `<section class="card"><h2>Your snapshot</h2>${snapMini(m)}<a class="btn ghost" href="#/dashboard">Open full dashboard →</a></section>` : ''}
       <section class="card flow"><h2>How every decision should flow</h2><ol class="steps-flow">${['LEARN', 'UNDERSTAND', 'CALCULATE', 'COMPARE', 'CHECK RISKS', 'TAXES / FEES', 'OPPORTUNITY COST', 'LONG-TERM IMPACT', 'YOU DECIDE'].map((s) => `<li>${s}</li>`).join('')}</ol><p class="muted">Finance OS shows the facts, the full cost, the risks and the alternatives — and then gives you a clear verdict with the numbers behind it.</p></section>
       <section class="card"><h2>Your financial journey</h2><p class="muted">From a ₹50 purchase to financial independence. Each step opens the matching module.</p><ol class="journey">${FOS.JOURNEY.map(([t, mod], i) => `<li><a href="#/m/${mod}"><b>${i + 1}</b><span>${esc(t)}</span></a></li>`).join('')}</ol></section>
@@ -308,7 +308,7 @@
         <div class="field"><label for="st-theme">Theme</label><select class="input" id="st-theme"><option value="auto" ${s.settings.theme === 'auto' ? 'selected' : ''}>Match my device</option><option value="light" ${s.settings.theme === 'light' ? 'selected' : ''}>Light</option><option value="dark" ${s.settings.theme === 'dark' ? 'selected' : ''}>Dark</option></select></div>
         <div class="field"><label for="st-text">Text size</label><select class="input" id="st-text"><option value="normal" ${s.settings.textSize === 'normal' ? 'selected' : ''}>Normal</option><option value="large" ${s.settings.textSize === 'large' ? 'selected' : ''}>Large</option><option value="xlarge" ${s.settings.textSize === 'xlarge' ? 'selected' : ''}>Extra large</option></select></div>
         <div class="field"><label class="check"><input type="checkbox" id="st-contrast" ${s.settings.contrast ? 'checked' : ''}> High contrast</label></div>
-        <div class="field"><label class="check"><input type="checkbox" id="st-motion" ${s.settings.reduceMotion ? 'checked' : ''}> Reduce motion</label></div></div></section>
+        <div class="field"><label class="check"><input type="checkbox" id="st-motion" ${s.settings.reduceMotion ? 'checked' : ''}> Reduce motion</label></div><div class="field"><label class="check"><input type="checkbox" id="st-sliders" ${s.settings.sliders === false ? '' : 'checked'}> Show the drag sliders under calculator inputs</label><small class="hint">Turn this off if dragging gets in the way and you would rather type the numbers.</small></div></div></section>
       <section class="card" id="sec-rates"><h2>Rates, tax rules &amp; limits</h2><p>Keep the numbers current from the official sites. Edit once; every calculator, lesson table and report recalculates.</p><div class="row-actions"><a class="btn primary" href="#/sources">Open Data &amp; Sources</a></div></section>
       <section class="card" id="sec-install"><h2>Install on your phone or computer</h2><p>Add Finance OS to your home screen so it opens like an app and works offline.</p><div class="row-actions"><button class="btn primary" data-install hidden>Install Finance OS</button></div><p class="note"><b>Android (Chrome):</b> menu ⋮ → Install app / Add to Home screen. <b>iPhone (Safari):</b> Share → Add to Home Screen. <b>Computer (Chrome/Edge):</b> the install icon in the address bar.</p></section>
       <section class="card" id="sec-gate"></section>
@@ -331,6 +331,7 @@
       $('#st-text', el).onchange = (e) => set((st) => { st.settings.textSize = e.target.value; });
       $('#st-contrast', el).onchange = (e) => set((st) => { st.settings.contrast = e.target.checked; });
       $('#st-motion', el).onchange = (e) => set((st) => { st.settings.reduceMotion = e.target.checked; });
+      $('#st-sliders', el).onchange = (e) => set((st) => { st.settings.sliders = e.target.checked; });
       $('#st-export', el).onclick = () => { U.download('finance-os-data-' + FOS.dates.iso() + (store.isDemo() ? '-DEMO' : '') + '.json', store.exportJSON(), 'application/json'); };
       $('#st-import', el).onchange = (e) => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = async () => { try { if (!confirm('Importing replaces the data currently in this browser. A safety copy is kept first. Continue?')) return; try { store.importJSON(r.result); } catch (err) { if (!err.needsPass) throw err; const p = prompt('This backup is encrypted. Enter its passphrase:'); if (!p) return; await store.importEncrypted(r.result, p); } applySettings(); U.toast('Data imported'); FOS.go('#/dashboard'); } catch (err) { U.toast(err.message); } }; r.readAsText(f); };
       $('#st-sample', el).onclick = () => { if (store.isDemo()) return U.toast('The demo is already on.'); FOS.startDemo(); };
