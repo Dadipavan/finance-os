@@ -254,3 +254,6 @@ table.hist td, table.hist th { vertical-align: top; } .hist-sum { font-size: .85
 .fhelp { display: block; color: var(--muted); font-size: .8rem; line-height: 1.4; margin: .1rem 0 .15rem; }
 .abbr-box { margin-top: 1rem; } .abbr-box dl { display: grid; grid-template-columns: max-content 1fr; gap: .3rem .9rem; margin: .4rem 0 0; font-size: .9rem; } .abbr-box dt { font-weight: 700; color: var(--ink); } .abbr-box dd { margin: 0; color: var(--ink2); }
 @media (max-width: 560px) { .abbr-box dl { grid-template-columns: 1fr; gap: 0; } .abbr-box dd { margin-bottom: .45rem; } }
+
+/* Settings → "Show the drag sliders" off: calculators keep only the typed number boxes */
+[data-sliders="off"] .slider { display: none; }
