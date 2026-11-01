@@ -10,19 +10,19 @@ window.FOS = window.FOS || {};
 (function () {
   'use strict';
   const KEY = 'fos.state.v1';
-  const LISTS = ['assets', 'liabilities', 'goals', 'recurring', 'reminders', 'records', 'timeline', 'expenses', 'snapshots', 'bankRates', 'quotes'];
+  const LISTS = ['assets', 'liabilities', 'goals', 'recurring', 'reminders', 'records', 'timeline', 'expenses', 'snapshots', 'bankRates', 'quotes', 'chapters'];
   const defaults = () => ({
     version: 1,
     profile: { age: '', monthlyIncome: '', annualIncome: '', monthlyExpenses: '', savings: '', investments: '', loans: '', cards: '', dependents: '', retAge: 60, riskUnderstanding: 3, hasHealth: false, healthCover: '', hasTerm: false, termCover: '', hasMotor: false, goalsInterest: [], onboarded: false },
     budget: { method: 'custom', income: '', items: [] },
-    assets: [], liabilities: [], snapshots: [], expenses: [], months: {}, suggestDone: {}, bankRates: [], quotes: [], meta: { bankSeeded: false, bankChecked: '', bankSnooze: '', lastExport: '', configChecked: '', noticeSnooze: '', updatedAt: '', lastSync: '', lastArchive: '' }, configPatch: {}, goals: [], recurring: [], reminders: [], records: [],
+    assets: [], liabilities: [], snapshots: [], chapters: [], journey: { start: '', title: '', note: '' }, expenses: [], months: {}, suggestDone: {}, bankRates: [], quotes: [], meta: { bankSeeded: false, bankChecked: '', bankSnooze: '', lastExport: '', configChecked: '', noticeSnooze: '', updatedAt: '', lastSync: '', lastArchive: '' }, configPatch: {}, goals: [], recurring: [], reminders: [], records: [],
     timeline: [
       { id: 'tl1', age: 18, text: 'Open first bank account' }, { id: 'tl2', age: 22, text: 'First salary' }, { id: 'tl3', age: 25, text: 'Emergency fund' },
       { id: 'tl4', age: 28, text: 'Vehicle' }, { id: 'tl5', age: 30, text: 'House planning' }, { id: 'tl6', age: 35, text: 'Family goals' },
       { id: 'tl7', age: 45, text: 'Wealth accumulation' }, { id: 'tl8', age: 60, text: 'Retirement' }
     ],
     progress: { lessons: {}, quiz: {} }, checklists: {}, calcSaved: {}, overrides: {},
-    settings: { theme: 'auto', textSize: 'normal', contrast: false, reduceMotion: false, notify: false }
+    settings: { theme: 'auto', textSize: 'normal', contrast: false, reduceMotion: false, sliders: true, notify: false }
   });
 
   const merge = (base, inc) => {
@@ -57,7 +57,7 @@ window.FOS = window.FOS || {};
   function sanitizeState(raw) {
     const s = clean(raw, 0);
     if (!isObj(s)) throw new Error('The data is not in the expected format.');
-    ['profile', 'budget', 'months', 'suggestDone', 'meta', 'configPatch', 'progress', 'checklists', 'calcSaved', 'overrides', 'settings'].forEach((k) => { if (k in s && !isObj(s[k])) delete s[k]; });
+    ['profile', 'budget', 'journey', 'months', 'suggestDone', 'meta', 'configPatch', 'progress', 'checklists', 'calcSaved', 'overrides', 'settings'].forEach((k) => { if (k in s && !isObj(s[k])) delete s[k]; });
     LISTS.forEach((k) => {
       if (!(k in s)) return;
       if (!Array.isArray(s[k])) { delete s[k]; return; }
