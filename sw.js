@@ -6,7 +6,7 @@
    WHEN YOU PUBLISH A NEW VERSION: change VERSION below (fos-v7, fos-v8, …). That makes every device download the
    complete new set of files together and drop the old ones, so no one ever mixes old and new files.
    (tests/logic.js checks that this list matches the scripts and styles that index.html loads.) */
-const VERSION = 'fos-v10';
+const VERSION = 'fos-v12';
 const CORE = [
   './',
   'index.html',
@@ -63,6 +63,7 @@ const CORE = [
   'js/calc-more-help.js',
   'js/invest.js',
   'js/shortforms.js',
+  'js/journey.js',
   'js/help.js',
   'js/gate.js',
   'js/search.js',
